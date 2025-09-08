@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include("./partials/meta") %>
+    <title>Manga Store - Payment Methods</title>
+
+    <link rel="stylesheet" href="/css/framework.css" />
+    <link rel="stylesheet" href="/css/build.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer" />
+
+    <style>
+      .loaderBtn {
+        width: 25px;
+        aspect-ratio: 1;
+        --c: no-repeat linear-gradient(currentColor 0 0);
+        background: var(--c) 0% 50%, var(--c) 50% 50%, var(--c) 100% 50%;
+        background-size: 20% 100%;
+        animation: l1 1s infinite linear;
+      }
+      @keyframes l1 {
+        0% {
+          background-size: 20% 100%, 20% 100%, 20% 100%;
+        }
+        33% {
+          background-size: 20% 10%, 20% 100%, 20% 100%;
+        }
+        50% {
+          background-size: 20% 100%, 20% 10%, 20% 100%;
+        }
+        66% {
+          background-size: 20% 100%, 20% 100%, 20% 10%;
+        }
+        100% {
+          background-size: 20% 100%, 20% 100%, 20% 100%;
+        }
+      }
+      input[type="number"]::-webkit-inner-spin-button,
+      input[type="number"]::-webkit-outer-spin-button {
+        display: none;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark transition-colors duration-200">
+    <%- include("./partials/header") %> <%- include("./partials/alerts-popups") %> <%- include("./partials/loader") %>
+
+    <main
+      class="min-h-screen w-full pt-24 flex flex-col justify-center items-center gap-6 px-4 md:px-10 max-w-7xl mx-auto">
+      <div id="giftFlag" data-gift="<%= (typeof isGift !== 'undefined' && isGift) ? '1' : '0' %>" class="hidden"></div>
+      <% if (typeof isGift !== 'undefined' && isGift) { %>
+      <div class="w-full glass border-2 border-primary-light/20 dark:border-primary-dark/20 rounded-xl p-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-primary-light text-background-light dark:bg-primary-dark dark:text-background-dark">
+            <i class="fa-solid fa-gift"></i>
+          </span>
+          <div>
+            <p class="font-semibold text-primary-light dark:text-primary-dark">Gift Mode</p>
+            <p class="text-sm text-text-light/70 dark:text-text-dark/70">Fill your info, then your friend's details below.</p>
+          </div>
+        </div>
+        <a href="/checkout" class="text-sm px-3 py-1.5 rounded-lg bg-background-light dark:bg-background-dark border-2 border-secondary-light/40 dark:border-secondary-dark/40 hover:border-primary-light dark:hover:border-primary-dark">Exit gift</a>
+      </div>
+      <% } %>
+      <section class="grid lg:grid-cols-5 xl:grid-cols-4 gap-6 w-full min-h-max mb-6">
+        <!-- Billing Information -->
+        <div
+          class="glass dark:bg-secondary-dark p-6 min-h-max rounded-2xl shadow-lg lg:col-span-3 xl:col-span-3 pt-10 transition-colors duration-200">
+          <h2 class="text-2xl font-semibold mb-6 text-primary-light dark:text-primary-dark"><%=(typeof isGift!=='undefined' && isGift)?'Your Information':'Billing Information'%></h2>
+          <form id="user-info-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label for="name" class="block text-sm font-medium">Name</label>
+              <input
+                type="text"
+                autocomplete="name"
+                id="name"
+                name="name"
+                required
+                class="w-full px-4 py-2.5 border-2 dark:bg-background-dark border-secondary-light/20 dark:border-secondary-dark/20 focus:border-primary-light dark:focus:border-primary-dark text-text-light dark:text-text-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-light dark:focus:ring-primary-dark bg-background-light transition-colors duration-200" />
+            </div>
+
+            <div class="space-y-2">
+              <label for="phone" class="block text-sm font-medium">Phone Number</label>
+              <input
+                type="number"
+                id="phone"
+                name="phone"
+                autocomplete="tel"
+                required
+                class="w-full px-4 py-2.5 border-2 dark:bg-background-dark border-secondary-light/20 dark:border-secondary-dark/20 focus:border-primary-light dark:focus:border-primary-dark text-text-light dark:text-text-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-light dark:focus:ring-primary-dark bg-background-light transition-colors duration-200" />
+            </div>
+
+            <div class="space-y-2">
+              <label for="referralEmail" class="block text-sm font-medium">Referral Email (optional)</label>
+              <input
+                type="email"
+                id="referralEmail"
+                name="referralEmail"
+                placeholder="friend@example.com"
+                class="w-full px-4 py-2.5 border-2 dark:bg-background-dark border-secondary-light/20 dark:border-secondary-dark/20 focus:border-primary-light dark:focus:border-primary-dark text-text-light dark:text-text-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-light dark:focus:ring-primary-dark bg-background-light transition-colors duration-200" />
+            </div>
+
+            <div class="space-y-2">
+              <label for="country" class="block text-sm font-medium">Country</label>
+              <select
+                id="country"
+                name="country"
+                autocomplete="country"
+                class="w-full px-4 py-2.5 border-2 dark:bg-background-dark border-secondary-light/20 dark:border-secondary-dark/20 focus:border-primary-light dark:focus:border-primary-dark text-text-light dark:text-text-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-light dark:focus:ring-primary-dark bg-background-light transition-colors duration-200">
+                <option value="">Select a country</option>
+              </select>
+            </div>
+
+            <div class="space-y-2">
+              <label for="city" class="block text-sm font-medium">City</label>
+              <select
+                id="city"
+                name="city"
+                autocomplete="address-level2"
+                disabled
+                class="w-full px-4 py-2.5 border-2 dark:bg-background-dark border-secondary-light/20 dark:border-secondary-dark/20 focus:border-primary-light dark:focus:border-primary-dark text-text-light dark:text-text-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-light dark:focus:ring-primary-dark bg-background-light transition-colors duration-200">
+                <option value="">Select a city</option>
+              </select>
+            </div>
+          </form>
+          <% if (typeof isGift !== 'undefined' && isGift) { %>
+          <hr class="my-6 border-secondary-light dark:border-secondary-dark" />
+          <h3 class="text-xl font-semibold mb-4 text-primary-light dark:text-primary-dark">Recipient Information</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-6" id="friend-info-form">
+            <div class="space-y-2">
+              <label for="friendName" class="block text-sm font-medium">Friend Name</label>
+              <input
+                type="text"
+                id="friendName"
+                name="friendName"
+                class="w-full px-4 py-2.5 border-2 dark:bg-background-dark border-secondary-light/20 dark:border-secondary-dark/20 focus:border-primary-light dark:focus:border-primary-dark text-text-light dark:text-text-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-light dark:focus:ring-primary-dark bg-background-light transition-colors duration-200" />
+            </div>
+            <div class="space-y-2">
+              <label for="friendEmail" class="block text-sm font-medium">Friend Email</label>
+              <input
+                type="email"
+                id="friendEmail"
+                name="friendEmail"
+                class="w-full px-4 py-2.5 border-2 dark:bg-background-dark border-secondary-light/20 dark:border-secondary-dark/20 focus:border-primary-light dark:focus:border-primary-dark text-text-light dark:text-text-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-light dark:focus:ring-primary-dark bg-background-light transition-colors duration-200" />
+            </div>
+            <div class="space-y-2">
+              <label for="friendPhone" class="block text-sm font-medium">Friend Phone</label>
+              <input
+                type="text"
+                id="friendPhone"
+                name="friendPhone"
+                class="w-full px-4 py-2.5 border-2 dark:bg-background-dark border-secondary-light/20 dark:border-secondary-dark/20 focus:border-primary-light dark:focus:border-primary-dark text-text-light dark:text-text-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-light dark:focus:ring-primary-dark bg-background-light transition-colors duration-200" />
+            </div>
+            <div class="space-y-2">
+              <label for="friendNote" class="block text-sm font-medium">Note (optional)</label>
+              <input
+                type="text"
+                id="friendNote"
+                name="friendNote"
+                class="w-full px-4 py-2.5 border-2 dark:bg-background-dark border-secondary-light/20 dark:border-secondary-dark/20 focus:border-primary-light dark:focus:border-primary-dark text-text-light dark:text-text-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-light dark:focus:ring-primary-dark bg-background-light transition-colors duration-200" />
+            </div>
+          </div>
+          <% } %>
+          <div class="mt-8"><%- include("./partials/payment-methods") %></div>
+        </div>
+
+        <!-- Order Summary -->
+        <div
+          class="glass dark:bg-secondary-dark p-6 min-h-max rounded-2xl shadow-lg lg:col-span-2 xl:col-span-1 pt-10 transition-colors duration-200">
+          <!-- Coupon Section -->
+          <div class="p-2 py-4 relative">
+            <input
+              type="text"
+              name="couponCode"
+              id="couponCode"
+              placeholder="Enter your coupon code"
+              class="w-full h-12 py-2 px-4 border-2 border-secondary-light dark:border-secondary-dark rounded-xl pr-24 focus:outline-none focus:ring-2 focus:ring-primary-light focus:border-primary-light dark:focus:border-primary-dark dark:focus:ring-primary-dark bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark transition-colors duration-200" />
+            <button
+              id="applyCoupon"
+              class="absolute top-[22px] right-4 bg-primary-light hover:bg-primary-light/90 dark:bg-primary-dark dark:hover:bg-primary-dark/90 text-white outline-none rounded-lg text-sm py-1.5 px-4 text-center font-semibold transition-colors duration-200">
+              Apply
+            </button>
+            <button
+              id="removeCouponButton"
+              class="hidden absolute top-[22px] right-4 bg-accent-light hover:bg-accent-light/90 dark:bg-accent-dark dark:hover:bg-accent-dark/90 text-white outline-none rounded-lg text-sm py-1.5 px-4 text-center font-semibold transition-colors duration-200">
+              ×
+            </button>
+          </div>
+
+          <!-- Suggested Coupons -->
+          <div id="suggested-coupons" class="px-2 pb-4 hidden">
+            <h3 class="text-sm font-semibold mb-2 text-primary-light dark:text-primary-dark">Suggested coupons</h3>
+            <div id="suggested-coupons-list" class="flex flex-wrap gap-2"></div>
+          </div>
+
+          <!-- Order Summary Details -->
+          <div
+            class="w-full h-fit py-6 px-4 bg-background-light dark:bg-background-dark rounded-xl shadow-sm transition-colors duration-200">
+            <div>
+              <h2 class="text-xl font-semibold mb-4 text-primary-light dark:text-primary-dark">Order Summary</h2>
+              <div id="order-summary" class="space-y-3">
+                <!-- Items will be dynamically added here -->
+              </div>
+              <hr class="my-4 border-secondary-light dark:border-secondary-dark" />
+              <!-- Calculations -->
+              <div class="calculate space-y-2">
+                <div class="flex justify-between py-2">
+                  <span>Subtotal</span>
+                  <span><span id="subtotal-amount"></span> <%= currency == "EG"? 'L.E' : '$' %></span>
+                </div>
+                <div class="flex justify-between py-2">
+                  <span>Tax:</span>
+                  <span><span id="taxAmount"></span> <%= currency == "EG"? 'L.E' : '$' %></span>
+                </div>
+                <div class="flex justify-between py-2">
+                  <span>Applied coupon:</span>
+                  <span><span id="couponName"></span></span>
+                </div>
+                <div class="flex justify-between py-2">
+                  <span>Coupon value:</span>
+                  <span><span id="couponValue"> 0 </span> <%= currency == "EG"? 'L.E' : '$' %></span>
+                </div>
+                <!-- Cashback Redemption -->
+                <div class="mt-4 p-3 rounded-xl border-2 border-secondary-light/30 dark:border-secondary-dark/30">
+                  <div id="cashback-available" data-points="<%= typeof cashbackPoints !== 'undefined' ? cashbackPoints : 0 %>" class="text-sm mb-2">
+                    Available cashback: <strong><%= typeof cashbackPoints !== 'undefined' ? cashbackPoints : 0 %></strong> pts
+                    <span class="text-xs opacity-70">(10 pts = 1 L.E)</span>
+                  </div>
+                  <label for="redeemPoints" class="block text-sm font-medium mb-1">Redeem points</label>
+                  <div class="flex items-center gap-2">
+                    <input type="number" id="redeemPoints" min="0" step="1" placeholder="0" class="w-full px-3 py-2 rounded-lg border-2 dark:bg-background-dark border-secondary-light/30 dark:border-secondary-dark/30 focus:border-primary-light dark:focus:border-primary-dark outline-none" />
+                    <button id="applyCashback" type="button" class="px-3 py-2 rounded-lg bg-primary-light hover:bg-primary-light/90 dark:bg-primary-dark dark:hover:bg-primary-dark/90 text-white text-sm">Apply</button>
+                  </div>
+                  <p id="cashbackError" class="text-xs text-red-500 mt-1 hidden"></p>
+                  <div class="flex justify-between py-2 mt-2">
+                    <span>Cashback discount:</span>
+                    <span><span id="cashbackValue">0</span> <%= currency == "EG"? 'L.E' : '$' %></span>
+                  </div>
+                </div>
+              </div>
+              <hr class="my-4 border-secondary-light dark:border-secondary-dark" />
+              <!-- Total -->
+              <div class="text-lg font-bold flex justify-between py-2">
+                <span>Total:</span>
+                <span><span id="total-amount"></span> <%= currency == "EG"? 'L.E' : '$' %></span>
+              </div>
+            </div>
+            <!-- Payment Button -->
+            <div class="mt-6 w-full">
+              <button
+                id="goToPayment"
+                disabled
+                class="w-full flex items-center justify-center text-lg font-semibold bg-primary-light hover:bg-primary-light/90 dark:bg-primary-dark dark:hover:bg-primary-dark/90 text-white py-3 px-4 rounded-xl active:scale-95 transition-all duration-200 disabled:bg-primary-light/50 dark:disabled:bg-primary-dark/50 disabled:cursor-not-allowed">
+                <i class="fa-solid fa-lock mr-2"></i>
+                Go To Payment
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <%- include("./partials/footer") %>
+
+    <!-- Get cities -->
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const countrySelect = document.getElementById("country");
+        const citySelect = document.getElementById("city");
+        // Fetch countries and populate the select list
+        const loadCountries = async () => {
+          try {
+            const response = await fetch("/api/countries");
+            const countries = await response.json();
+            // Sort and populate countries
+            countries.data
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .forEach((country) => {
+                const option = document.createElement("option");
+                option.value = country.iso2; // Country ISO Alpha-2 code
+                option.textContent = country.name; // Country name
+                countrySelect.appendChild(option);
+              });
+            // Set user's country as selected
+            const userCountryResponse = await fetch("https://ipapi.co/json/");
+            const userCountryData = await userCountryResponse.json();
+            countrySelect.value = userCountryData.country_code;
+            loadCities(userCountryData.country_code);
+          } catch (error) {
+            console.error("Error fetching countries:", error);
+          }
+        };
+        // Fetch cities based on selected country
+        const loadCities = async (countryCode) => {
+          citySelect.disabled = true; // Disable city select until cities are loaded
+          citySelect.innerHTML = '<option value="">Select a city</option>'; // Clear previous cities
+          if (!countryCode) return;
+          try {
+            const response = await fetch(`/api/cities?country=${countryCode}`);
+            if (!response.ok) {
+              throw new Error(`Failed to fetch cities: ${response.statusText}`);
+            }
+            const cities = await response.json();
+            // Populate cities in the select list
+            cities.forEach((city) => {
+              const option = document.createElement("option");
+              option.value = city.name || city; // Use appropriate property
+              option.textContent = city.name || city; // Use appropriate property
+              citySelect.appendChild(option);
+            });
+            citySelect.disabled = false; // Enable city select
+          } catch (error) {
+            console.error("Error fetching cities:", error);
+          }
+        };
+        // Event listener for country selection
+        countrySelect.addEventListener("change", (e) => {
+          const selectedCountryCode = countrySelect.value; // ISO Alpha-2 code
+          loadCities(selectedCountryCode);
+        });
+        // Initialize by loading countries
+        loadCountries();
+      });
+    </script>
+    <script src="/js/checkout.js"></script>
+  </body>
+</html>

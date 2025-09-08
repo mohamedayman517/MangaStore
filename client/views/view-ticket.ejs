@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include("./partials/meta") %>
+    <title>Manga Store - View Ticket</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <link rel="stylesheet" href="/css/framework.css" />
+    <link rel="stylesheet" href="/css/build.min.css" />
+    <link rel="stylesheet" href="/css/profile.css" />
+    <style>
+      .loaderBtn.active {
+        width: 30px;
+        max-height: 30px;
+        aspect-ratio: 1;
+        --c: no-repeat linear-gradient(var(--text-color) 0 0);
+        background: var(--c) 0% 50%, var(--c) 50% 50%, var(--c) 100% 50%;
+        background-size: 20% 100%;
+        animation: l1 1s infinite linear;
+      }
+      @keyframes l1 {
+        0% {
+          background-size: 20% 100%, 20% 100%, 20% 100%;
+        }
+        33% {
+          background-size: 20% 10%, 20% 100%, 20% 100%;
+        }
+        50% {
+          background-size: 20% 100%, 20% 10%, 20% 100%;
+        }
+        66% {
+          background-size: 20% 100%, 20% 100%, 20% 10%;
+        }
+        100% {
+          background-size: 20% 100%, 20% 100%, 20% 100%;
+        }
+      }
+      aside {
+        transform: translateX(-120%);
+      }
+      @media (min-width: 1024px) {
+        aside {
+          transform: translateX(0%);
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark">
+    <%- include("./partials/header") %> <%- include("./partials/alerts-popups") %> <%- include("./partials/loader") %>
+
+    <main class="min-h-screen flex w-full gap-3 mt-16 mb-10">
+      <div class="min-h-screen w-full">
+        <div
+          class="container mx-auto mt-6 bg-white dark:bg-background-dark shadow-md rounded-lg min-h-screen border-2 border-primary-light/20 dark:border-primary-dark/20">
+          <% if (message != "") { %>
+          <div class="text-primary-light dark:text-primary-dark text-center py-14 px-3 mx-auto">
+            <h1 class="text-lg sm:text-xl md:text-2xl font-bold"><%= message %></h1>
+          </div>
+          <% } else { %>
+          <div class="p-6 flex flex-col gap-4">
+            <div class="flex flex-col gap-4 md:px-10 px-2">
+              <div
+                class="w-full h-20 flex justify-between items-center border-b-2 border-secondary-light/20 dark:border-secondary-dark/20 font-semibold text-sm xs:text-base md:text-lg flex-col xs:flex-row gap-1 pb-2 xs:pb-0 xs:gap-0">
+                <h2 class="text-primary-light dark:text-primary-dark"><%= ticket.id %></h2>
+                <p
+                  class="<%= ticket.status === 'open' ? 'bg-primary-light/20 text-primary-light dark:bg-primary-dark/20 dark:text-primary-dark' : ticket.status === 'resolved' ? 'bg-secondary-light/20 text-secondary-light dark:bg-secondary-dark/20 dark:text-secondary-dark' : ticket.status === 'replied' ? 'bg-yellow-500/20 text-yellow-500 dark:bg-yellow-700/20 dark:text-yellow-700' : ticket.status === 'closed' ? 'bg-red-500/20 text-red-500 dark:bg-red-700/20 dark:text-red-700' : 'bg-purple-500/20 text-purple-500 dark:bg-purple-700/20 dark:text-purple-700' %> px-4 py-2 rounded-full font-bold">
+                  <%= ticket.status %>
+                </p>
+              </div>
+
+              <!-- User Info Section -->
+              <div class="mt-3 w-full flex flex-col justify-start items-start px-3 min-h-96 max-h-max pb-6 pt-2">
+                <div class="flex justify-start items-center gap-3 select-none">
+                  <div
+                    class="rounded-full h-12 w-12 overflow-hidden bg-white dark:bg-background-dark border-2 border-primary-light dark:border-primary-dark flex items-center justify-center">
+                    <i class="fa-regular fa-user text-xl text-primary-light dark:text-primary-dark"></i>
+                  </div>
+                  <div
+                    class="flex flex-col gap-2 text-xl font-bold md:text-2xl text-primary-light dark:text-primary-dark">
+                    <p>You:</p>
+                  </div>
+                </div>
+
+                <!-- Ticket Details -->
+                <div class="flex flex-col gap-4 w-full mt-6">
+                  <div class="flex justify-start items-center gap-3">
+                    <p class="text-sm sm:text-lg font-semibold text-secondary-light dark:text-secondary-dark">
+                      Subject:
+                    </p>
+                    <p class="text-sm sm:text-lg"><%= ticket.description %></p>
+                  </div>
+                  <% if (ticket.issueCategory === 'CustomRequest') { %>
+                  <div class="flex flex-wrap gap-6 items-center">
+                    <div class="flex items-center gap-2">
+                      <p class="text-sm sm:text-lg font-semibold text-secondary-light dark:text-secondary-dark">Your Offered Price:</p>
+                      <p class="text-sm sm:text-lg">
+                        <%= (ticket.offeredPrice !== undefined && ticket.offeredPrice !== null) ? (ticket.offeredPrice + ' USD') : 'N/A' %>
+                      </p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <p class="text-sm sm:text-lg font-semibold text-secondary-light dark:text-secondary-dark">Admin Offer Price:</p>
+                      <p class="text-sm sm:text-lg">
+                        <%= (ticket.adminOfferPrice !== undefined && ticket.adminOfferPrice !== null) ? (ticket.adminOfferPrice + ' USD') : 'Pending' %>
+                      </p>
+                    </div>
+                  </div>
+                  <% } %>
+                  <div class="flex justify-start items-center gap-3">
+                    <p class="text-sm sm:text-lg font-semibold text-secondary-light dark:text-secondary-dark">
+                      Category:
+                    </p>
+                    <p class="text-sm sm:text-lg"><%= ticket.issueCategory %></p>
+                  </div>
+                  <div class="flex justify-start items-center gap-3">
+                    <p class="text-sm sm:text-lg font-semibold text-secondary-light dark:text-secondary-dark">
+                      Description:
+                    </p>
+                    <p class="text-sm sm:text-lg"><%= ticket.description %></p>
+                  </div>
+                  <div class="flex flex-col sm:flex-row justify-start items-start gap-3">
+                    <p class="text-sm sm:text-lg font-semibold text-secondary-light dark:text-secondary-dark">
+                      Attachments:
+                    </p>
+                    <div class="flex gap-4 flex-col">
+                      <% ticket.attachments.forEach(attachment => { %>
+                      <a
+                        href="<%= attachment.file %>"
+                        target="_blank"
+                        class="text-accent-light hover:text-accent-light/80 dark:text-accent-dark dark:hover:text-accent-dark/80 underline">
+                        <%= attachment.fileName %> (<%= (attachment.fileSize / (1024 * 1024)).toFixed(2) %> MB)
+                      </a>
+                      <% }) %>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Replies Section -->
+          <div class="p-6 bg-secondary-light/5 dark:bg-secondary-dark/5 rounded-md min-h-min max-h-max">
+            <h2 class="text-xl font-bold sm:text-2xl text-primary-light dark:text-primary-dark mb-6">Replies</h2>
+            <div class="flex flex-col gap-4 px-2 sm:px-6">
+              <% ticket.messages.forEach(message => { %>
+              <div
+                class="flex flex-col gap-4 mt-5 pb-6 border-b-2 border-secondary-light/20 dark:border-secondary-dark/20">
+                <div class="flex justify-start items-start gap-3 select-none flex-col">
+                  <div class="flex flex-row gap-3 text-sm xs:text-base font-bold md:text-2xl items-center">
+                    <div
+                      class="rounded-full h-10 w-10 sm:w-12 sm:h-12 overflow-hidden bg-white dark:bg-background-dark border-2 border-primary-light dark:border-primary-dark flex justify-center items-center">
+                      <% if (message.senderType === 'client') { %>
+                      <i class="fa-regular fa-user text-lg sm:text-xl text-primary-light dark:text-primary-dark"></i>
+                      <% } else { %>
+                      <i class="fa-solid fa-headset text-lg sm:text-xl text-accent-light dark:text-accent-dark"></i>
+                      <% } %>
+                    </div>
+                    <p class="text-primary-light dark:text-primary-dark">
+                      <%= message.senderType === 'client' ? 'You' : 'Support' %>:
+                    </p>
+                  </div>
+                </div>
+
+                <div class="flex flex-col gap-3 text-sm xs:text-base sm:text-lg">
+                  <p>
+                    <span class="font-medium text-secondary-light dark:text-secondary-dark">Replied at: </span>
+                    <%= new Date(message.createdAt.toDate()).toLocaleString("en-us") %>
+                  </p>
+                  <p>
+                    <span class="font-semibold text-secondary-light dark:text-secondary-dark">Message: </span>
+                    <%= message.message %>
+                  </p>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-4 justify-start items-start">
+                  <h2 class="font-medium text-secondary-light dark:text-secondary-dark text-sm xs:text-base sm:text-lg">
+                    Attachments:
+                  </h2>
+                  <div class="flex gap-4 flex-col text-sm xs:text-base sm:text-lg">
+                    <% if (message.attachments) { %> <% message.attachments.forEach(attachment => { %>
+                    <a
+                      href="<%= attachment.file %>"
+                      target="_blank"
+                      class="text-accent-light hover:text-accent-light/80 dark:text-accent-dark dark:hover:text-accent-dark/80 underline">
+                      <%= attachment.fileName %> (<%= (attachment.fileSize / (1024 * 1024)).toFixed(2) %> MB)
+                    </a>
+                    <% }) %> <% } %>
+                  </div>
+                </div>
+              </div>
+              <% }) %>
+            </div>
+
+            <!-- Reply Form -->
+            <% if (ticket.status !== 'resolved' && ticket.status !== 'closed') { %>
+            <div
+              class="px-6 py-8 bg-white dark:bg-background-dark rounded-lg mt-8 border-2 border-primary-light/20 dark:border-primary-dark/20">
+              <h2 class="text-lg sm:text-2xl font-semibold mb-6 text-primary-light dark:text-primary-dark">
+                Reply to Ticket
+              </h2>
+              <form id="ticketForm" class="space-y-6">
+                <div class="space-y-2">
+                  <label class="block text-secondary-light dark:text-secondary-dark font-medium">Message</label>
+                  <textarea
+                    id="message"
+                    class="w-full p-3 border-2 border-secondary-light/20 dark:border-secondary-dark/20 rounded-lg bg-white dark:bg-background-dark focus:border-primary-light dark:focus:border-primary-dark focus:ring-2 focus:ring-primary-light/20 dark:focus:ring-primary-dark/20 transition-colors duration-200"
+                    maxlength="5000"
+                    required
+                    placeholder="Reply to the ticket"></textarea>
+                </div>
+
+                <div class="space-y-3">
+                  <label class="block text-primary-light dark:text-primary-dark font-medium"> Attachments </label>
+                  <label
+                    for="fileInput"
+                    class="cursor-pointer flex flex-col items-center justify-center p-6 rounded-lg border-2 border-dashed border-primary-light/40 dark:border-primary-dark/40 hover:border-primary-light dark:hover:border-primary-dark transition-colors duration-200">
+                    <i class="fas fa-cloud-upload-alt text-4xl text-primary-light dark:text-primary-dark mb-2"></i>
+                    <span class="text-primary-light dark:text-primary-dark">Upload Files</span>
+                    <input type="file" id="fileInput" name="file" class="hidden" multiple />
+                  </label>
+                  <div id="fileList" class="space-y-2"></div>
+                </div>
+
+                <button
+                  type="submit"
+                  id="submitButton"
+                  class="w-full py-3 px-4 rounded-lg font-medium text-white bg-accent-light hover:bg-accent-light/90 dark:bg-primary-dark dark:hover:bg-primary-dark/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 border-2 border-accent-light hover:border-accent-light/90 dark:border-primary-dark dark:hover:border-primary-dark/90 shadow-sm hover:shadow-md">
+                  <span class="btnWord">Send reply</span>
+                  <span class="loaderBtn"></span>
+                </button>
+              </form>
+            </div>
+            <% } %> <% } %>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <%- include("./partials/footer") %>
+    <script src="/js/cart.js"></script>
+    <script src="/js/view-ticket.js" type="module"></script>
+  </body>
+</html>

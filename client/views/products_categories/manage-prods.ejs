@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Product Management</title>
+    <!-- Include DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="/css/build.min.css" />
+    <style>
+      input[type="number"]::-webkit-outer-spin-button,
+      input[type="number"]::-webkit-inner-spin-button {
+        display: none;
+      }
+      .fancy i {
+        transition: all 0.3s ease-in-out;
+      }
+
+      .fancy:hover i {
+        color: white;
+        background: black;
+      }
+      .fancy:hover span {
+        color: white;
+        padding-left: 1.5em;
+      }
+      /* DataTables layout fixes */
+      .dataTables_wrapper { width: 100% !important; }
+      table.dataTable { width: 100% !important; }
+      .dataTables_wrapper .dataTables_length,
+      .dataTables_wrapper .dataTables_filter {
+        margin: 0.5rem 0;
+      }
+      /* Keep actions on one line and compact */
+      td.actions-cell { white-space: nowrap; }
+      .btn-compact { padding: 0.25rem 0.5rem !important; font-size: 0.75rem !important; line-height: 1rem !important; }
+    </style>
+  </head>
+  <body class="bg-gray-100 relative">
+    <%- include("../partials/navbar") %>
+    <%- include("../partials/admin-back") %>
+    <div
+      class="flex -top-0 flex-col items-center justify-center bg-gradient-to-br from-zinc-500 to-zinc-700 bg-opacity-80 fixed w-screen h-screen backdrop-blur-md"
+      style="z-index: 100"
+      id="loadingContainer">
+      <svg viewBox="25 25 50 50" class="w-16 transform origin-center animate-rotate4">
+        <circle
+          r="20"
+          cy="50"
+          cx="50"
+          fill="none"
+          stroke="hsl(214, 97%, 59%)"
+          stroke-width="2"
+          stroke-dasharray="1, 200"
+          stroke-dashoffset="0"
+          stroke-linecap="round"
+          class="animate-dash4"></circle>
+      </svg>
+      <p class="mt-4 text-white text-lg font-semibold animate-pulse">Loading...</p>
+    </div>
+    <%- include("./partials/edit-popup") %> <%- include("../partials/alerts-popups") %><%-
+    include("./partials/popup-details") %><%- include("./partials/confirm-delete") %>
+    <%- include("../partials/reusable-popup") %>
+
+    <main class="max-w-7xl my-20 mx-auto bg-white p-6 rounded-lg shadow-md">
+      <div class="flex items-center justify-around">
+        <h1 class="text-2xl font-semibold text-gray-800">Product Management</h1>
+        <button
+          id="addNewProd"
+          class="flex fancy my-5 flex-row-reverse items-center justify-center bg-transparent border-2 border-black text-white font-bold tracking-wide text-xs p-3 transition-all ease-in-out duration-300 hover:bg-black hover:text-white">
+          <span class="text-black text-sm pl-6 uppercase transition-all ease-in-out duration-300 hover:pl-4">
+            <a href="/admin/add-product"> Add New Product </a>
+          </span>
+          <i class="fas fa-plus-circle text-black transition-all ease-in-out duration-300 hover:text-white"></i>
+        </button>
+      </div>
+      <div class="overflow-x-auto">
+        <table id="productTable" class="min-w-full bg-white border border-gray-200 rounded-lg">
+          <thead>
+            <tr class="bg-gray-100 text-gray-600 text-left text-sm uppercase">
+              <th class="px-6 py-3">Product ID</th>
+              <th class="px-6 py-3">Name</th>
+              <th class="px-6 py-3">Category</th>
+              <th class="px-6 py-3">Price</th>
+              <th class="px-6 py-3">Stock</th>
+              <th class="px-6 py-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Example Data -->
+            <% products.forEach((product) => { %>
+            <tr>
+              <td class="px-6 py-4"><%= product.id %></td>
+              <td class="px-6 py-4"><%= product.name %></td>
+              <td class="px-6 py-4"><%= product.categoryId %></td>
+              <td class="px-6 py-4"><%= product.price %></td>
+              <td class="px-6 py-4"><%= product.stock %></td>
+              <td class="px-6 py-4 actions-cell flex items-center gap-2">
+                <button
+                  class="delete-btn btn-compact bg-red-500 text-white rounded-md hover:bg-red-600"
+                  data-id="<%=product.id %>">
+                  Delete
+                </button>
+                <button
+                  class="create-coupon-btn btn-compact bg-green-600 text-white rounded-md hover:bg-green-700"
+                  data-id="<%=product.id %>"
+                  style="background-color:#16a34a !important;color:#fff !important;">
+                  Create Coupon
+                </button>
+                <button
+                  class="view-btn btn-compact bg-green-500 text-white rounded-md hover:bg-green-600"
+                  data-id="<%=product.id %>">
+                  <a href="/admin/view-product/<%= product.id %>">View</a>
+                </button>
+              </td>
+            </tr>
+            <% }) %>
+            <!-- Additional rows will go here -->
+          </tbody>
+        </table>
+      </div>
+    </main>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="/js/script/manage-prods.js"></script>
+  </body>
+</html>

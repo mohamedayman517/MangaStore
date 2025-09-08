@@ -1,0 +1,21 @@
+{
+  "name": "Manga Store",
+  "short_name": "Manga Store",
+  "description": "Discover and buy game accounts easily.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fdf7e4",
+  "theme_color": "#ff9900",
+  "icons": [
+    {
+      "src": "/icons/mango_144x144.png",
+      "sizes": "144x144",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/mango_512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

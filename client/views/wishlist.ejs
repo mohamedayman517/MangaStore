@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include("./partials/meta") %>
+    <title>My Wishlist - Manga Store</title>
+    <link rel="stylesheet" href="/css/build.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer" />
+    <style>
+      .wish-card { transition: box-shadow .2s ease, transform .2s ease; }
+      .wish-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,.08) }
+      .remove-btn { transition: opacity .15s ease, transform .15s ease; }
+      .remove-btn:active { transform: scale(.96); }
+      .chip { padding: .35rem .6rem; border-radius: 9999px; border: 1px solid rgba(0,0,0,.08) }
+      .dark .chip { border-color: rgba(255,255,255,.15) }
+
+      /* Wishlist page specific sizing */
+      .wish-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+      .wish-card { padding: 12px; max-width: 270px; }
+      .wish-card .img-box { height: 180px; }
+      .wish-card .title { font-size: 1.05rem; margin-bottom: 6px; }
+      .wish-card .meta { font-size: .85rem; }
+      .wish-card .price { margin-top: 8px; font-size: 1.125rem; font-weight: 700; }
+      .wish-card .price .currency { font-size: .75rem; font-weight: 500; }
+      .wish-card .remove-btn i { font-size: 1rem; }
+      .wish-card .remove-btn { top: 10px; right: 10px; }
+    </style>
+  </head>
+  <body class="bg-background-light dark:bg-background-dark mt-12">
+    <%- include("./partials/header") %>
+    <%- include('./partials/alerts-popups') %>
+
+    <main class="container mx-auto px-4 md:px-8 xl:px-20 pt-6 md:pt-16 min-h-screen">
+      <h1 class="text-2xl md:text-3xl font-bold text-text-light dark:text-text-dark mb-6 flex items-center gap-3">
+        <i class="fa-solid fa-heart text-rose-500"></i> My Wishlist
+      </h1>
+
+      <!-- Category favorites intentionally removed per request -->
+
+      <!-- Favorite Products -->
+      <section>
+        <h2 class="text-lg font-semibold mb-3 text-text-light dark:text-text-dark">Favorite Products</h2>
+        <% if ((products || []).length === 0) { %>
+          <div class="p-6 border-2 border-primary-light dark:border-primary-dark rounded-lg text-secondary-light dark:text-secondary-dark">
+            <p>You have no favorite products yet. Browse products and tap the heart to add them here.</p>
+          </div>
+        <% } %>
+
+        <div class="wish-grid">
+          <% (products || []).forEach(function(p){ %>
+            <div class="wish-card bg-background-light dark:bg-background-dark border-2 border-primary-light dark:border-primary-dark rounded-lg relative" data-id="<%= p.id %>">
+              <button type="button" class="remove-btn absolute text-rose-500 hover:text-rose-600" title="Remove from wishlist" aria-label="Remove from wishlist">
+                <i class="fa-solid fa-heart-crack"></i>
+              </button>
+              <a href="/view/product/<%= p.id %>" class="block">
+                <div class="img-box w-full overflow-hidden rounded-md flex items-center justify-center bg-background-light dark:bg-background-dark mb-2">
+                  <img src="<%= p.images %>" alt="<%= p.name %>" style="height:100%; width:auto; object-fit:contain;" />
+                </div>
+                <h3 class="title font-semibold text-text-light dark:text-text-dark line-clamp-2"><%= p.name %></h3>
+                <p class="meta text-secondary-light dark:text-secondary-dark">In <span class="font-medium"><%= p.categoryId %></span></p>
+                <p class="price text-text-light dark:text-text-dark">
+                  <%= Number(p.price).toFixed(2) %> <span class="currency"><%= 'L.E' %></span>
+                </p>
+              </a>
+            </div>
+          <% }) %>
+        </div>
+      </section>
+    </main>
+
+    <%- include('./partials/footer') %>
+
+    <script>
+      // Remove from wishlist via API
+      document.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.remove-btn');
+        if (!btn) return;
+        const card = btn.closest('[data-id]');
+        const id = card?.getAttribute('data-id');
+        if (!id) return;
+        try {
+          const res = await fetch('/api/wishlist/toggle', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: 'product', id })
+          });
+          if (!res.ok) throw new Error('Failed');
+          const data = await res.json();
+          if (data && data.success) {
+            card.remove();
+            try {
+              const msg = (data.action === 'removed') ? 'Removed from favorites' : 'Updated favorites';
+              if (typeof successAlert === 'function') successAlert(msg);
+            } catch (_) {}
+          } else {
+            try { if (typeof errorAlert === 'function') errorAlert('Failed to update favorites'); } catch (_) {}
+          }
+        } catch (err) {
+          console.error('Failed to update wishlist', err);
+          try { if (typeof errorAlert === 'function') errorAlert('Failed to update favorites'); } catch (_) {}
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,38 @@
+<!-- Sidebar (Appears from Left) -->
+<aside
+  id="menu"
+  class="fixed top-0 left-0 w-64 h-full bg-background-light dark:bg-background-dark shadow-lg p-4 transform -translate-x-full transition-transform duration-300 ease-in-out mt-14"
+  style="z-index: 62">
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-xl font-bold text-primary-light dark:text-primary-dark">Manga Store</h2>
+    <button id="closeBtn" class="text-primary-light dark:text-primary-dark text-2xl">&times;</button>
+  </div>
+  <nav class="dark:text-text-dark text-text-light font-semibold">
+    <a href="/" class="block w-full text-left py-2 border-b border-b-primary-light dark:border-b-primary-dark">Home</a>
+    <a href="/products" class="block w-full text-left py-2 border-b border-b-primary-light dark:border-b-primary-dark">
+      Products</a
+    >
+    <a href="/orders" class="block w-full text-left py-2 border-b border-b-primary-light dark:border-b-primary-dark">
+      Orders</a
+    >
+    <a href="/support/custom-request" class="block w-full text-left py-2 border-b border-b-primary-light dark:border-b-primary-dark">
+      Custom Request</a
+    >
+    <a
+      href="/support/tickets"
+      class="block w-full text-left py-2 border-b border-b-primary-light dark:border-b-primary-dark">
+      Support
+    </a>
+    <div class="pt-4">
+      <a
+        href="/logout"
+        class="inline-flex items-center justify-center w-full py-2 px-4 rounded-md bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors">
+        <i class="fas fa-right-from-bracket mr-2"></i>
+        Logout
+      </a>
+    </div>
+  </nav>
+</aside>
+
+<!-- Dark Background Overlay -->
+<div id="dark-bg" class="hidden fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-10 mt-14"></div>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include("./partials/meta") %>
+    <title>Order Details</title>
+    <link rel="stylesheet" href="/css/framework.css" />
+    <link rel="stylesheet" href="/css/build.min.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    <style>
+      /* Updated timeline styles */
+      .timeline-step {
+        position: relative;
+        z-index: 1;
+      }
+
+      .timeline-step::before {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 2px;
+        background-color: #e5e7eb;
+        left: 50%;
+        top: 33%;
+        transform: translate(0, -50%);
+        z-index: -1;
+      }
+
+      .timeline-step:last-child::before {
+        display: none;
+      }
+
+      /* Create a white circle background to hide the line */
+      .timeline-icon {
+        position: relative;
+        z-index: 2;
+        background-color: white;
+        transition: all 0.3s ease;
+      }
+
+      .dark .timeline-icon {
+        background-color: var(--background-dark, #1f2937);
+      }
+
+      /* Style for completed steps */
+      .timeline-icon.completed {
+        background-color: #228b22;
+        border-color: #228b22;
+        color: white;
+      }
+
+      /* Style for canceled/rejected steps */
+      .timeline-icon.canceled {
+        background-color: #dc2626;
+        border-color: #dc2626;
+        color: white;
+      }
+
+      /* Hide checkmark for incomplete and canceled steps */
+      .timeline-icon:not(.completed) .fa-check,
+      .timeline-icon.canceled .fa-check {
+        display: none;
+      }
+
+      /* Show X icon for canceled steps */
+      .timeline-icon.canceled .fa-times {
+        display: inline-block;
+      }
+
+      /* Hide X icon for non-canceled steps */
+      .timeline-icon:not(.canceled) .fa-times {
+        display: none;
+      }
+
+      /* Add a circle for incomplete steps */
+      .timeline-icon:not(.completed):not(.canceled)::before {
+        content: "";
+        display: block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: #e5e7eb;
+      }
+
+      .status-update {
+        animation: slideIn 0.5s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .download-button {
+        transition: all 0.3s ease;
+      }
+
+      .download-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+  <body class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark">
+    <%- include("./partials/alerts-popups") %> <%- include("./partials/header") %>
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+      <!-- Order Header -->
+      <div class="dark:bg-secondary-dark rounded-lg shadow-lg p-6 mb-6 mt-20 glass">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <h1 class="md:text-xl text-sm font-semibold mb-2">Order #<%= order.orderId %></h1>
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+              Placed on <%= (order.orderDate.toDate()).toLocaleString("en-GB", { day: '2-digit', month: '2-digit', year:
+              'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) %>
+            </p>
+          </div>
+          <div class="text-right">
+            <span
+              class="inline-block px-3 py-1 rounded-full text-sm <%= order.status[order.status.length - 1].state === 'Viewed' ? 'bg-secondary-light text-white' : (order.status[order.status.length - 1].state === 'Canceled' || order.status[order.status.length - 1].state === 'Rejected') ? 'bg-red-600 text-white' : 'bg-primary-light text-white' %>">
+              <%= order.status[order.status.length - 1].state %>
+            </span>
+          </div>
+        </div>
+
+        <!-- Timeline - Updated with Canceled/Rejected Support -->
+        <div class="relative">
+          <div class="flex justify-between items-center mb-8">
+            <% const isOrderCanceledOrRejected = order.status.some(s => s.state === 'Canceled' || s.state === 'Rejected'
+            ); let steps = []; let currentStepIndex = -1; if (isOrderCanceledOrRejected) { const canceledState =
+            order.status.find(s => s.state === 'Canceled' || s.state === 'Rejected' ).state; steps = ['ToPay',
+            canceledState]; currentStepIndex = 1; } else { steps = ['ToPay', 'Preparing', 'Delivering', 'Delivered',
+            'Viewed']; for (let i = 0; i < steps.length; i++) { if (order.status.find(s => s.state === steps[i])) {
+            currentStepIndex = i; } } } %> <% steps.forEach((step, index) => { const isCanceled = step === 'Canceled' ||
+            step === 'Rejected'; %>
+            <div class="flex flex-col items-center relative timeline-step flex-1">
+              <div
+                class="md:w-10 md:h-10 w-8 h-8 rounded-full border-2 flex items-center justify-center timeline-icon <%= isCanceled ? 'canceled' : (index <= currentStepIndex ? 'completed' : '') %>">
+                <i class="fas fa-check"></i>
+                <i class="fas fa-times"></i>
+              </div>
+              <p class="text-xs mt-2 text-center <%= isCanceled ? 'text-red-600' : '' %>"><%= step %></p>
+            </div>
+            <% }); %>
+          </div>
+        </div>
+
+        <!-- Status Updates -->
+        <div class="space-y-4 mt-8">
+          <% order.status.forEach((status, index) => { %>
+          <div
+            class="status-update flex items-start space-x-4 p-4 bg-gray-50 dark:bg-secondary-dark rounded-lg"
+            style="animation-delay: <%= index * 0.1 %>s">
+            <div class="flex-shrink-0">
+              <div
+                class="w-8 h-8 rounded-full <%= (status.state === 'Canceled' || status.state === 'Rejected') ? 'bg-red-600' : 'bg-primary-light dark:bg-primary-dark' %> flex items-center justify-center">
+                <i
+                  class="<%= (status.state === 'Canceled' || status.state === 'Rejected') ? 'fas fa-times' : 'fas fa-info' %> text-white text-sm"></i>
+              </div>
+            </div>
+            <div>
+              <p class="text-sm font-medium"><%= status.message %></p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                <%= status.updatedAt ? (status.updatedAt.toDate()).toLocaleString("en-GB", { day: '2-digit', month:
+                '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : 'Date not available'
+                %>
+              </p>
+            </div>
+          </div>
+          <% }); %>
+        </div>
+      </div>
+
+      <!-- Delivery Items -->
+      <div class="dark:bg-secondary-dark rounded-lg shadow-lg p-6 glass">
+        <h2 class="text-lg font-semibold mb-4">Purchased Items</h2>
+        <% order.deliveryItems.forEach((item, index) => { %>
+        <div class="border dark:border-gray-700 rounded-lg p-4 mb-4">
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <h3 class="font-medium mb-2 text-sm md:text-base line-clamp-2"><%= item.title %></h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2"><%= item.details %></p>
+            </div>
+            <p
+              class="text-xs md:text-base font-semibold text-primary-light dark:text-primary-dark max-w-max min-w-max text-right">
+              <%= Number(item.price).toFixed(2) %><%= order.currency == "EG"? ' L.E' : '$' %>
+            </p>
+          </div>
+
+          <% if (order.status[order.status.length - 1].state === "Delivered" ||order.status[order.status.length -
+          1].state === "Viewed" ) { %>
+          <div class="flex flex-wrap gap-4 mt-4 text-sm">
+            <button
+              onclick="handleItemAction('<%= item.id %>', 'download', '<%= index %>')"
+              class="download-button bg-primary-light dark:bg-primary-dark text-white px-4 py-2 rounded-lg inline-flex items-center">
+              <i class="fas fa-download md:mr-2"></i>
+              <span class="hidden md:block"> Download </span>
+            </button>
+            <button
+              onclick="handleItemAction('<%= item.id %>', 'view', '<%= index %>' )"
+              class="download-button bg-secondary-light dark:bg-secondary-dark text-white px-4 py-2 rounded-lg inline-flex items-center">
+              <i class="fas fa-eye md:mr-2"></i>
+              <span class="hidden md:block"> View </span>
+            </button>
+          </div>
+          <% } %>
+        </div>
+        <% }); %>
+      </div>
+    </div>
+
+    <!-- Proof Gallery Modal -->
+    <div id="proofModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 glass">
+      <div class="bg-[#fdf4cb] dark:bg-secondary-dark rounded-lg p-6 max-w-2xl w-full mx-4">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold">Proof Gallery</h3>
+          <button
+            onclick="closeProofModal()"
+            class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div id="proofContent" class="space-y-4">
+          <!-- Proof content will be inserted here -->
+        </div>
+      </div>
+    </div>
+
+    <%- include("./partials/footer") %>
+
+    <script src="/js/view-product.js"></script>
+  </body>
+</html>

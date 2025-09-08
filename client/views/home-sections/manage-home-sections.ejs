@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manage Home Sections</title>
+    <link rel="stylesheet" href="/css/build.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+  </head>
+  <body class="bg-gray-100">
+    <%- include("../partials/alerts-popups") %>
+    <%- include("../partials/navbar") %>
+
+    <div class="container mx-auto p-4 mt-16">
+      <%- include("../partials/admin-back", { href: '/admin' }) %>
+
+      <h1 class="text-2xl font-bold mb-4">Home Sections</h1>
+
+      <!-- Create new section -->
+      <form action="/admin/home-sections" method="POST" class="bg-white p-4 rounded shadow mb-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Title</label>
+          <input name="title" required class="mt-1 p-2 border rounded w-full" placeholder="Featured" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Order</label>
+          <input name="order" type="number" class="mt-1 p-2 border rounded w-full" value="0" />
+        </div>
+        <div class="flex items-end">
+          <button class="px-4 py-2 rounded w-full md:w-auto font-semibold border-2 shadow-sm bg-yellow-400 hover:bg-yellow-500 text-black border-yellow-500 transition-colors">
+            <i class="fa fa-plus mr-1"></i> Create
+          </button>
+        </div>
+      </form>
+
+      <!-- Sections list -->
+      <div class="space-y-4">
+        <% if (sections && sections.length) { %>
+          <% sections.forEach(s => { %>
+            <div class="bg-white p-4 rounded shadow">
+              <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div>
+                  <div class="text-lg font-semibold"><%= s.title %></div>
+                  <div class="text-sm text-gray-500">Order: <%= s.order || 0 %> • <span class="<%= s.isActive ? 'text-green-600' : 'text-gray-400' %>"><%= s.isActive ? 'Active' : 'Disabled' %></span></div>
+                </div>
+                <form action="/admin/home-sections/<%= s.id %>" method="POST" class="section-form grid grid-cols-1 md:grid-cols-5 gap-2 w-full md:w-3/4" data-id="<%= s.id %>">
+                  <input type="text" name="title" class="p-2 border rounded" value="<%= s.title %>" placeholder="Title" disabled />
+                  <input type="number" name="order" class="p-2 border rounded" value="<%= s.order || 0 %>" placeholder="Order" disabled />
+                  <select name="isActive" class="p-2 border rounded" disabled>
+                    <option value="true" <%= s.isActive ? 'selected' : '' %>>Active</option>
+                    <option value="false" <%= !s.isActive ? 'selected' : '' %>>Disabled</option>
+                  </select>
+                  <div class="flex gap-2 items-center">
+                    <button type="button" class="btn-edit bg-yellow-400 hover:bg-yellow-500 text-black border-2 border-yellow-500 px-3 py-2 rounded"><i class="fa fa-pen mr-1"></i> Edit</button>
+                    <button type="submit" class="btn-save bg-green-600 hover:bg-green-700 text-black px-4 py-2 rounded border border-green-700 shadow-sm hidden"><i class="fa fa-check mr-1"></i> Save</button>
+                    <button type="button" class="btn-cancel bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 px-4 py-2 rounded hidden">Cancel</button>
+                  </div>
+
+                  <div class="md:col-span-5">
+                    <label class="block text-sm font-medium text-gray-700">Product IDs (comma separated)</label>
+                    <textarea name="productIds" rows="2" class="mt-1 p-2 border rounded w-full" placeholder="prod1, prod2, prod3" disabled><%= Array.isArray(s.productIds) ? s.productIds.join(', ') : '' %></textarea>
+                  </div>
+                </form>
+
+                <form action="/admin/home-sections/<%= s.id %>/delete" method="POST" onsubmit="return confirm('Delete this section?')">
+                  <button class="bg-red-600 text-white px-3 py-2 rounded"><i class="fa fa-trash mr-1"></i> Delete</button>
+                </form>
+              </div>
+            </div>
+          <% }) %>
+        <% } else { %>
+          <div class="p-4 bg-white rounded shadow text-gray-500">No sections yet.</div>
+        <% } %>
+      </div>
+    </div>
+    <script>
+      document.addEventListener('click', (e) => {
+        const editBtn = e.target.closest('.btn-edit');
+        if (editBtn) {
+          const form = editBtn.closest('.section-form');
+          form.querySelectorAll('input, select, textarea').forEach(el => el.disabled = false);
+          form.querySelector('.btn-save').classList.remove('hidden');
+          form.querySelector('.btn-cancel').classList.remove('hidden');
+          editBtn.classList.add('hidden');
+        }
+        const cancelBtn = e.target.closest('.btn-cancel');
+        if (cancelBtn) {
+          const form = cancelBtn.closest('.section-form');
+          // revert values to initial by reloading the page (simplest)
+          location.reload();
+        }
+      });
+    </script>
+  </body>
+</html>

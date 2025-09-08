@@ -1,0 +1,105 @@
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const countdownElements = document.querySelectorAll(".countdown");
+
+    countdownElements.forEach((element) => {
+      const endDate = new Date(element.dataset.endDate);
+      const startDate = new Date(element.dataset.startDate);
+      function updateCountdown() {
+        const now = new Date();
+        const remainingTime = endDate - now;
+
+        if (remainingTime > 0) {
+          const days = String(Math.floor(remainingTime / (1000 * 60 * 60 * 24))).padStart(2, "0");
+          const hours = String(Math.floor((remainingTime / (1000 * 60 * 60)) % 24)).padStart(2, "0");
+          const minutes = String(Math.floor((remainingTime / (1000 * 60)) % 60)).padStart(2, "0");
+          const seconds = String(Math.floor((remainingTime / 1000) % 60)).padStart(2, "0");
+          element.innerHTML = `<i class="fa fa-clock mr-2"> </i> Ends in ${days}d ${hours}h ${minutes}m ${seconds}s`;
+        } else {
+          element.textContent = "";
+          element.classList.add("!hidden");
+        }
+      }
+
+      setInterval(updateCountdown, 1000);
+    });
+  });
+</script>
+
+<% if (products.length == 0) {%>
+<div class="h-full w-full flex items-center justify-center text-xl font-semibold text-orange-700 col-span-3  rounded-lg shadow-sm">
+  No results found
+</div>
+<% } %>
+
+<% products.forEach(product => { %>
+<div data-id="<%= product.id %>" data-title="<%= product.name %>" data-price="<%= Number(product.price).toFixed(2) %>"
+  data-description="<%= product.description %>"
+  data-img="<%= product.images %>"
+  data-stock="<%= product.stock %>"
+  <% if (product.discount !== null && (new Date() - new Date(product.startDate) > 0)) { %>
+  data-discount-startDate="<%= product.startDate %>" data-discount-endDate="<%= product.endDate %>"
+  data-discount-price-after="<%= product.price %>"
+  <% } %>
+  class="card bg-background-light dark:bg-background-dark border-primary-light dark:border-primary-dark relative sm:min-w-[200px] w-full sm:h-[280px] flex-row lg:hover:scale-105 transition-all duration-150 ease-linear cursor-pointer text-text-light dark:text-text-dark p-4 rounded-lg shadow-sm flex sm:flex-col items-center justify-between border-2 flex-1 xl:col-span-1 col-span-6 sm:col-span-3">
+  
+    <% if (product.label) { %>
+    <div class="absolute top-0 z-10 bg-primary-light dark:bg-primary-dark w-max max-w-40 left-0  flex justify-between items-center p-1 px-2">
+      <span class="card-badge text-xs font-bold text-secondary-light dark:text-text-dark">Sale</span> 
+    </div>
+    <% } %>
+
+  <div class="img_container  xs:h-40 xs:w-40 vxs:h-32 vxs:w-32 sm:h-52 sm:w-max aspect-square overflow-hidden rounded-lg flex items-center justify-center mr-6 bg-background-light dark:bg-background-dark">
+  <img src="<%=product.images%>" alt="<%= product.name %>" class="card-img h-full w-auto object-contain" />
+  </div>
+  <div class="card_details mt-3 text-center w-full sm:h-max h-full sm:min-h-24">
+  <div class="item_name flex flex-col  h-full justify-start px-2  items-center font-medium">
+    <span class="card-title w-full text-left line-clamp-2 text-sm sm:text-[16px]  font-semibold mb-2"><%= product.name %></span>
+
+    <div class="w-full flex xs:flex-row flex-col sm:flex-row gap-2 justify-start items-center">
+      <% if (product.discount !== null && (new Date() - new Date(product.startDate) > 0)) {%>
+        <div class="flex items-center justify-start">
+          <span class="card-dsPrice text-sm line-through font-light"><%= product.bfDiscount %> <%=currency == "EG"? 'L.E' : '$' %></span>
+          <span class="card-dsPrice px-2 py-1 rounded-lg text-sm ml-1"
+            ><%= product.discount %></span
+          >
+        </div>
+      <% } %>
+      <span class="card-price text-lg font-bold text-left sm:font-semibold"><%= (product.price) %> <%=currency == "EG"? 'L.E' : '$' %></span>
+
+    </div>
+    <% if (product.discount !== null && (new Date() - new Date(product.startDate) > 0)) { %>
+    <div class="w-full">
+      <span
+        data-end-date="<%= product.endDate %>"
+        data-start-date="<%= product.startDate %>"
+        class="countdown flex justify-start w-full items-center text-sm sm:text-sm"></span>
+    </div>
+
+    <% } %>
+    <div class="w-full my-auto sm:hidden xs:block"<% if (product.discount !== null && (new Date() - new Date(product.startDate) > 0)) {%> style="@media(max-width:480px){display: none;}"<% } %>>
+      <span class="pr-10 text-left xs:!line-clamp-3 vxs:line-clamp-2 vxs:text-[11px] xs:text-sm"><%= product.description %></span>
+    </div>
+  </div>
+  </div>
+
+  <div class="cta flex items-center justify-around  mt-4 absolute right-12 bottom-12 h-max w-max">
+    <span >
+      <button
+      type="button"
+      class="addToCartBtn bg-secondary-light dark:text-primary-dark text-text-light dark:bg-secondary-dark sm:rounded-lg sm:hover:bg-primary-light active:bg-primary-dark transition-all duration-200 active:scale-95 rounded-full w-10 h-10 absolute ">
+      <i class="fa-solid fa-cart-shopping"></i>
+      <!-- <span class="hidden sm:inline-block"> Add to cart </span> -->
+    </button>
+    </span>
+  </div>
+</div>
+<% }); %>
+<script>
+  document.addEventListener("click", (e) => {
+    const card = e.target.closest(".card");
+    if (card && !e.target.closest(".addToCartBtn")) {
+        location.href = `/view/product/${card.getAttribute("data-id")}`;
+    }
+})
+</script>

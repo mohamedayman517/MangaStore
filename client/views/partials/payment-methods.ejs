@@ -1,0 +1,109 @@
+<div
+  class="md:col-span-3 w-full px-4 py-5 bg-background-light dark:bg-background-dark flex flex-col gap-3 rounded-lg shadow-lg transition-colors duration-200"
+>
+  <legend
+    class="text-2xl font-semibold mb-4 text-primary-light dark:text-primary-dark select-none"
+  >
+    Choose Your Payment Method
+  </legend>
+
+  <% if (currency === "EG") { %>
+  <!-- Instapay -->
+  <label
+    for="instapay"
+    class="font-medium cursor-pointer h-20 border-2 border-secondary-light dark:border-secondary-dark hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10 flex items-center gap-6 px-3 rounded-lg has-[:checked]:text-primary-light dark:has-[:checked]:text-primary-dark has-[:checked]:bg-primary-light/10 dark:has-[:checked]:bg-primary-dark/10 has-[:checked]:ring-2 has-[:checked]:ring-primary-light dark:has-[:checked]:ring-primary-dark has-[:checked]:border-primary-light has-[:checked]:dark:border-primary-dark select-none transition-all duration-200"
+  >
+    <input
+      type="radio"
+      name="payment-method"
+      class="w-5 h-5 accent-primary-light dark:accent-primary-dark"
+      id="instapay"
+    />
+    <div class="py-1">
+      <img
+        src="/pics/instapay-logo.webp"
+        alt="Instapay"
+        class="h-14 w-auto object-cover"
+      />
+    </div>
+    <span class="text-text-light dark:text-text-dark">Instapay</span>
+  </label>
+
+  <!-- Vodafone Cash -->
+  <label
+    for="VodafoneCash"
+    class="font-medium cursor-pointer h-20 border-2 border-secondary-light dark:border-secondary-dark hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10 flex items-center gap-6 px-3 rounded-lg has-[:checked]:text-primary-light dark:has-[:checked]:text-primary-dark has-[:checked]:bg-primary-light/10 dark:has-[:checked]:bg-primary-dark/10 has-[:checked]:ring-2 has-[:checked]:ring-primary-light dark:has-[:checked]:ring-primary-dark has-[:checked]:border-primary-light has-[:checked]:dark:border-primary-dark select-none transition-all duration-200"
+  >
+    <input
+      type="radio"
+      name="payment-method"
+      class="w-5 h-5 accent-primary-light dark:accent-primary-dark"
+      id="VodafoneCash"
+    />
+    <div class="py-1">
+      <img
+        src="/pics/vodafone-cash.jpg"
+        alt="Vodafone cash"
+        class="h-14 w-auto object-cover"
+      />
+    </div>
+    <span class="text-text-light dark:text-text-dark">Vodafone cash</span>
+  </label>
+
+  <!-- Telda -->
+  <label
+    for="telda"
+    class="font-medium cursor-pointer h-20 border-2 border-secondary-light dark:border-secondary-dark hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10 flex items-center gap-6 px-3 rounded-lg has-[:checked]:text-primary-light dark:has-[:checked]:text-primary-dark has-[:checked]:bg-primary-light/10 dark:has-[:checked]:bg-primary-dark/10 has-[:checked]:ring-2 has-[:checked]:ring-primary-light dark:has-[:checked]:ring-primary-dark has-[:checked]:border-primary-light has-[:checked]:dark:border-primary-dark select-none transition-all duration-200"
+  >
+    <input
+      type="radio"
+      name="payment-method"
+      class="w-5 h-5 accent-primary-light dark:accent-primary-dark"
+      id="telda"
+    />
+    <div class="py-4 p-2">
+      <img src="/pics/telda.png" alt="Telda" class="h-10 w-auto object-cover" />
+    </div>
+    <span class="text-text-light dark:text-text-dark">Telda</span>
+  </label>
+  <% } else { %>
+
+  <!-- Binance -->
+  <label
+    for="binance"
+    class="font-medium cursor-pointer h-20 border-2 border-secondary-light dark:border-secondary-dark hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10 flex items-center gap-6 px-3 rounded-lg has-[:checked]:text-primary-light dark:has-[:checked]:text-primary-dark has-[:checked]:bg-primary-light/10 dark:has-[:checked]:bg-primary-dark/10 has-[:checked]:ring-2 has-[:checked]:ring-primary-light dark:has-[:checked]:ring-primary-dark has-[:checked]:border-primary-light has-[:checked]:dark:border-primary-dark select-none transition-all duration-200"
+  >
+    <input
+      type="radio"
+      name="payment-method"
+      class="w-5 h-5 accent-primary-light dark:accent-primary-dark"
+      id="binance"
+    />
+    <div class="py-4">
+      <img
+        src="/pics/binance.png"
+        alt="Binance"
+        class="h-12 w-auto object-cover"
+      />
+    </div>
+    <span class="text-text-light dark:text-text-dark">Binance</span>
+  </label>
+
+  <!-- Bybit -->
+  <label
+    for="bybit"
+    class="font-medium cursor-pointer h-20 border-2 border-secondary-light dark:border-secondary-dark hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10 flex items-center gap-6 px-3 rounded-lg has-[:checked]:text-primary-light dark:has-[:checked]:text-primary-dark has-[:checked]:bg-primary-light/10 dark:has-[:checked]:bg-primary-dark/10 has-[:checked]:ring-2 has-[:checked]:ring-primary-light dark:has-[:checked]:ring-primary-dark has-[:checked]:border-primary-light has-[:checked]:dark:border-primary-dark select-none transition-all duration-200"
+  >
+    <input
+      type="radio"
+      name="payment-method"
+      class="w-5 h-5 accent-primary-light dark:accent-primary-dark has-[:checked]:border-primary-light"
+      id="bybit"
+    />
+    <div class="py-4 p-2">
+      <img src="/pics/bybit.png" alt="Bybit" class="h-9 w-auto object-cover" />
+    </div>
+    <span class="text-text-light dark:text-text-dark">Bybit</span>
+  </label>
+  <% } %>
+</div>

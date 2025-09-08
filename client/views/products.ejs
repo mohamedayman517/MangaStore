@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include("./partials/meta") %>
+    <title>Manga Store - products</title>
+    <link rel="stylesheet" href="/css/build.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer" />
+    <!-- Removed paginate.js CDN (returned text/html with nosniff). Server-side pagination is used below. -->
+    <style>
+      /* Enhanced menu pointers */
+      @media (max-width: 1024px) {
+        .filterMenu::before,
+        .sortByMenu::before {
+          content: "";
+          position: absolute;
+          bottom: -10px;
+          left: 50%;
+          transform: translateX(-50%);
+          border-width: 10px;
+          border-style: solid;
+          border-color: #fb923c transparent transparent transparent;
+          transition: all 0.3s ease;
+        }
+      }
+
+      /* Enhanced animations */
+      .card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        backface-visibility: hidden;
+        transform: translateZ(0);
+        will-change: transform;
+      }
+
+      .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      }
+
+      /* Improved card layout */
+      .card-badge {
+        position: relative;
+        z-index: 5;
+      }
+
+      /* Wishlist heart button */
+      .fav-btn {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        z-index: 20;
+        width: 2.25rem;
+        height: 2.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9999px;
+        background: rgba(255,255,255,0.85);
+        backdrop-filter: saturate(180%) blur(6px);
+        border: 1px solid rgba(255,255,255,0.5);
+        transition: transform .15s ease, background .15s ease;
+      }
+      .dark .fav-btn { background: rgba(0,0,0,0.35); border-color: rgba(255,255,255,0.2); }
+      .fav-btn:hover { transform: scale(1.05); }
+      .fav-btn.active { background: rgba(244,63,94,0.15); }
+      .fav-btn.active i { font-weight: 900; }
+
+      .img_container {
+        transition: transform 0.3s ease;
+        overflow: hidden;
+      }
+
+      .card:hover .img_container img {
+        transform: scale(1.05);
+      }
+
+      .card-img {
+        transition: transform 0.5s ease;
+      }
+
+      /* Improved button animations */
+      .addToCartBtn {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        opacity: 0.9;
+        transform: translateY(5px);
+      }
+
+      .card:hover .addToCartBtn {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* Improved filter/sort menu */
+      .filterMenu,
+      #sortByMobile {
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      }
+
+      /* Improved pagination */
+      .pagination-link {
+        transition: all 0.2s ease;
+      }
+
+      /* Improved loading state */
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      .loading-pulse {
+        animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+
+      /* Improved countdown timer */
+      .countdown {
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Improved mobile layout */
+      @media (max-width: 640px) {
+        .card {
+          display: grid;
+          grid-template-columns: 120px 1fr;
+          gap: 1rem;
+          padding: 0.75rem;
+          height: auto;
+          min-height: 120px;
+        }
+
+        .img_container {
+          height: 100%;
+          width: 100%;
+          margin-right: 0;
+        }
+
+        .card_details {
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          height: 100%;
+          text-align: left;
+        }
+
+        .cta {
+          position: absolute;
+          right: 0.5rem;
+          bottom: 0.5rem;
+        }
+      }
+
+      /* Fix for desktop filter sidebar */
+      @media (min-width: 1024px) {
+        .desktop-layout {
+          display: grid;
+          grid-template-columns: 280px 1fr;
+          gap: 1.5rem;
+        }
+
+        .filter-sidebar {
+          /* position: sticky; */
+          top: 5rem;
+          height: 100%;
+          overflow-y: auto;
+          padding-right: 0.5rem;
+        }
+
+        .products-container {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-background-light dark:bg-background-dark mt-12">
+    <%- include("./partials/header") %><%- include("./partials/loader") %><%- include("./partials/alerts-popups") %>
+    <main class="md:px-6 px-3 pt-6 md:pt-16 xl:px-20 min-h-screen bg-background-light dark:bg-background-dark">
+      <!-- Mobile Filter/Sort Buttons -->
+      <div
+        class="bottom-10 font-semibold left-1/2 transform -translate-x-1/2 flex justify-center items-center fixed lg:!hidden lg:z-0 z-50">
+        <button
+          type="button"
+          id="filterBtn"
+          class="rounded-s-xl w-1/2 h-12 bg-secondary-light dark:bg-secondary-dark text-background-light dark:text-background-light flex gap-2 justify-center items-center min-w-24 border-r-2 border-r-white shadow-lg transition-all duration-200 active:scale-95">
+          <i class="fa-solid fa-filter"></i> Filter
+        </button>
+        <button
+          type="button"
+          id="sortBtn"
+          class="rounded-e-xl w-1/2 h-12 bg-secondary-light dark:bg-secondary-dark text-background-light dark:text-background-light flex gap-2 justify-center items-center min-w-24 shadow-lg transition-all duration-200 active:scale-95">
+          <i class="fa-solid fa-sort"></i> Sort
+        </button>
+
+        <!-- Sort by (Mobile) -->
+        <div
+          name="sortBy"
+          id="sortByMobile"
+          class="sortByMenu text-text-light dark:text-text-dark bg-background-light dark:bg-background-dark border-2 border-primary-light dark:border-primary-dark hidden z-50 flex-col justify-center items-center gap-3 p-4 fixed bottom-24 max-w-60 left-1/2 transform -translate-x-1/3 rounded-xl h-max min-w-60">
+          <span class="text-xl font-semibold mb-2">Sort by:</span>
+          <button
+            id="price_asc"
+            class="sortByButtons border-2 bg-secondary-light dark:bg-secondary-dark border-secondary-light dark:border-secondary-dark outline-none py-2 px-3 w-full rounded-xl text-white text-base font-medium transition-all duration-200 hover:bg-primary-light hover:dark:bg-primary-dark active:scale-95">
+            Price: Low to high
+          </button>
+          <button
+            id="price_desc"
+            class="sortByButtons border-2 bg-secondary-light dark:bg-secondary-dark border-secondary-light dark:border-secondary-dark outline-none py-2 px-3 mt-2 w-full rounded-xl text-white text-base font-medium transition-all duration-200 hover:bg-primary-light hover:dark:bg-primary-dark active:scale-95">
+            Price: High to Low
+          </button>
+          <button
+            id="name_asc"
+            class="sortByButtons border-2 bg-secondary-light dark:bg-secondary-dark border-secondary-light dark:border-secondary-dark outline-none py-2 px-3 mt-2 w-full rounded-xl text-white text-base font-medium transition-all duration-200 hover:bg-primary-light hover:dark:bg-primary-dark active:scale-95">
+            A -Z
+          </button>
+          <button
+            id="name_desc"
+            class="sortByButtons border-2 bg-secondary-light dark:bg-secondary-dark border-secondary-light dark:border-secondary-dark outline-none py-2 px-3 mt-2 w-full rounded-xl text-white text-base font-medium transition-all duration-200 hover:bg-primary-light hover:dark:bg-primary-dark active:scale-95">
+            Z- A
+          </button>
+        </div>
+      </div>
+
+      <!-- Desktop layout with sidebar and products -->
+      <div class="desktop-layout">
+        <!-- Filter sidebar (desktop) -->
+        <aside
+          class="filterMenu filter-sidebar text-text-light dark:text-text-dark bg-background-light dark:bg-background-dark border-2 border-primary-light dark:border-primary-dark lg:z-0 z-50 hidden lg:block flex-col gap-4 p-4 fixed bottom-24 max-w-60 left-1/2 transform -translate-x-2/3 rounded-xl h-max min-w-60 lg:static lg:transform-none lg:max-w-none lg:min-w-0 lg:bottom-auto">
+          <div class="relative w-full p-2">
+            <input
+              type="search"
+              name="search"
+              id="search"
+              class="border-2 dark:focus:border-accent-dark border-primary-light dark:border-primary-dark outline-none focus:border-secondary-light focus:dark:border-secondary-dark h-12 w-full rounded-lg pl-10 pr-3 text-text-light dark:text-text-dark bg-background-light dark:bg-background-dark font-semibold transition-all duration-200"
+              placeholder="Search games..." />
+            <i class="fa-solid fa-magnifying-glass absolute left-5 top-6 cursor-pointer text-orange-700"></i>
+          </div>
+
+          <hr class="border-t border-primary-light dark:border-primary-dark" />
+
+          <div class="my-2">
+            <h3 class="font-semibold text-base lg:text-lg mb-3">Categories</h3>
+            <select
+              name="categories"
+              id="categories"
+              class="border-2 focus:border-accent-light dark:focus:border-accent-dark border-primary-light dark:border-primary-dark rounded-md p-2 cursor-pointer w-full outline-none text-text-light dark:text-text-dark font-semibold bg-background-light dark:bg-background-dark transition-all duration-200">
+              <option value="" disabled selected>Choose a category</option>
+              <% categories.forEach(category => {; %>
+              <option value="<%= category.id %>" class="cursor-pointer"><%= category.id %></option>
+              <% }); %>
+            </select>
+          </div>
+
+          <div class="my-2">
+            <h3 class="font-semibold text-base lg:text-lg mb-3">Sub categories</h3>
+            <select
+              name="subcategories"
+              id="subcategories"
+              class="border-2 focus:border-accent-light dark:focus:border-accent-dark border-primary-light dark:border-primary-dark rounded-md p-2 cursor-pointer w-full outline-none text-text-light dark:text-text-dark font-semibold bg-background-light dark:bg-background-dark transition-all duration-200">
+              <option value="" disabled selected>Choose a category first</option>
+            </select>
+
+            <script id="optionsData" type="application/json">
+              <%- JSON.stringify(categories) %>
+            </script>
+            <script>
+              // Parse categories from the JSON script tag to avoid EJS-in-JS lint issues
+              const optionsData = JSON.parse(document.getElementById("optionsData").textContent);
+              document.getElementById("categories").addEventListener("change", function () {
+                const selectedCategory = this.value;
+                const subcategoriesSelect = document.getElementById("subcategories");
+
+                // Clear previous subcategories
+                subcategoriesSelect.innerHTML = '<option value="" disabled selected>Choose a subcategory</option>';
+
+                // Find the selected category and populate subcategories
+                const category = optionsData.find((cat) => cat.id === selectedCategory);
+                if (category && category.subcategories.length > 0) {
+                  category.subcategories.forEach((subCategory) => {
+                    const option = document.createElement("option");
+                    option.value = subCategory;
+                    option.textContent = subCategory;
+                    subcategoriesSelect.appendChild(option);
+                  });
+                }
+              });
+            </script>
+          </div>
+
+          <hr class="border-t border-primary-light dark:border-primary-dark" />
+
+          <div class="my-2">
+            <h3 class="font-semibold text-base lg:text-lg mb-3">Price</h3>
+            <div class="flex gap-3">
+              <div class="relative w-1/2">
+                <input
+                  type="number"
+                  name="minPrice"
+                  id="minPrice"
+                  class="border-2 border-primary-light dark:border-primary-dark focus:border-accent-light dark:focus:border-accent-dark bg-background-light dark:bg-background-dark rounded-md px-3 p-2 w-full outline-none text-text-light dark:text-text-dark font-semibold transition-all duration-200"
+                  placeholder="Min" />
+              </div>
+              <div class="relative w-1/2">
+                <input
+                  type="number"
+                  name="maxPrice"
+                  id="maxPrice"
+                  class="border-2 border-primary-light dark:border-primary-dark focus:border-accent-light dark:focus:border-accent-dark bg-background-light dark:bg-background-dark rounded-md px-3 p-2 w-full outline-none text-text-light dark:text-text-dark font-semibold transition-all duration-200"
+                  placeholder="Max" />
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <button
+              type="button"
+              id="applyFilter"
+              class="py-2.5 w-full mt-2 dark:hover:text-primary-dark bg-primary-light dark:bg-primary-dark hover:bg-secondary-light hover:dark:bg-secondary-dark text-background-light dark:text-secondary-dark font-semibold active:scale-95 transition-all duration-200 ease-in-out rounded-lg shadow-md">
+              Apply filter
+            </button>
+          </div>
+
+          <div>
+            <button
+              type="button"
+              id="resetFilter"
+              class="bg-red-600 hover:bg-red-700 py-2.5 w-full mt-2 text-background-light dark:text-text-dark active:scale-95 transition-all duration-200 ease-in-out rounded-lg shadow-md">
+              Reset filter
+            </button>
+          </div>
+        </aside>
+
+        <!-- Main content section -->
+        <section class="products-container bg-background-light dark:bg-background-dark flex flex-col gap-2">
+          <div
+            class="h-16 w-full flex justify-between items-center p-4 font-semibold text-[18px] px-6 border-b border-b-primary-light dark:border-b-primary-dark bg-background-light dark:bg-background-dark sticky top-0 z-10 backdrop-blur-sm bg-opacity-90 dark:bg-opacity-90">
+            <span
+              class="text-text-light dark:text-text-dark border-primary-light dark:border-primary-dark focus:border-accent-light dark:focus:border-accent-darkfont-semibold">
+              Results (<%= products.length %>)
+            </span>
+            <span>
+              <select
+                name="sortBy"
+                id="sortBy"
+                class="border-2 focus:border-accent-light dark:focus:border-accent-dark bg-background-light dark:bg-background-dark border-primary-light dark:border-text-dark rounded-md p-2 cursor-pointer w-52 outline-none hidden lg:block text-text-light dark:text-text-dark font-semibold transition-all duration-200">
+                <option value="" disabled selected>Sort by:</option>
+                <option value="price_asc">Price: Low to high</option>
+                <option value="price_desc">Price: High to Low</option>
+                <option value="name_asc">A -Z</option>
+                <option value="name_desc">Z- A</option>
+              </select>
+            </span>
+          </div>
+
+          <!-- Products grid -->
+          <div
+            class="py-6 px-3 md:px-6 w-full h-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+            id="products-grid">
+            <script>
+              document.addEventListener("DOMContentLoaded", function () {
+                const countdownElements = document.querySelectorAll(".countdown");
+
+                countdownElements.forEach((element) => {
+                  const endDate = new Date(element.dataset.endDate);
+                  const startDate = new Date(element.dataset.startDate);
+
+                  function updateCountdown() {
+                    const now = new Date();
+                    const remainingTime = endDate - now;
+
+                    if (remainingTime > 0) {
+                      const days = String(Math.floor(remainingTime / (1000 * 60 * 60 * 24))).padStart(2, "0");
+                      const hours = String(Math.floor((remainingTime / (1000 * 60 * 60)) % 24)).padStart(2, "0");
+                      const minutes = String(Math.floor((remainingTime / (1000 * 60)) % 60)).padStart(2, "0");
+                      const seconds = String(Math.floor((remainingTime / 1000) % 60)).padStart(2, "0");
+                      element.innerHTML = `<i class="fa-solid fa-clock mr-2"></i> Ends in ${days}d ${hours}h ${minutes}m ${seconds}s`;
+                    } else {
+                      element.textContent = "";
+                      element.classList.add("!hidden");
+                      const card = element.closest(".card");
+                      const discountPrice = card.querySelector(".card-dsPrice");
+                      if (discountPrice) {
+                        discountPrice.remove();
+                        card.querySelector(".price").textContent = card.dataset.discountPriceBefore;
+                        card.dataset.price = card.dataset.discountPriceBefore;
+                        card.dataset.discountPriceBefore = null;
+                        card.dataset.discountPriceAfter = null;
+                        card.dataset.discountEnddate = null;
+                        card.dataset.discountStartdate = null;
+                      }
+                    }
+                  }
+
+                  updateCountdown();
+                  setInterval(updateCountdown, 1000);
+                });
+              });
+            </script>
+
+            <% if (products.length == 0) {%>
+            <div
+              class="h-64 w-full flex items-center justify-center text-xl font-semibold text-orange-700 col-span-full rounded-lg shadow-sm">
+              <div class="text-center">
+                <i class="fa-solid fa-search text-4xl mb-4 opacity-70"></i>
+                <p>No results found</p>
+                <p class="text-sm mt-2 text-text-light dark:text-text-dark opacity-70">Try adjusting your filters</p>
+              </div>
+            </div>
+            <% } %>
+
+            <!-- Product cards -->
+            <% products.forEach(product => { %> <div data-id="<%= product.id %>" data-title="<%= product.name %>"
+            data-price="<%= Number(product.price).toFixed(2) %>" data-description="<%= product.description %>"
+            data-img="<%= product.images %>" data-stock="<%= product.stock %>" <% if (product.discount !== null && (new
+            Date() - new Date(product.startDate) > 0) && (new Date() < new Date(product.endDate))) { %>
+            data-discount-startDate="<%= product.startDate %>" data-discount-endDate="<%= product.endDate %>"
+            data-discount-price-after="<%= product.price %>" data-discount-price-before="<%= product.bfDiscount %>" <% }
+            %> class="card bg-background-light dark:bg-background-dark border-primary-light dark:border-primary-dark
+            relative w-full h-full flex flex-col transition-all duration-300 ease-out cursor-pointer text-text-light
+            dark:text-text-dark p-4 rounded-lg shadow-md border-2">
+
+            <!-- Sale badge -->
+            <% if (product.label) { %>
+            <div
+              class="absolute top-0 left-0 z-10 bg-primary-light dark:bg-primary-dark w-max max-w-40 flex justify-between items-center p-1 px-3 rounded-br-lg">
+              <span class="card-badge text-xs font-bold text-secondary-light dark:text-text-dark"
+                ><%= product.label %></span
+              >
+            </div>
+            <% } %>
+
+            <!-- Wishlist heart -->
+            <button type="button" class="fav-btn">
+              <i class="fa-regular fa-heart text-rose-500 text-[18px]"></i>
+            </button>
+
+            <!-- Product image -->
+            <div
+              class="img_container h-48 w-full aspect-square overflow-hidden rounded-lg flex items-center justify-center bg-background-light dark:bg-background-dark mb-4">
+              <img src="<%=product.images%>" alt="<%= product.name %>" class="card-img h-full w-auto object-contain" />
+            </div>
+
+            <!-- Product details -->
+            <div class="card_details flex-1 flex flex-col">
+              <div class="item_name flex flex-col h-full">
+                <h3 class="card-title line-clamp-2 text-base sm:text-lg font-semibold mb-2"><%= product.name %></h3>
+
+                <!-- Price section -->
+                <div class="flex flex-wrap gap-2 items-center mb-2">
+                  <% if (product.discount !== null && (new Date() - new Date(product.startDate) > 0) && (new Date() <
+                  new Date(product.endDate)) ) {%>
+                  <div class="flex items-center card-dsPrice">
+                    <span class="text-sm line-through font-light text-gray-500"
+                      ><%= product.bfDiscount %> <%=currency == "EG"? 'L.E' : '$' %></span
+                    >
+                    <span
+                      class="px-2 py-1 bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-200 rounded-lg text-xs ml-1 font-medium">
+                      -<%= product.discount %>
+                    </span>
+                  </div>
+                  <% } %>
+                  <span class="card-price text-lg font-bold"
+                    ><span class="price"> <%= (product.price) %></span> <%=currency == "EG"? 'L.E' : '$' %></span
+                  >
+                </div>
+
+                <!-- Countdown timer -->
+                <% if (product.discount !== null && (new Date() - new Date(product.startDate) > 0) && (new Date() < new
+                Date(product.endDate))) { %>
+                <div class="w-full mb-2">
+                  <span
+                    data-end-date="<%= product.endDate %>"
+                    data-start-date="<%= product.startDate %>"
+                    class="countdown flex items-center text-xs sm:text-sm text-orange-700 dark:text-orange-400 font-medium"></span>
+                </div>
+                <% } %>
+
+                <!-- Out of Stock indicator -->
+                <% if (product.stock !== undefined && product.stock === 0) { %>
+                <div class="w-full mt-auto mb-2">
+                  <span class="text-sm font-medium text-red-600 dark:text-red-400">Out of Stock</span>
+                </div>
+                <% } %>
+
+                <!-- Description (visible on mobile) -->
+                <div class="w-full mt-auto mb-2 hidden sm:block">
+                  <p class="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 pr-10"><%= product.description %></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Add to cart button (only shown if product is in stock) -->
+            <% if (product.stock === undefined || product.stock > 0) { %>
+
+            <div class="cta absolute right-4 bottom-4">
+              <span>
+                <button
+                  type="button"
+                  class="addToCartBtn bg-secondary-light dark:bg-secondary-dark text-white dark:text-primary-dark rounded-full w-10 h-10 flex items-center justify-center hover:bg-primary-light dark:hover:bg-primary-dark transition-all duration-300 shadow-md">
+                  <i class="fa-solid fa-cart-shopping"></i>
+                </button>
+              </span>
+            </div>
+            <% } %>
+          </div>
+          <% }); %>
+          <script>
+            // Wishlist (products) via server API with optimistic UI
+            let serverFavs = new Set();
+            async function fetchWishlistOnce() {
+              try {
+                const res = await fetch('/api/wishlist');
+                if (!res.ok) throw new Error('Failed');
+                const data = await res.json();
+                const list = (data && data.wishlist && Array.isArray(data.wishlist.products)) ? data.wishlist.products : [];
+                serverFavs = new Set(list.map(String));
+              } catch (e) {
+                // silently ignore to avoid blocking UI; keep empty set
+              }
+            }
+            function applyFavUIProducts() {
+              document.querySelectorAll('.card').forEach(card => {
+                const id = card.getAttribute('data-id');
+                const btn = card.querySelector('.fav-btn');
+                const icon = btn?.querySelector('i');
+                if (!btn || !icon || !id) return;
+                if (serverFavs.has(String(id))) {
+                  btn.classList.add('active');
+                  icon.classList.remove('fa-regular');
+                  icon.classList.add('fa-solid');
+                } else {
+                  btn.classList.remove('active');
+                  icon.classList.remove('fa-solid');
+                  icon.classList.add('fa-regular');
+                }
+              });
+            }
+            window.addEventListener('DOMContentLoaded', async () => {
+              await fetchWishlistOnce();
+              applyFavUIProducts();
+            });
+
+            document.addEventListener('click', async (e) => {
+              const card = e.target.closest('.card');
+              const addToCartBtn = e.target.closest('.addToCartBtn');
+              const favBtn = e.target.closest('.fav-btn');
+
+              // Toggle favorite (optimistic)
+              if (favBtn && card) {
+                e.preventDefault();
+                e.stopPropagation();
+                const id = String(card.getAttribute('data-id'));
+                const wasFav = serverFavs.has(id);
+
+                // optimistic state
+                if (wasFav) serverFavs.delete(id); else serverFavs.add(id);
+                applyFavUIProducts();
+
+                try {
+                  const res = await fetch('/api/wishlist/toggle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'product', id })
+                  });
+                  if (!res.ok) throw new Error('Failed');
+                  const data = await res.json();
+                  if (data && data.wishlist && Array.isArray(data.wishlist.products)) {
+                    serverFavs = new Set(data.wishlist.products.map(String));
+                    applyFavUIProducts();
+                  }
+                } catch (err) {
+                  // revert on failure
+                  if (wasFav) serverFavs.add(id); else serverFavs.delete(id);
+                  applyFavUIProducts();
+                  if (err && err.status === 401) {
+                    window.location.href = '/login';
+                  }
+                }
+                return;
+              }
+
+              if (card && !addToCartBtn && !favBtn) {
+                location.href = `/view/product/${card.getAttribute('data-id')}`;
+              }
+            });
+          </script>
+        </section>
+      </div>
+
+      <!-- Pagination -->
+      <% if (totalPages > 1) { %>
+      <div class="mt-6 mb-20 lg:mb-8 flex justify-center space-x-2 min-w-full col-span-full items-center">
+        <div class="inline-flex rounded-md shadow-sm">
+          <% if (currentPage > 1) { %>
+          <a
+            href="<%= generatePageUrl(currentPage - 1, query) %>"
+            class="px-4 py-2 border rounded-l-md flex items-center justify-center hover:text-primary-light border-primary-light dark:border-primary-dark hover:dark:border-secondary-dark hover:bg-secondary-light dark:text-primary-dark bg-background-light hover:dark:bg-primary-dark hover:border-background-dark dark:bg-background-dark hover:dark:text-accent-dark transition-all duration-200">
+            <i class="fa-solid fa-chevron-left mr-1"></i> Previous
+          </a>
+          <% } %> <% const pageBuffer = 1; let startPage = Math.max(1, currentPage - pageBuffer); let endPage =
+          Math.min(totalPages, currentPage + pageBuffer); if (endPage - startPage + 1 < 3 && totalPages >= 3) { if
+          (currentPage < 2) { endPage = Math.min(3, totalPages); } else if (currentPage > totalPages - 1) { startPage =
+          Math.max(1, totalPages - 2); } } if (startPage > 1) { %>
+          <a
+            href="<%= generatePageUrl(1, query) %>"
+            class="px-4 py-2 border-2 border-primary-light dark:border-primary-dark font-bold hover:text-primary-light hover:border-secondary-light hover:dark:border-secondary-dark hover:bg-secondary-light dark:text-primary-dark hover:dark:text-background-dark bg-background-light hover:dark:bg-primary-dark hover:border-background-dark dark:bg-background-dark flex items-center justify-center transition-all duration-200">
+            1
+          </a>
+
+          <% if (startPage > 2) { %>
+          <span
+            class="px-4 py-2 border-2 border-primary-light dark:border-primary-dark text-text-light dark:text-text-dark bg-background-light dark:bg-background-dark flex items-center justify-center">
+            ...
+          </span>
+          <% } %> <% } %> <% for (let page = startPage; page <= endPage; page++) { %>
+          <a
+            href="<%= generatePageUrl(page, query) %>"
+            class="px-4 py-2 border-2 <%= currentPage === page ? 'border-primary-light dark:border-primary-dark' : 'border-primary-light dark:border-primary-dark' %> font-bold hover:text-primary-light hover:border-secondary-light hover:dark:border-secondary-dark <%= currentPage === page ? 'bg-primary-light dark:bg-primary-dark text-secondary-light dark:text-background-dark hover:dark:border-primary-dark hover:bg-secondary-light hover:dark:bg-secondary-dark hover:dark:text-primary-dark' : 'hover:bg-secondary-light dark:text-primary-dark hover:dark:text-background-dark bg-background-light hover:dark:bg-primary-dark hover:border-background-dark dark:bg-background-dark' %> flex items-center justify-center transition-all duration-200">
+            <%= page %>
+          </a>
+          <% } %> <% if (endPage < totalPages) { %> <% if (endPage < totalPages - 1) { %>
+          <span
+            class="px-4 py-2 border-2 border-primary-light dark:border-primary-dark text-text-light dark:text-text-dark bg-background-light dark:bg-background-dark flex items-center justify-center">
+            ...
+          </span>
+          <% } %>
+
+          <a
+            href="<%= generatePageUrl(totalPages, query) %>"
+            class="px-4 py-2 border-2 border-primary-light dark:border-primary-dark font-bold hover:text-primary-light hover:border-secondary-light hover:dark:border-secondary-dark hover:bg-secondary-light dark:text-primary-dark hover:dark:text-background-dark bg-background-light hover:dark:bg-primary-dark hover:border-background-dark dark:bg-background-dark flex items-center justify-center transition-all duration-200">
+            <%= totalPages %>
+          </a>
+          <% } %> <% if (currentPage < totalPages) { %>
+          <a
+            href="<%= generatePageUrl(currentPage + 1, query) %>"
+            class="px-4 py-2 border rounded-r-md flex items-center justify-center hover:text-primary-light border-primary-light dark:border-primary-dark hover:dark:border-secondary-dark hover:bg-secondary-light dark:text-primary-dark bg-background-light hover:dark:bg-primary-dark hover:border-background-dark dark:bg-background-dark hover:dark:text-background-dark transition-all duration-200">
+            Next <i class="fa-solid fa-chevron-right ml-1"></i>
+          </a>
+          <% } %> <% } %>
+        </div>
+      </div>
+    </main>
+    <%- include("./partials/footer") %>
+    <script>
+      document.getElementById("applyFilter").addEventListener("click", function () {
+        submitForm();
+      });
+      document.getElementById("sortBy").addEventListener("change", function () {
+        submitSortForm();
+      });
+
+      function submitForm() {
+        const search = document.getElementById("search").value;
+        const categories = Array.from(document.getElementById("categories").selectedOptions).map(
+          (option) => option.value
+        );
+        const minPrice = document.getElementById("minPrice").value;
+        const maxPrice = document.getElementById("maxPrice").value;
+        const subCategory = document.getElementById("subcategories").value;
+
+        const url = new URL(window.location.href);
+        url.searchParams.set("page", 1);
+        url.searchParams.set("search", search);
+        url.searchParams.set("categories", categories.join(","));
+        url.searchParams.set("minPrice", minPrice);
+        url.searchParams.set("maxPrice", maxPrice);
+        url.searchParams.set("subCategory", subCategory);
+
+        window.location.href = url.toString();
+      }
+
+      function submitSortForm() {
+        const url = new URL(window.location.href);
+        const sortBy = document.getElementById("sortBy").value;
+
+        url.searchParams.set("page", 1);
+        url.searchParams.set("sortBy", sortBy);
+
+        window.location.href = url.toString();
+      }
+
+      // On page load, populate inputs with URL parameters if they exist
+      window.addEventListener("DOMContentLoaded", function () {
+        const urlParams = new URLSearchParams(window.location.search);
+
+        if (urlParams.has("search")) {
+          document.getElementById("search").value = urlParams.get("search");
+        }
+        if (urlParams.has("categories")) {
+          const categories = urlParams.get("categories").split(",");
+          const options = document.getElementById("categories").options;
+          for (let i = 0; i < options.length; i++) {
+            if (categories.includes(options[i].value)) {
+              options[i].selected = true;
+            }
+          }
+          const selectedCategory = categories[0];
+          const subcategoriesSelect = document.getElementById("subcategories");
+          const category = optionsData.find((cat) => cat.id === selectedCategory);
+          if (category && category.subcategories.length > 0) {
+            category.subcategories.forEach((subCategory) => {
+              const option = document.createElement("option");
+              option.value = subCategory;
+              option.textContent = subCategory;
+              subcategoriesSelect.appendChild(option);
+            });
+            if (urlParams.has("subCategory")) {
+              subcategoriesSelect.value = urlParams.get("subCategory");
+            }
+          }
+        }
+
+        if (urlParams.has("minPrice")) {
+          document.getElementById("minPrice").value = urlParams.get("minPrice");
+        }
+        if (urlParams.has("maxPrice")) {
+          document.getElementById("maxPrice").value = urlParams.get("maxPrice");
+        }
+        if (urlParams.has("sortBy")) {
+          document.getElementById("sortBy").value = urlParams.get("sortBy");
+        }
+      });
+
+      // Mobile filter/sort menu toggle
+      document.querySelector("#filterBtn").addEventListener("click", function (e) {
+        if (!document.getElementById("sortByMobile").classList.contains("hidden")) {
+          document.getElementById("sortByMobile").classList.add("hidden");
+        }
+        document.querySelector(".filterMenu").classList.toggle("hidden");
+      });
+
+      document.getElementById("sortBtn").addEventListener("click", function () {
+        if (!document.querySelector(".filterMenu").classList.contains("hidden")) {
+          document.querySelector(".filterMenu").classList.add("hidden");
+        }
+        document.getElementById("sortByMobile").classList.toggle("hidden");
+      });
+
+      // Close menus when clicking outside
+      document.addEventListener("click", function (event) {
+        const filterMenu = document.querySelector(".filterMenu");
+        const sortByMobile = document.getElementById("sortByMobile");
+        const filterBtn = document.getElementById("filterBtn");
+        const sortBtn = document.getElementById("sortBtn");
+
+        if (
+          !filterMenu.contains(event.target) &&
+          !sortByMobile.contains(event.target) &&
+          event.target !== filterBtn &&
+          event.target !== sortBtn &&
+          !filterBtn.contains(event.target) &&
+          !sortBtn.contains(event.target)
+        ) {
+          filterMenu.classList.add("hidden");
+          sortByMobile.classList.add("hidden");
+        }
+      });
+
+      // Mobile sort buttons
+      document.querySelectorAll(".sortByButtons").forEach((btn) => {
+        btn.addEventListener("click", function (e) {
+          const url = new URL(window.location.href);
+          const sortBy = btn.id;
+
+          url.searchParams.set("page", 1);
+          url.searchParams.set("sortBy", sortBy);
+
+          window.location.href = url.toString();
+        });
+      });
+
+      // Reset filter
+      document.querySelector("#resetFilter").addEventListener("click", function () {
+        const url = new URL(window.location.href);
+        url.searchParams.set("page", 1);
+        url.searchParams.delete("search");
+        url.searchParams.delete("categories");
+        url.searchParams.delete("minPrice");
+        url.searchParams.delete("maxPrice");
+        url.searchParams.delete("sortBy");
+        url.searchParams.delete("subCategory");
+
+        window.location.href = url.toString();
+      });
+    </script>
+    <script src="/js/search-products.js"></script>
+    <script src="/js/cart.js"></script>
+  </body>
+</html>

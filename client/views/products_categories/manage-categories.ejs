@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manage Categories & Subcategories</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="/css/build.min.css" />
+    <style>
+      .alert.active {
+        transform: translateX(0);
+        transition: all 0.3s ease-in-out;
+      }
+      .alert {
+        transform: translateX(-115%);
+      }
+      .subcategory-container {
+        margin-left: 2rem;
+        border-left: 2px dashed #e5e7eb;
+        padding-left: 1rem;
+      }
+      .subcategory-item {
+        margin-top: 0.5rem;
+      }
+      .toggle-subcategories {
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+      .toggle-subcategories.open {
+        transform: rotate(90deg);
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100">
+    <%- include("./partials/popup-details") %> <%- include("../partials/navbar") %> <%-
+    include("../partials/alerts-popups") %> <%- include("../partials/reusable-popup") %>
+    <%- include("../partials/admin-back", { adminHomePath: '/admin' }) %>
+    <div class="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md mt-20">
+      <h1 class="text-3xl font-semibold text-gray-800 mb-6">Manage Categories & Subcategories</h1>
+
+      <!-- Category Form -->
+      <div class="mb-8">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Add a New Category</h2>
+        <form id="add-category-form" class="space-y-4">
+          <div class="form-group">
+            <label for="name" class="block text-gray-700 text-lg font-medium">Category Name</label>
+            <input
+              type="text"
+              id="name"
+              name="category"
+              placeholder="Enter category name"
+              required
+              class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+          </div>
+          <div class="form-group">
+            <label for="category-icon" class="block text-gray-700 text-lg font-medium">Category Icon (optional)</label>
+            <input
+              type="url"
+              id="category-icon"
+              name="iconUrl"
+              placeholder="https://... (image URL)"
+              class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+            <div class="mt-2 flex items-center gap-3">
+              <img id="category-icon-preview" src="" alt="Icon preview" class="hidden w-10 h-10 rounded border object-cover" />
+              <span id="category-icon-hint" class="text-xs text-gray-500">Paste a direct image URL to preview.</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="category-icon-file" class="block text-gray-700 text-lg font-medium">Or Upload Icon (optional, max 3MB)</label>
+            <input
+              type="file"
+              id="category-icon-file"
+              name="icon"
+              accept="image/*"
+              class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+            <div class="mt-2 flex items-center gap-3">
+              <img id="category-icon-file-preview" src="" alt="Icon file preview" class="hidden w-10 h-10 rounded border object-cover" />
+              <span class="text-xs text-gray-500">If both URL and file are provided, the uploaded file will be used.</span>
+            </div>
+          </div>
+          <button
+            type="submit"
+            class="w-full py-3 rounded-lg focus:outline-none text-base font-semibold shadow"
+            style="min-height:48px; background-color:#2563eb!important; color:#ffffff!important; border:1px solid rgba(0,0,0,0.1);">
+            Add Category
+          </button>
+        </form>
+      </div>
+
+      <!-- Subcategory Form -->
+      <div class="mb-8">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Add a New Subcategory</h2>
+        <form id="add-subcategory-form" class="space-y-4">
+          <div class="form-group">
+            <label for="parent-category" class="block text-gray-700 text-lg font-medium">Parent Category</label>
+            <select
+              id="parent-category"
+              name="parentCategory"
+              required
+              class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+              <option value="">Select a parent category</option>
+              <% categories.forEach((cat) => { %>
+              <option value="<%= cat.id %>"><%= cat.name %></option>
+              <% }) %>
+              <option value="__other__">Other...</option>
+            </select>
+            <!-- Inline Add New Category (shown when selecting Other...) -->
+            <div id="inline-new-category" class="hidden mt-3 grid grid-cols-12 gap-2">
+              <div class="col-span-12 sm:col-span-8">
+                <input id="inline-new-cat-input" type="text" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Enter new category name" />
+              </div>
+              <div class="col-span-12 sm:col-span-4 flex gap-2 items-stretch" style="display:flex;">
+                <button id="inline-add-cat-btn" type="button"
+                  style="display:inline-block; flex:1; background-color:#2563eb; color:#ffffff; padding:12px 16px; border-radius:8px; font-size:16px; font-weight:600; line-height:1.25; min-height:48px; border:1px solid rgba(0,0,0,0.1); box-shadow:0 1px 2px rgba(0,0,0,0.1); visibility:visible; opacity:1;">
+                  Add
+                </button>
+                <button id="inline-cancel-cat-btn" type="button"
+                  style="display:inline-block; flex:1; background-color:#4b5563; color:#ffffff; padding:12px 16px; border-radius:8px; font-size:16px; font-weight:600; line-height:1.25; min-height:48px; border:1px solid rgba(0,0,0,0.1); box-shadow:0 1px 2px rgba(0,0,0,0.1); visibility:visible; opacity:1;">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="subcategory-name" class="block text-gray-700 text-lg font-medium">Subcategory Name</label>
+            <input
+              type="text"
+              id="subcategory-name"
+              name="subcategory"
+              placeholder="Enter subcategory name"
+              required
+              class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+          </div>
+          <button
+            type="submit"
+            class="w-full py-3 rounded-lg focus:outline-none text-base font-semibold shadow"
+            style="min-height:48px; background-color:#16a34a!important; color:#ffffff!important; border:1px solid rgba(0,0,0,0.1);">
+            Add Subcategory
+          </button>
+        </form>
+      </div>
+
+      <hr class="my-6" />
+
+      <h2 class="text-2xl font-semibold text-gray-800 mb-4">Categories & Subcategories</h2>
+      <div class="mt-4 space-y-4" id="cat-container">
+        <% if (categories.length === 0) { %>
+        <p class="text-gray-500">No categories added yet.</p>
+        <% } else { %> <% categories.forEach((cat) => { %>
+        <div class="category-block">
+          <div
+            class="category-item-parent p-4 bg-gray-50 border rounded-lg shadow-sm flex items-center justify-between">
+            <div class="flex items-center">
+              <i class="fas fa-chevron-right toggle-subcategories mr-2" data-catid="<%= cat.id %>"></i>
+              <% if (cat.iconUrl) { %>
+                <img src="<%= cat.iconUrl %>" alt="<%= cat.name %> icon" class="w-6 h-6 object-cover rounded mr-2 border" />
+              <% } %>
+              <span class="text-gray-700 cat-name"><%= cat.name %></span>
+            </div>
+            <div>
+              <button
+                data-catid="<%= cat.id %>"
+                class="mr-1 add-subcategory-btn bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-600 transition duration-200 text-xs sm:text-sm">
+                Add Subcategory
+              </button>
+              <button
+                data-catid="<%= cat.id %>"
+                class="mr-1 deleteBtn bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition duration-200 text-xs sm:text-sm">
+                Delete
+              </button>
+              <button
+                data-catid="<%= cat.id %>"
+                class="mr-1 editBtn bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition duration-200 text-xs sm:text-sm">
+                Edit
+              </button>
+              <button
+                data-catid="<%= cat.id %>"
+                class="mr-1 create-category-coupon-btn bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition duration-200 text-xs sm:text-sm">
+                Create Coupon
+              </button>
+              <button
+                id="viewBtn"
+                data-catid="<%= cat.id %>"
+                class="viewBtn bg-purple-500 text-white px-3 py-1 rounded-md hover:bg-purple-600 transition duration-200 text-xs sm:text-sm">
+                View
+              </button>
+            </div>
+          </div>
+
+          <!-- Subcategories Container (initially hidden) -->
+          <div class="subcategory-container hidden" id="subcategories-<%= cat.id %>">
+            <% if (cat.subcategories && cat.subcategories.length > 0) { %> <% cat.subcategories.forEach((subcat) => { %>
+            <div
+              class="subcategory-item p-3 bg-gray-50 border rounded-lg shadow-sm flex items-center justify-between mt-2">
+              <span class="text-gray-700 subcat-name"><%= subcat.name %></span>
+              <div>
+                <button
+                  data-subcatid="<%= subcat.id %>"
+                  data-catid="<%= cat.id %>"
+                  class="mr-1 delete-subcat-btn bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition duration-200 text-xs sm:text-sm">
+                  Delete
+                </button>
+                <button
+                  data-subcatid="<%= subcat.id %>"
+                  data-catid="<%= cat.id %>"
+                  class="mr-1 edit-subcat-btn bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition duration-200 text-xs sm:text-sm">
+                  Edit
+                </button>
+                <button
+                  data-subcatid="<%= subcat.id %>"
+                  data-catid="<%= cat.id %>"
+                  class="view-subcat-btn bg-purple-500 text-white px-3 py-1 rounded-md hover:bg-purple-600 transition duration-200 text-xs sm:text-sm">
+                  View
+                </button>
+              </div>
+            </div>
+            <% }) %> <% } else { %>
+            <p class="text-gray-500 p-2">No subcategories added yet.</p>
+            <% } %>
+          </div>
+        </div>
+        <% }) %> <% } %>
+      </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script>
+      $(document).ready(() => {
+        // Live preview for icon URL
+        $(document).on("input", "#category-icon", function(){
+          const url = $(this).val().trim();
+          const $img = $("#category-icon-preview");
+          if (!url) { $img.addClass("hidden").attr("src", ""); return; }
+          $img.attr("src", url).removeClass("hidden");
+        });
+
+        // Create Category Coupon
+        $(document).on("click", ".create-category-coupon-btn", function () {
+          const categoryId = $(this).data("catid");
+          const catName = $(this).closest(".category-item-parent").find(".cat-name").text();
+
+          popup.showForm({
+            title: "Create Category Coupon",
+            confirmText: "Create Coupon",
+            actions: [
+              { id: 'popup-submit-btn', text: 'Create Coupon', class: 'bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200', preventClose: true }
+            ],
+            fields: [
+              { type: 'text', id: 'coupon-name', label: 'Coupon Name', placeholder: 'e.g. CAT10', required: true },
+              { type: 'select', id: 'coupon-type', label: 'Type', options: [ { value: 'percentage', label: 'Percentage' }, { value: 'fixed', label: 'Fixed' } ] },
+              { type: 'number', id: 'coupon-amount', label: 'Amount', placeholder: 'e.g. 10', required: true },
+              { type: 'date', id: 'coupon-expiry', label: 'Expiry Date', required: true },
+            ]
+          });
+
+          // Force visible styles in case of overriding CSS on this page
+          $("#popup-actions").css({ display: 'flex', gap: '1rem' });
+          $("#popup-submit-btn").css({
+            backgroundColor: '#16a34a', // green-600
+            color: '#ffffff',
+            padding: '0.5rem 1rem',
+            borderRadius: '0.5rem',
+          });
+          $("#popup-actions .close-popup").css({
+            backgroundColor: '#6b7280', // gray-500
+            color: '#ffffff',
+            padding: '0.5rem 1rem',
+            borderRadius: '0.5rem',
+          });
+
+          $(document).off('click', '#popup-submit-btn').on('click', '#popup-submit-btn', async () => {
+            const name = $("#coupon-name").val().trim();
+            const type = $("#coupon-type").val();
+            const amountStr = $("#coupon-amount").val().trim();
+            const expiryDate = $("#coupon-expiry").val();
+
+            if (!name) { errorAlert("Coupon name is required."); return; }
+            if (!amountStr || isNaN(Number(amountStr)) || Number(amountStr) <= 0) { errorAlert("Amount must be a positive number."); return; }
+            if (!expiryDate) { errorAlert("Expiry date is required."); return; }
+
+            try {
+              const resp = await fetch("/admin/add/category-coupon", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, type, amount: Number(amountStr), expiryDate, categoryId }),
+              });
+              const result = await resp.json();
+              if (!resp.ok) { errorAlert(result.error || "Failed to create coupon."); return; }
+              successAlert("Coupon created successfully.");
+              setTimeout(() => { popup.hide(); }, 300);
+            } catch (e) {
+              console.error("Error creating category coupon:", e);
+              errorAlert("An unexpected error occurred. Please try again.");
+            }
+          });
+        });
+        // Live preview for icon file
+        $(document).on("change", "#category-icon-file", function(){
+          const file = this.files && this.files[0];
+          const $img = $("#category-icon-file-preview");
+          if (!file) { $img.addClass("hidden").attr("src", ""); return; }
+          const reader = new FileReader();
+          reader.onload = (e) => { $img.attr("src", e.target.result).removeClass("hidden"); };
+          reader.readAsDataURL(file);
+        });
+        // Toggle subcategories visibility
+        $(document).on("click", ".toggle-subcategories", function () {
+          const catId = $(this).data("catid");
+          const subcategoriesContainer = $(`#subcategories-${catId}`);
+          $(this).toggleClass("open");
+          subcategoriesContainer.toggleClass("hidden");
+        });
+
+        // Inline new-category helpers
+        function showInlineNewCategory(prefill = "") {
+          $("#inline-new-category").removeClass("hidden");
+          const $inp = $("#inline-new-cat-input");
+          $inp.val(prefill).focus();
+        }
+        function hideInlineNewCategory() {
+          $("#inline-new-category").addClass("hidden");
+          $("#inline-new-cat-input").val("");
+        }
+
+        // Show inline inputs when selecting Other...
+        $("#parent-category").on("change", function () {
+          const val = $(this).val();
+          if (val === "__other__") {
+            showInlineNewCategory();
+          } else {
+            hideInlineNewCategory();
+          }
+        });
+
+        // Inline Cancel
+        $(document).on("click", "#inline-cancel-cat-btn", function () {
+          $("#parent-category").val("");
+          hideInlineNewCategory();
+        });
+
+        // Inline Add
+        $(document).on("click", "#inline-add-cat-btn", async function () {
+          const newName = $("#inline-new-cat-input").val().trim();
+          if (!newName) {
+            errorAlert("Category name is required.");
+            return;
+          }
+          try {
+            const resp = await fetch("/admin/add-category", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ category: newName }),
+            });
+            const result = await resp.json();
+            if (!resp.ok) {
+              errorAlert(result.message || "Failed to add category.");
+              return;
+            }
+            // Update UI: list and select
+            addCategoryToList(result.id, newName);
+            const otherOpt = $("#parent-category option[value='__other__']");
+            const newOpt = $(`<option></option>`).val(result.id).text(newName);
+            newOpt.insertBefore(otherOpt);
+            $("#parent-category").val(result.id);
+            successAlert("Category added successfully");
+            hideInlineNewCategory();
+          } catch (err) {
+            console.error("Error adding category inline:", err);
+            errorAlert("An unexpected error occurred. Please try again.");
+          }
+        });
+
+        // If page opened with ?newCategoryName=..., auto-open the inline form prefilled
+        (function autoOpenFromQuery() {
+          const params = new URLSearchParams(window.location.search);
+          const prefill = params.get("newCategoryName");
+          if (!prefill) return;
+
+          // Show inline input prefilled and focus
+          $("#parent-category").val("__other__");
+          showInlineNewCategory(prefill);
+          // Optional: auto-click Add after a user presses Enter inside input
+          $("#inline-new-cat-input").off("keydown.inline").on("keydown.inline", function (e) {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              $("#inline-add-cat-btn").click();
+            }
+          });
+        })();
+
+        // Enforce button styles/text in case of global overrides
+        (function enforceInlineButtonsStyles() {
+          const $btns = $("#inline-add-cat-btn, #inline-cancel-cat-btn");
+          $btns.css({
+            display: "inline-flex",
+            "align-items": "center",
+            "justify-content": "center",
+            color: "#fff",
+            "font-size": "16px",
+            "line-height": "1.25",
+            "text-indent": 0,
+            "letter-spacing": "normal",
+            "min-height": "48px",
+            border: "1px solid rgba(0,0,0,0.1)",
+          });
+          $("#inline-add-cat-btn").text("Add");
+          $("#inline-cancel-cat-btn").text("Cancel");
+        })();
+
+        // Add Category
+        function addCategoryToList(id, name, iconUrl = null) {
+          const categoriesContainer = $("#cat-container");
+
+          // Remove only the top-level "No categories" message, not nested subcategory placeholders
+          const topLevelMsg = categoriesContainer.children("p.text-gray-500");
+          if (topLevelMsg.length > 0) {
+            topLevelMsg.remove();
+          }
+
+          const newCategoryBlock = `
+            <div class="category-block">
+              <div class="category-item-parent p-4 bg-gray-50 border rounded-lg shadow-sm flex items-center justify-between">
+                <div class="flex items-center">
+                  <i class="fas fa-chevron-right toggle-subcategories mr-2" data-catid="${id}"></i>
+                  ${iconUrl ? `<img src="${iconUrl}" alt="${name} icon" class="w-6 h-6 object-cover rounded mr-2 border" />` : ""}
+                  <span class="text-gray-700 cat-name">${name}</span>
+                </div>
+                <div>
+                  <button
+                    data-catid="${id}"
+                    class="mr-1 add-subcategory-btn bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-600 transition duration-200 text-xs sm:text-sm">
+                    Add Subcategory
+                  </button>
+                  <button
+                    data-catid="${id}"
+                    class="mr-1 deleteBtn bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition duration-200 text-xs sm:text-sm">
+                    Delete
+                  </button>
+                  <button
+                    data-catid="${id}"
+                    class="mr-1 editBtn bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition duration-200 text-xs sm:text-sm">
+                    Edit
+                  </button>
+                  <button
+                    data-catid="${id}"
+                    class="mr-1 create-category-coupon-btn bg-emerald-600 text-white px-3 py-1 rounded-md hover:bg-emerald-700 transition duration-200 text-xs sm:text-sm">
+                    Create Coupon
+                  </button>
+                  <button
+                    data-catid="${id}"
+                    class="viewBtn bg-purple-500 text-white px-3 py-1 rounded-md hover:bg-purple-600 transition duration-200 text-xs sm:text-sm">
+                    View
+                  </button>
+                </div>
+              </div>
+              <div class="subcategory-container hidden" id="subcategories-${id}">
+                <p class="text-gray-500 p-2">No subcategories added yet.</p>
+              </div>
+            </div>`;
+
+          categoriesContainer.append(newCategoryBlock);
+
+          // Update the parent category dropdown
+          const option = `<option value="${id}">${name}</option>`;
+          $("#parent-category").append(option);
+        }
+
+        // Add Subcategory
+        function addSubcategoryToList(catId, subcatId, subcatName) {
+          const subcategoriesContainer = $(`#subcategories-${catId}`);
+
+          // Remove "No subcategories" message if it exists
+          if (subcategoriesContainer.find(".text-gray-500").length > 0) {
+            subcategoriesContainer.empty();
+          }
+
+          const newSubcategoryItem = `
+            <div class="subcategory-item p-3 bg-gray-50 border rounded-lg shadow-sm flex items-center justify-between mt-2">
+              <span class="text-gray-700 subcat-name">${subcatName}</span>
+              <div>
+                <button
+                  data-subcatid="${subcatId}"
+                  data-catid="${catId}"
+                  class="mr-1 delete-subcat-btn bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition duration-200 text-xs sm:text-sm">
+                  Delete
+                </button>
+                <button
+                  data-subcatid="${subcatId}"
+                  data-catid="${catId}"
+                  class="mr-1 edit-subcat-btn bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition duration-200 text-xs sm:text-sm">
+                  Edit
+                </button>
+                <button
+                  data-subcatid="${subcatId}"
+                  data-catid="${catId}"
+                  class="view-subcat-btn bg-purple-500 text-white px-3 py-1 rounded-md hover:bg-purple-600 transition duration-200 text-xs sm:text-sm">
+                  View
+                </button>
+              </div>
+            </div>`;
+
+          subcategoriesContainer.append(newSubcategoryItem);
+
+          // Show the subcategories container if it's hidden
+          if (subcategoriesContainer.hasClass("hidden")) {
+            subcategoriesContainer.removeClass("hidden");
+            $(`i.toggle-subcategories[data-catid="${catId}"]`).addClass("open");
+          }
+        }
+
+        // Add Category Form Submission
+        $("#add-category-form").on("submit", async (e) => {
+          e.preventDefault();
+          const category = $("#name").val().trim();
+          const iconUrl = $("#category-icon").val().trim();
+          const iconFile = document.getElementById("category-icon-file").files[0];
+
+          if (!category) {
+            showPopup("Category name is required.");
+            return;
+          }
+
+          try {
+            const fd = new FormData();
+            fd.append("category", category);
+            if (iconFile) fd.append("icon", iconFile);
+            else if (iconUrl) fd.append("iconUrl", iconUrl);
+            const response = await fetch("/admin/add-category", { method: "POST", body: fd });
+
+            const result = await response.json();
+
+            if (response.ok) {
+              successAlert("Category added successfully");
+              addCategoryToList(result.id, category, result.iconUrl || null);
+              $("#name").val("");
+              $("#category-icon").val("");
+              $("#category-icon-preview").addClass("hidden").attr("src", "");
+              $("#category-icon-file").val("");
+              $("#category-icon-file-preview").addClass("hidden").attr("src", "");
+            } else {
+              errorAlert(result.message || "Failed to add category.");
+            }
+          } catch (error) {
+            console.error("Error adding category:", error);
+            errorAlert("An unexpected error occurred. Please try again.");
+          }
+        });
+
+        // Add Subcategory Form Submission
+        $("#add-subcategory-form").on("submit", async (e) => {
+          e.preventDefault();
+          const parentCategoryId = $("#parent-category").val();
+          const subcategoryName = $("#subcategory-name").val().trim();
+
+          if (!parentCategoryId) {
+            showPopup("Please select a parent category.");
+            return;
+          }
+
+          if (!subcategoryName) {
+            showPopup("Subcategory name is required.");
+            return;
+          }
+
+          try {
+            const response = await fetch("/admin/add-subcategory", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                categoryId: parentCategoryId,
+                subcategoryName: subcategoryName,
+              }),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+              successAlert("Subcategory added successfully");
+              addSubcategoryToList(parentCategoryId, result.id, subcategoryName);
+              $("#subcategory-name").val("");
+            } else {
+              errorAlert(result.message || "Failed to add subcategory.");
+            }
+          } catch (error) {
+            console.error("Error adding subcategory:", error);
+            errorAlert("An unexpected error occurred. Please try again.");
+          }
+        });
+
+        // Quick Add Subcategory Button
+        $(document).on("click", ".add-subcategory-btn", function () {
+          const catId = $(this).data("catid");
+          const catName = $(this).closest(".category-item-parent").find(".cat-name").text();
+
+          // Set the parent category in the dropdown
+          $("#parent-category").val(catId);
+
+          // Scroll to the subcategory form
+          $("html, body").animate(
+            {
+              scrollTop: $("#add-subcategory-form").offset().top - 100,
+            },
+            500
+          );
+
+          // Focus on the subcategory name input
+          $("#subcategory-name").focus();
+        });
+
+        // View Category
+        $(document).on("click", ".viewBtn", function () {
+          viewCat(this);
+        });
+
+        function viewCat(buttonData) {
+          const catId = $(buttonData).data("catid");
+          if (!catId) {
+            errorAlert("Category not found in database");
+            return;
+          }
+
+          // Close popup handlers
+          $("#close-view-popup")
+            .off("click")
+            .on("click", () => {
+              $("#popup-details").addClass("hidden");
+            });
+          $("#view-popup-close-btn")
+            .off("click")
+            .on("click", () => {
+              $("#popup-details").addClass("hidden");
+            });
+
+          // AJAX request to fetch category details
+          $.ajax({
+            url: `/admin/view-category/${catId}`,
+            type: "GET",
+            success: function (response) {
+              try {
+                const popup = $("#popup-details");
+                popup.removeClass("hidden");
+                popup.find("#title").text(response.category);
+
+                if (!Array.isArray(response.products) || response.products.length === 0) {
+                  popup.find("#popupBody").html(`No products available`);
+                  return;
+                }
+
+                // Create the popup content
+                const popupContent = response.products
+                  .map((item) => {
+                    const img = item.images
+                      ? `<img src="${item.images}" alt="Product Image" class="w-16 h-16 rounded shadow" />`
+                      : `<div class="w-10 h-10 bg-gray-200 rounded shadow flex items-center justify-center text-gray-500">N/A</div>`;
+                    const details = Object.entries(item)
+                      .filter(([key]) => key !== "images")
+                      .map(([key, value]) => `<p><strong>${key}:</strong> ${value}</p>`)
+                      .join("");
+                    return `
+                      <div class="category-item flex items-center justify-start gap-4 p-3 border-b">
+                        ${img}
+                        <div>${details}</div>
+                      </div>
+                    `;
+                  })
+                  .join("");
+
+                popup.find("#popupBody").html(popupContent);
+              } catch (error) {
+                console.error("Failed to process the response:", error);
+                errorAlert(`An error occurred while processing the response. ${error}`);
+              }
+            },
+            error: function (xhr, status, error) {
+              console.error("AJAX Error:", status, error);
+              errorAlert(`An error occurred while processing the response. \n${status} - ${error}`);
+            },
+          });
+        }
+
+        // View Subcategory
+        $(document).on("click", ".view-subcat-btn", function () {
+          const subcatId = $(this).data("subcatid");
+          const catId = $(this).data("catid");
+
+          if (!subcatId || !catId) {
+            errorAlert("Subcategory not found in database");
+            return;
+          }
+
+          // Close popup handlers
+          $("#close-view-popup")
+            .off("click")
+            .on("click", () => {
+              $("#popup-details").addClass("hidden");
+            });
+          $("#view-popup-close-btn")
+            .off("click")
+            .on("click", () => {
+              $("#popup-details").addClass("hidden");
+            });
+
+          // AJAX request to fetch subcategory details
+          $.ajax({
+            url: `/admin/view-subcategory/${catId}/${subcatId}`,
+            type: "GET",
+            success: function (response) {
+              try {
+                const popup = $("#popup-details");
+                popup.removeClass("hidden");
+                popup.find("#title").text(response.subcategory);
+
+                if (!Array.isArray(response.products) || response.products.length === 0) {
+                  popup.find("#popupBody").html(`No products available`);
+                  return;
+                }
+
+                // Create the popup content
+                const popupContent = response.products
+                  .map((item) => {
+                    const img = item.images
+                      ? `<img src="${item.images}" alt="Product Image" class="w-16 h-16 rounded shadow" />`
+                      : `<div class="w-10 h-10 bg-gray-200 rounded shadow flex items-center justify-center text-gray-500">N/A</div>`;
+                    const details = Object.entries(item)
+                      .filter(([key]) => key !== "images")
+                      .map(([key, value]) => `<p><strong>${key}:</strong> ${value}</p>`)
+                      .join("");
+                    return `
+                      <div class="category-item flex items-center justify-start gap-4 p-3 border-b">
+                        ${img}
+                        <div>${details}</div>
+                      </div>
+                    `;
+                  })
+                  .join("");
+
+                popup.find("#popupBody").html(popupContent);
+              } catch (error) {
+                console.error("Failed to process the response:", error);
+                errorAlert(`An error occurred while processing the response. ${error}`);
+              }
+            },
+            error: function (xhr, status, error) {
+              console.error("AJAX Error:", status, error);
+              errorAlert(`An error occurred while processing the response. \n${status} - ${error}`);
+            },
+          });
+        });
+        // Delete Category
+        $(document).on("click", ".deleteBtn", function () {
+          const categoryId = $(this).data("catid");
+
+          if (!categoryId) {
+            errorAlert(`Category not found in database`);
+            return;
+          }
+
+          popup.show({
+            title: "Delete Category",
+            message: "Are you sure you want to delete this category? This will also delete all subcategories.",
+            actions: [
+              {
+                text: "Delete Category",
+                class: "bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition duration-200",
+                onClick: () => {
+                  $.ajax({
+                    url: `/admin/delete-category`,
+                    data: JSON.stringify({ categoryId: categoryId }),
+                    type: "DELETE",
+                    contentType: "application/json",
+                    success: function (response) {
+                      successAlert("Category deleted successfully");
+                      setTimeout(() => {
+                        location.reload();
+                      }, 300);
+                    },
+                    error: function (xhr, status, error) {
+                      console.error("AJAX Error:", status, error);
+                      errorAlert(`Failed to delete category. Please try again.\n${status} - ${error}`);
+                    },
+                  });
+                },
+              },
+            ],
+          });
+        });
+
+        // Delete Subcategory
+        $(document).on("click", ".delete-subcat-btn", function () {
+          const subcategoryId = $(this).data("subcatid");
+          const categoryId = $(this).data("catid");
+
+          if (!subcategoryId || !categoryId) {
+            errorAlert(`Subcategory not found in database`);
+            return;
+          }
+
+          popup.show({
+            title: "Delete Subcategory",
+            message: "Are you sure you want to delete this subcategory?",
+            actions: [
+              {
+                text: "Delete Subcategory",
+                class: "bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition duration-200",
+                onClick: () => {
+                  $.ajax({
+                    url: `/admin/delete-subcategory`,
+                    data: JSON.stringify({
+                      categoryId: categoryId,
+                      subcategoryId: subcategoryId,
+                    }),
+                    type: "DELETE",
+                    contentType: "application/json",
+                    success: function (response) {
+                      successAlert("Subcategory deleted successfully");
+
+                      // Remove the subcategory item from the UI
+                      const subcatItem = $(`.delete-subcat-btn[data-subcatid="${subcategoryId}"]`).closest(
+                        ".subcategory-item"
+                      );
+                      subcatItem.remove();
+
+                      // If no more subcategories, add the "No subcategories" message
+                      const subcategoriesContainer = $(`#subcategories-${categoryId}`);
+                      if (subcategoriesContainer.children().length === 0) {
+                        subcategoriesContainer.html('<p class="text-gray-500 p-2">No subcategories added yet.</p>');
+                      }
+                    },
+                    error: function (xhr, status, error) {
+                      console.error("AJAX Error:", status, error);
+                      errorAlert(`Failed to delete subcategory. Please try again.\n${status} - ${error}`);
+                    },
+                  });
+                },
+              },
+            ],
+          });
+        });
+
+        // Edit Category
+        $(document).on("click", ".editBtn", function () {
+          const catId = $(this).data("catid");
+          popup.showForm({
+            title: "Edit Category",
+            fields: [
+              {
+                type: "text",
+                id: "product_name",
+                name: "productName",
+                placeholder: "Enter new category name",
+                required: true,
+              },
+            ],
+            confirmText: "Edit Category",
+            actions: [
+              {
+                text: "Edit Category",
+                id: "popup-submit-btn",
+                class: "bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition duration-200",
+                onClick: () => {
+                  const newName = $("input[name='productName']").val().trim();
+                  if (!newName) {
+                    errorAlert("Category name is required.");
+                    return;
+                  }
+                  $.ajax({
+                    url: `/admin/edit-cat/${catId}/${newName}`,
+                    type: "POST",
+                    contentType: "application/json",
+                    success: function (response) {
+                      successAlert("Category updated successfully");
+
+                      // Update the category name in the UI
+                      $(`.editBtn[data-catid="${catId}"]`)
+                        .closest(".category-item-parent")
+                        .find(".cat-name")
+                        .text(newName);
+
+                      // Update the parent category dropdown
+                      $(`#parent-category option[value="${catId}"]`).text(newName);
+                    },
+                    error: function (xhr, status, error) {
+                      console.error("AJAX Error:", status, error);
+                      errorAlert(`Failed to update category. Please try again.\n${status} - ${error}`);
+                    },
+                  });
+                },
+              },
+            ],
+          });
+        });
+
+        // Edit Subcategory
+        $(document).on("click", ".edit-subcat-btn", function () {
+          const subcatId = $(this).data("subcatid");
+          const catId = $(this).data("catid");
+
+          popup.showForm({
+            title: "Edit Subcategory",
+            fields: [
+              {
+                type: "text",
+                id: "subcategory_name",
+                name: "subcategoryName",
+                placeholder: "Enter new subcategory name",
+                required: true,
+              },
+            ],
+            confirmText: "Edit Subcategory",
+            actions: [
+              {
+                text: "Edit Subcategory",
+                id: "popup-submit-btn",
+                class: "bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition duration-200",
+                onClick: () => {
+                  const newName = $("input[name='subcategoryName']").val().trim();
+                  if (!newName) {
+                    errorAlert("Subcategory name is required.");
+                    return;
+                  }
+                  $.ajax({
+                    url: `/admin/edit-subcategory`,
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({
+                      categoryId: catId,
+                      subcategoryId: subcatId,
+                      newName: newName,
+                    }),
+                    success: function (response) {
+                      successAlert("Subcategory updated successfully");
+
+                      // Update the subcategory name in the UI
+                      $(`.edit-subcat-btn[data-subcatid="${subcatId}"]`)
+                        .closest(".subcategory-item")
+                        .find(".subcat-name")
+                        .text(newName);
+                    },
+                    error: function (xhr, status, error) {
+                      console.error("AJAX Error:", status, error);
+                      errorAlert(`Failed to update subcategory. Please try again.\n${status} - ${error}`);
+                    },
+                  });
+                },
+              },
+            ],
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
+      

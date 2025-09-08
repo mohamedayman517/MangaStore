@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gifts Management</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+    <link rel="stylesheet" href="/css/build.min.css" />
+    <style>
+      table { border-collapse: collapse; width: 100%; }
+      table th, table td { padding: 12px 15px; text-align: left; }
+      table thead th { background-color: #1f2937; color: white; font-weight: bold; text-transform: uppercase; font-size: 0.875rem; }
+      table tbody tr:nth-child(even) { background-color: #f3f4f6; }
+      table tbody tr:hover { background-color: #e5e7eb; cursor: pointer; }
+      .action-btn { padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.375rem; color: white; transition: background-color 0.3s ease; }
+      .btn-view { background-color: #16a34a; }
+      .btn-deliver { background-color: #2563eb; }
+      .badge { padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-weight: 600; font-size: 0.75rem; }
+      .badge-green { background: #dcfce7; color: #166534; }
+      .badge-yellow { background: #fef9c3; color: #854d0e; }
+      .badge-blue { background: #dbeafe; color: #1e40af; }
+      .badge-red { background: #fee2e2; color: #991b1b; }
+      .badge-purple { background: #ede9fe; color: #5b21b6; }
+      .badge-pink { background: #fce7f3; color: #9d174d; }
+    </style>
+  </head>
+  <body class="bg-gray-100 mt-16">
+    <%- include("../partials/navbar") %>
+    <%- include("../partials/admin-back") %>
+
+    <div class="max-w-7xl mx-auto my-10 p-6 bg-white rounded-lg shadow-lg">
+      <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Gifts Management</h1>
+        <a href="/admin/transactions" class="text-blue-600 underline">Back to Transactions</a>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table id="giftsTable">
+          <thead>
+            <tr>
+              <th>Transaction ID</th>
+              <th>Purchaser</th>
+              <th>Total</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Recipient</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% gifts.forEach(g => { %>
+              <tr>
+                <td><%= g.id %></td>
+                <td>
+                  <div class="font-semibold"><%= g.name %></div>
+                  <div class="text-xs text-gray-500">UID: <%= g.uid %></div>
+                </td>
+                <td class="font-semibold"><%= Number(g.totalPrice).toFixed(2) %> <%= g.currency || '' %></td>
+                <td>
+                  <%= (g.createdAt.toDate()).toLocaleString("en-GB", { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) %>
+                </td>
+                <td>
+                  <% const latest = g.status && g.status.length ? g.status[g.status.length - 1].state : 'N/A'; %>
+                  <% if (latest === 'ToPay') { %>
+                    <span class="badge badge-red">ToPay</span>
+                  <% } else if (latest === 'Preparing') { %>
+                    <span class="badge badge-yellow">Preparing</span>
+                  <% } else if (latest === 'Delivering') { %>
+                    <span class="badge badge-blue">Delivering</span>
+                  <% } else if (latest === 'Deilevered') { %>
+                    <span class="badge badge-green">Delivered</span>
+                  <% } else if (latest === 'Viewed') { %>
+                    <span class="badge badge-purple">Viewed</span>
+                  <% } else if (latest === 'Rejected') { %>
+                    <span class="badge badge-red">Rejected</span>
+                  <% } else if (latest === 'unconfirmed') { %>
+                    <span class="badge badge-pink">Unconfirmed</span>
+                  <% } else { %>
+                    <span class="badge">N/A</span>
+                  <% } %>
+                </td>
+                <td>
+                  <% if (g.giftRecipient) { %>
+                    <div class="font-medium"><%= g.giftRecipient.name %></div>
+                    <% if (g.giftRecipient.email) { %><div class="text-xs text-gray-500"><%= g.giftRecipient.email %></div><% } %>
+                    <% if (g.giftRecipient.phone) { %><div class="text-xs text-gray-500"><%= g.giftRecipient.phone %></div><% } %>
+                    <% if (g.giftRecipient.note) { %><div class="text-xs text-gray-400 italic truncate max-w-xs">"<%= g.giftRecipient.note %>"</div><% } %>
+                  <% } else { %>
+                    <span class="text-gray-400">-</span>
+                  <% } %>
+                </td>
+                <td class="flex items-center space-x-3">
+                  <a href="/admin/view/transaction/<%= g.id %>" class="action-btn btn-view">View</a>
+                  <a href="/admin/deliver-order/<%= g.id %>" class="action-btn btn-deliver">Deliver</a>
+                  <button data-tid="<%= g.id %>" class="action-btn" style="background:#8b5cf6" onclick="sendGift(this)">Send Gift</button>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script>
+      $(document).ready(function(){
+        $('#giftsTable').DataTable({ order: [[3, 'desc']] });
+      });
+
+      async function sendGift(btn){
+        const id = btn.getAttribute('data-tid');
+        btn.disabled = true; const old = btn.textContent; btn.textContent = 'Sending...';
+        try{
+          const res = await fetch('/admin/gifts/send',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ transactionId: id })
+          });
+          if(!res.ok) throw new Error('Failed');
+          btn.textContent = 'Sent';
+          btn.style.background = '#16a34a';
+        }catch(e){
+          btn.disabled = false; btn.textContent = old; alert('Failed to send gift');
+        }
+      }
+    </script>
+  </body>
+</html>

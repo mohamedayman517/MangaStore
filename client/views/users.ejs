@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Users</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+    <link rel="stylesheet" href="/css/build.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer" />
+    <style>
+      /* Ensure Actions column never hides buttons (DataTables sometimes sets nowrap) */
+      #usersTable th.actions-head,
+      #usersTable td.actions-cell { min-width: 360px; }
+      #usersTable td.actions-cell { white-space: normal !important; overflow: visible !important; }
+      @media (max-width: 768px) {
+        #usersTable td.actions-cell { display: flex; flex-wrap: wrap; gap: .5rem; }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100">
+    <%- include('partials/navbar') %>
+    <%- include('partials/admin-back') %> <%- include('partials/reusable-popup') %><%- include('partials/alerts-popups') %>
+    <!-- Main Container -->
+    <main class="container mx-auto mt-10 px-4 md:mt-10 md:mb-0 mb-10 pt-16">
+      <!-- Header -->
+      <div class="flex justify-between items-center mb-6 gap-3 flex-wrap">
+        <h1 class="text-3xl font-semibold text-gray-800 mb-6 text-center sm:text-left">Users</h1>
+        <div class="flex items-center gap-2">
+          <button id="export-points" class="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-gray-800 text-white hover:bg-gray-900 shadow-lg ring-1 ring-white/20 text-sm md:text-base font-semibold">
+            <i class="fa-solid fa-file-export"></i>
+            <span>Export Points</span>
+          </button>
+          <button
+          id="addRole"
+          type="button"
+          class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition duration-200 text-xs sm:text-sm">
+          Add role
+          </button>
+        </div>
+      </div>
+      <!-- DataTable Wrapper -->
+      <div class="overflow-x-auto bg-white rounded-lg shadow-md border border-gray-300">
+        <table id="usersTable" class="table-auto w-full text-sm text-left text-gray-500">
+          <thead>
+            <tr class="bg-gray-200">
+              <th class="px-4 py-2 text-center sm:text-left">Name</th>
+              <th class="px-4 py-2 text-center sm:text-left">Email</th>
+              <th class="px-4 py-2 text-center sm:text-left">Phone</th>
+              <th class="px-4 py-2 text-center sm:text-left">provider</th>
+              <th class="px-4 py-2 text-center sm:text-left actions-head">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% users.forEach(user => { %>
+            <tr class="border-b border-gray-200 hover:bg-gray-50">
+              <td class="px-4 py-2 text-center sm:text-left"><%= user.displayName %></td>
+              <td class="px-4 py-2 text-center sm:text-left"><%= user.email %></td>
+              <td class="px-4 py-2 text-center sm:text-left"><%= user.phoneNumber %></td>
+              <td class="px-4 py-2 text-center sm:text-left">
+                <% if (user.providerData[0].providerId == "password") {%> <i class="fa-solid fa-envelope"></i> <%} else
+                if (user.providerData[0].providerId == "google.com") {%> <i class="fab fa-google"></i> <% } %>
+              </td>
+              <td class="px-4 py-2 flex flex-col sm:flex-row justify-center sm:justify-start gap-2 flex-wrap actions-cell" style="white-space: normal; overflow: visible;">
+                <button
+                  data-userID="<%= user.uid %>"
+                  class="deleteUserBtn bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition duration-200 text-xs sm:text-sm w-full sm:w-auto">
+                  Delete
+                </button>
+
+                <button
+                  data-userID="<%= user.uid %>"
+                  class="disableUserBtn bg-gray-700 text-white px-4 py-2 rounded-md hover:bg-gray-800 transition duration-200 text-xs sm:text-sm w-full sm:w-auto">
+                  <%= user.disabled == true? "Enable" : "Disable" %>
+                </button>
+                <button
+                  data-userID="<%= user.uid %>"
+                  class="detailsUserBtn bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition duration-200 text-xs sm:text-sm w-full sm:w-auto">
+                  Details
+                </button>
+                <button
+                  data-userID="<%= user.uid %>"
+                  data-email="<%= user.email %>"
+                  class="createCouponBtn bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition duration-200 text-xs sm:text-sm w-full sm:w-auto">
+                  Create Coupon
+                </button>
+              </td>
+            </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </main>
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js" integrity="sha512-a+SUDuwNzXDvz4XrIcXHuCf089/iJAoN4lmrXJg18XnduKK6YlDHNRalv4yd1N40OKI80tFidF+rqTFKGPoWFQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/js/script/users.js"></script>
+    <script>
+      // Safeguard: ensure any alert() shows as our styled popup
+      (function(){
+        try {
+          window.alert = function(message){
+            if (typeof infoAlert === 'function') infoAlert(String(message));
+            else console.log(String(message));
+          };
+        } catch(_){}
+      })();
+    </script>
+    <script>
+      (function(){
+        const btn = document.getElementById('export-points');
+        if (!btn) return;
+        btn.addEventListener('click', async () => {
+          btn.disabled = true; const old = btn.textContent; btn.textContent = 'Exporting...';
+          try {
+            const res = await fetch('/admin/export/points', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' } });
+            const data = await res.json().catch(()=>({success:false,error:'Invalid JSON response'}));
+            if (!res.ok || !data.success) throw new Error(data.error || 'Export failed');
+            if (typeof successAlert === 'function') {
+              successAlert(`Exported ${data.count} rows to sheet: ${data.sheet}`);
+            } else {
+              console.log(`Exported ${data.count} rows to sheet: ${data.sheet}`);
+            }
+          } catch (e) {
+            if (typeof errorAlert === 'function') {
+              errorAlert(`Export failed: ${e.message}`);
+            } else {
+              console.error(`Export failed: ${e.message}`);
+            }
+          } finally {
+            btn.disabled = false; btn.textContent = old;
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Product Management</title>
+    <!-- Include DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="/css/build.min.css" />
+    <style>
+      input[type="number"]::-webkit-outer-spin-button,
+      input[type="number"]::-webkit-inner-spin-button {
+        display: none;
+      }
+      .fancy i {
+        transition: all 0.3s ease-in-out;
+      }
+
+      .fancy:hover i {
+        color: white;
+        background: black;
+      }
+      .fancy:hover span {
+        color: white;
+        padding-left: 1.5em;
+      }
+      /* From Uiverse.io by adamgiebl */
+      .dots-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        width: 100%;
+      }
+
+      .dot {
+        height: 20px;
+        width: 20px;
+        margin-right: 10px;
+        border-radius: 10px;
+        background-color: #b3d4fc;
+        animation: pulse 1.5s infinite ease-in-out;
+      }
+
+      .dot:last-child {
+        margin-right: 0;
+      }
+
+      .dot:nth-child(1) {
+        animation-delay: -0.3s;
+      }
+
+      .dot:nth-child(2) {
+        animation-delay: -0.1s;
+      }
+
+      .dot:nth-child(3) {
+        animation-delay: 0.1s;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(0.8);
+          background-color: #b3d4fc;
+          box-shadow: 0 0 0 0 rgba(178, 212, 252, 0.7);
+        }
+
+        50% {
+          transform: scale(1.2);
+          background-color: #6793fb;
+          box-shadow: 0 0 0 10px rgba(178, 212, 252, 0);
+        }
+
+        100% {
+          transform: scale(0.8);
+          background-color: #b3d4fc;
+          box-shadow: 0 0 0 0 rgba(178, 212, 252, 0.7);
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 relative">
+    <div
+      class="flex -top-0 flex-col items-center justify-center bg-gradient-to-br from-zinc-500 to-zinc-700 bg-opacity-80 fixed w-screen h-screen backdrop-blur-md"
+      style="z-index: 100"
+      id="loadingContainer">
+      <section class="dots-container">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </section>
+    </div>
+    <%- include("../partials/navbar") %>
+    <%- include("../partials/admin-back") %>
+    <%- include("./modals/add-new-popup") %><%- include("./modals/edit-coupon-popup") %><%- include("./modals/alerts-popups") %><%- include("./modals/popup-details") %><%- include("./modals/confirm-delete") %>
+    <div class="max-w-7xl my-20 mx-auto bg-white p-6 rounded-lg shadow-md">
+      <div class="flex items-center justify-around">
+        <h1 class="text-2xl font-semibold text-gray-800">Coupon Management</h1>
+        <button
+          id="addNewCoupon"
+          class="flex fancy my-5 flex-row-reverse items-center justify-center bg-transparent border-2 border-black text-white font-bold tracking-wide text-xs p-3 transition-all ease-in-out duration-300 hover:bg-black hover:text-white">
+          <span class="text-black text-sm pl-6 uppercase transition-all ease-in-out duration-300 hover:pl-4">
+            Add New Coupon
+          </span>
+          <i class="fas fa-plus-circle text-black transition-all ease-in-out duration-300 hover:text-white"></i>
+        </button>
+      </div>
+      <div class="overflow-x-auto">
+        <table id="productTable" class="min-w-full bg-white border border-gray-200 rounded-lg">
+          <thead>
+            <tr class="bg-gray-100 text-gray-600 text-left text-sm uppercase">
+              <th class="px-6 py-3">Coupon ID</th>
+              <th class="px-6 py-3">Name</th>
+              <th class="px-6 py-3">valid</th>
+              <th class="px-6 py-3">Amount</th>
+              <th class="px-6 py-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% coupons.forEach((coupon) => { %>
+            <tr>
+              <td class="px-6 py-4"><%= coupon.id %></td>
+              <td class="px-6 py-4"><%= coupon.name %></td>
+              <td class="px-6 py-4">
+                <% if ( coupon.isValid === true) {%>
+                <i class="fa-regular fa-circle-check text-green-600"></i>
+                <% } %> <% if(coupon.isValid === false) { %>
+                <i class="fa-solid fa-circle-xmark text-red-600"></i>
+                <% } %>
+              </td>
+              <td class="px-6 py-4"><%= coupon.amount %> <%= coupon.type == "percentage" ? "%" : "L.E"%></td>
+              <td class="px-6 py-4">
+                <button
+                  class="edit-btn bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600"
+                  data-id="<%=coupon.id %>">
+                  Edit
+                </button>
+                <button
+                  class="delete-btn bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600"
+                  data-id="<%=coupon.id %>">
+                  Delete
+                </button>
+                <button
+                  class="view-btn bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-600"
+                  data-id="<%=coupon.id %>">
+                  View
+                </button>
+              </td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script>
+      $(document).ready(function () {
+        $("#loadingContainer").html("");
+        $("#loadingContainer").addClass("!hidden");
+        function successAlert(msg) {
+          const alert = $("#success-alert");
+          alert.find(".popup-text").text(msg);
+          alert.addClass("active");
+          alert.removeClass("!hidden");
+          setTimeout(() => {
+            alert.removeClass("active");
+            alert.addClass("!hidden");
+          }, 3000);
+        }
+        function errorAlert(err) {
+          const alert = $("#err-alert");
+          alert.find(".popup-text").text(`Error while adding category ${err}`);
+          alert.addClass("active");
+          alert.removeClass("!hidden");
+          setTimeout(() => {
+            alert.addClass("!hidden");
+            alert.removeClass("active");
+          }, 3000);
+        }
+        function warnAlert(warn) {
+          const alert = $("#warn-alert");
+          alert.find(".popup-text").text(`Warning: ${warn}`);
+          alert.addClass("active");
+          alert.removeClass("!hidden");
+          setTimeout(() => {
+            alert.addClass("!hidden");
+            alert.removeClass("active");
+          }, 3000);
+        }
+        function infoAlert(msg) {
+          const alert = $("#info-alert");
+          alert.find(".popup-text").text(msg);
+          alert.addClass("active");
+          alert.removeClass("!hidden");
+          setTimeout(() => {
+            alert.addClass("!hidden");
+            alert.removeClass("active");
+          }, 3000);
+        }
+
+        $("#productTable").DataTable();
+
+        $("#addNewCoupon").click(function () {
+          $("#add-popup").removeClass("!hidden");
+        });
+        $("#submitBtn").on("click", function (e) {
+          $("#submitBtn").attr("disabled", "disabled");
+          e.preventDefault();
+          const name = $("#name").val().trim();
+          const amount = parseFloat($("#amount").val());
+          const isValid = $("#isValid").val() === "true";
+          const type = $("#Type").val();
+          const expiryDate = $("#expiryDate").val();
+          if (!name || isNaN(amount) || type === "Select option" || expiryDate === "") {
+            $("#submitBtn").removeAttr("disabled");
+            warnAlert("Please fill in all fields.");
+            return;
+          }
+          const timestamp = new Date(expiryDate).getTime();
+          const productData = {
+            name,
+            amount,
+            isValid,
+            type,
+            expiryDate: timestamp,
+          };
+          $.ajax({
+            url: "/admin/add/coupon",
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(productData),
+            success: function (response) {
+              successAlert(response.message);
+              $("#add-popup").addClass("!hidden");
+              setTimeout(() => {
+                location.reload();
+              }, 500);
+            },
+            error: function (error) {
+              $("#submitBtn").removeAttr("disabled");
+              console.error("Error:", error);
+              errorAlert(`Failed to add product. Please try again.\n${error}`);
+            },
+          });
+        });
+        $(".close-popup").on("click", function () {
+          $(".popup").addClass("!hidden");
+          $("#name").val("");
+          $("#amount").val("");
+          $("#isValid").val("Select option");
+          $("#Type").val("Select option");
+          $("#expiryDate").val("");
+          $("#submitBtn").removeAttr("disabled");
+        });
+
+        $(".edit-btn").on("click", function () {
+          const id = $(this).data("id");
+          $.ajax({
+            url: `/admin/view/coupon/${id}`,
+            method: "GET",
+            success: function (response) {
+              const popup = $("#edit-popup");
+              popup.removeClass("!hidden");
+              popup.find("#isValid").val(response.coupon.isValid.toString()).trigger("change");
+              popup.find("#Type").val(response.coupon.type.toLowerCase()).trigger("change");
+              popup.find("#name").val(response.coupon.name);
+              popup.find("#amount").val(Number(response.coupon.amount));
+              const expiryDate = new Date(response.coupon.expired._seconds * 1000).toISOString().split("T")[0];
+              popup.find("#expiryDate").val(expiryDate);
+              popup.find("#editId").val(id);
+            },
+            error: function (error) {
+              console.error("Error:", error);
+              errorAlert(`Failed to load coupon data. Please try again.\n${error}`);
+            },
+          });
+        });
+
+        $("#submitEditBtn").on("click", function (e) {
+          e.preventDefault();
+          const popup = $("#edit-popup");
+          const id = popup.find("#editId").val();
+          const name = popup.find("#name").val().trim();
+          const amount = popup.find("#amount").val();
+          const isValid = popup.find("#isValid").val();
+          const type = popup.find("#Type").val().toLowerCase(); // Normalize case
+          const expiryDate = popup.find("#expiryDate").val();
+          let errors = [];
+          if (isNaN(amount) || amount <= 0) {
+            errors.push("Amount must be a positive number");
+          }
+          if (!["true", "false"].includes(isValid)) {
+            errors.push("Please select validity status");
+          }
+          if (!["percentage", "fixed"].includes(type)) {
+            errors.push("Please select a valid coupon type");
+          }
+          const selectedDate = new Date(expiryDate);
+          if (!expiryDate || selectedDate < new Date()) {
+            errors.push("Expiry date must be in the future");
+          }
+          if (!name) {
+            errors.push("Name is required");
+          }
+          if (errors.length > 0) {
+            warnAlert(errors.join("\n"));
+            return;
+          }
+          const couponData = {
+            id,
+            name,
+            amount: Number(amount).toFixed(2),
+            isValid: isValid === "true",
+            type,
+            expiryDate: selectedDate.getTime(),
+          };
+          $.ajax({
+            url: `/admin/edit/coupon/${id}`,
+            method: "PUT",
+            data: couponData,
+            success: function (response) {
+              successAlert("Edited successfully");
+              setTimeout(() => {
+                location.reload();
+              }, 700);
+            },
+            error: function (error) {
+              console.error("Error updating coupon:", error);
+              errorAlert("Failed to update coupon. Please try again.");
+            },
+          });
+        });
+
+        $(document)
+          .off("click")
+          .on("click", ".view-btn", function () {
+            const id = $(this).data("id");
+
+            $.ajax({
+              url: `/admin/view/coupon/${id}`,
+              method: "GET",
+              success: function (response) {
+                const popup = $("#popup-details");
+
+                // Ensure the popup is visible
+                popup.removeClass("!hidden"); // Make sure it's visible
+                popup
+                  .find("#view-popup-close-btn")
+                  .off("click")
+                  .on("click", function () {
+                    popup.addClass("!hidden"); // Hide the popup again on close
+                    popup.find("#popupBody").html(""); // Clear content
+                  });
+
+                // Generate styled popup content
+                const isValidClass = response.coupon.isValid ? "text-green-600" : "text-red-600";
+                const isValidText = response.coupon.isValid ? "Valid" : "Expired";
+                const expiryDate = new Date(response.coupon.expired._seconds * 1000).toLocaleString();
+
+                const popupContent = `
+  <div class="p-6 space-y-6 bg-white rounded-lg shadow-lg max-w-lg w-full">
+    <h3 class="text-2xl font-semibold text-gray-900 ">Coupon Details</h3>
+    <div class="grid gap-5">
+      <!-- Coupon Name -->
+      <div>
+        <strong class="block text-sm font-medium text-gray-700 text-gray-300">Name:</strong>
+        <span class="text-lg font-semibold text-gray-900 ">${response.coupon.name}</span>
+      </div>
+
+      <!-- Coupon Amount -->
+      <div>
+        <strong class="block text-sm font-medium text-gray-700 text-gray-300">Amount:</strong>
+        <span class="text-lg font-semibold text-gray-900 ">
+          ${response.coupon.amount} ${response.coupon.type === "percentage" ? "%" : "L.E"}
+        </span>
+      </div>
+
+      <!-- Coupon Validity -->
+      <div>
+        <strong class="block text-sm font-medium text-gray-700 text-gray-300">Validity:</strong>
+        <span class="text-lg font-semibold ${isValidClass}">${isValidText}</span>
+      </div>
+
+      <!-- Coupon Expiry Date -->
+      <div>
+        <strong class="block text-sm font-medium text-gray-700 text-gray-300">Expiry Date:</strong>
+        <span class="text-lg font-semibold text-gray-900 ">${expiryDate}</span>
+      </div>
+
+      <!-- Coupon Type -->
+      <div>
+        <strong class="block text-sm font-medium text-gray-700 text-gray-300">Type:</strong>
+        <span class="text-lg font-semibold text-gray-900 ">${
+          response.coupon.type.charAt(0).toUpperCase() + response.coupon.type.slice(1)
+        }</span>
+      </div>
+    </div>
+  </div>
+`;
+
+                popup.find("#popupBody").html(popupContent); // Insert styled content into the popup
+              },
+              error: function (error) {
+                console.error("Error:", error);
+                errorAlert(`Failed to view coupon. Please try again.\n${error}`);
+              },
+            });
+          });
+        $(document).on("click", "#conf-delte-btn-popup", function (e) {
+          e.preventDefault();
+          const id = $(this).data("id");
+          $.ajax({
+            url: `/admin/delete/coupon/${id}`,
+            method: "DELETE",
+            success: function (response) {
+              successAlert(response.message);
+              setTimeout(() => {
+                location.reload();
+              }, 500);
+            },
+            error: function (error) {
+              console.error("Error deleting coupon:", error);
+              errorAlert("Failed to delete coupon. Please try again.");
+            },
+          });
+        });
+        $(document).on("click", "#cancel-btn-popup", function (event) {
+          event.preventDefault();
+          $("#delte-popup").addClass("!hidden");
+        });
+        $(".delete-btn").on("click", function (event) {
+          const id = $(this).data("id");
+          $("#delte-popup").removeClass("!hidden");
+          $("#conf-delte-btn-popup").data("id", id);
+        });
+        $("#close-view-popup").on("click", function () {
+          $("#popup-details").addClass("!hidden");
+        });
+        $(".close-popup").on("click", function () {
+          $(".popup").addClass("!hidden");
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,357 @@
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const countdownElements = document.querySelectorAll(".countdown");
+
+    countdownElements.forEach((element) => {
+      const endDate = new Date(element.dataset.endDate);
+
+      function updateCountdown() {
+        const now = new Date();
+        const remainingTime = endDate - now;
+
+        if (remainingTime > 0) {
+          const days = String(Math.floor(remainingTime / (1000 * 60 * 60 * 24))).padStart(2, "0");
+          const hours = String(Math.floor((remainingTime / (1000 * 60 * 60)) % 24)).padStart(2, "0");
+          const minutes = String(Math.floor((remainingTime / (1000 * 60)) % 60)).padStart(2, "0");
+
+          element.innerHTML = `<i class="fa fa-clock mr-2"> </i> ${days}:${hours}:${minutes}`;
+        } else {
+          element.textContent = "";
+          element.classList.add("!hidden");
+        }
+      }
+
+      setInterval(updateCountdown, 1000);
+    });
+  });
+</script>
+
+<% function renderCategorySection(category) { %>
+  <% const categoryProducts = products.filter(product => product.categoryId == category); %>
+  <% if (categoryProducts.length > 0) { %>
+    <section class="p-3 px-6 overflow-hidden  mt-4 shadow-md glass dark:bg-[#ffffff2b] ">
+      <h2 class="text-2xl text-text-light dark:text-text-dark mb-6 font-semibold"><%= category %></h2>
+      <div class="swiper-container relative">
+        <div class="swiper-wrapper">
+          <% categoryProducts.forEach(product => { %>
+            <div class="swiper-slide">
+              <div data-id="<%= product.id %>"
+                data-title="<%= product.name %>"
+                data-price="<%= Number(product.price).toFixed(2) %>"
+                data-img="<%= product.images %>"
+                data-stock="<%= product.stock %>"
+                <% if (product.discount !== null && (new Date() - new Date(product.startDate) > 0)) { %>
+                  data-discount-startDate="<%= product.startDate %>"
+                  data-discount-endDate="<%= product.endDate %>"
+                  data-discount-price-after="<%= product.price %>"
+                <% } %>
+                class="card home-card w-full h-[200px] bg-background-light dark:bg-background-dark border-primary-light dark:border-primary-dark p-1.5 rounded-lg shadow-md border-2 flex relative flex-col items-center justify-start cursor-pointer lg:hover:scale-105 transition-all ease-in-out duration-200 sm:h-[220px] md:h-[250px]">
+                <% if (product.label) { %>
+                  <div class="absolute top-0 z-10 bg-primary-light dark:bg-primary-dark w-max max-w-40 left-0  flex justify-between items-center p-1 px-2">
+                    <span class="card-badge text-xs font-bold text-secondary-light dark:text-text-dark"><%= product.label %></span> 
+                  </div>
+                <% } %>
+                <!-- Wishlist heart -->
+                <button type="button" class="fav-btn absolute z-20 rounded-full w-9 h-9 flex items-center justify-center bg-transparent text-rose-600" style="background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;">
+                  <i class="fa-regular fa-heart text-[16px]"></i>
+                </button>
+                <!-- Product Image -->
+                <div class="img_container w-full aspect-square overflow-hidden rounded-lg relative">
+                  <img
+                    src="<%= product.images %>"
+                    alt="<%= product.name %>"
+                    class="card-img w-auto h-auto object-contain rounded-lg"
+                    loading="lazy" />
+                  <% if (product.discount !== null && (new Date() - new Date(product.startDate) > 0)) { %>
+                  <div class="absolute right-0 min-w-full rounded-lg flex justify-center items-center bottom-0">
+                    <span
+                      data-end-date="<%= product.endDate %>"
+                      data-start-date="<%= product.startDate %>"
+                      class="countdown px-1.5 w-3/4 py-0.5 flex justify-center items-center text-[8px] md:text-xs bg-primary-light dark:bg-primary-dark text-secondary-light dark:text-text-dark">
+                    </span>
+
+                    <span class="card-dsPrice md:min-w-[75px] w-2/5 bg-slate-800 text-white pl-1 py-0.5 text-[8px] md:text-xs">
+                      <%= product.discount.split(" ")[0] %>
+                    </span>
+                  </div>
+                  <% } %>
+
+                </div>
+
+                <!-- Product Details -->
+                <div class="card_details text-center w-full text-xs mt-2">
+                  <div class="item_name flex flex-col gap-2 justify-between px-2 items-center font-medium text-text-light dark:text-text-dark">
+                    <span class="card-title w-full text-left line-clamp-2"><%= product.name %></span>
+
+                    <div class="w-full flex gap-2 justify-start items-center">
+                      <div class="w-full flex gap-2 justify-start mb-2 items-start">
+                        <% if (product.discount !== null && (new Date() - new Date(product.startDate) > 0)) { %>
+                        <span class="card-dsPrice text-[9px] md:text-xs line-through font-light">
+                          <%= Number(product.bfDiscount) %> 
+                        </span>
+                        <% } %>
+                        <span class="card-price text-xs md:text-base font-semibold">
+                          <%= Number(product.price).toFixed(2) %> <%= currency == "EG" ? 'L.E' : '$' %>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Add to Cart Button -->
+                  <div class="cta flex items-center justify-around absolute bottom-1 right-1">
+                    <button
+                      type="button"
+                      class="addToCartBtn w-7 rounded-full h-7 md:h-8 md:w-8 bg-primary-light dark:bg-primary-dark text-secondary-light dark:text-text-dark md:hover:bg-gray-700 active:bg-gray-700 transition-all duration-200 active:scale-95">
+                      <i class="fa-solid fa-cart-shopping"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+        <div class="swiper-button-next glass hidden md:flex"></div>
+        <div class="swiper-button-prev glass hidden md:flex"></div>
+      </div>
+      <div class="w-full flex justify-center items-center mt-4 mb-1">
+        <a
+          href="/products?page=1&search=&categories=<%=category%>&minPrice=&maxPrice="
+          class="text-primary-light dark:text-primary-dark font-semibold button-54 mt-4"
+          >View more</a
+        >
+      </div>
+    </section>
+  <% } %>
+<% } %>
+
+<% pinnedCategories.forEach(category => { %>
+  <%= renderCategorySection(category.name) %>
+<% }); %>
+
+<% categories.forEach(category => { %>
+  <% if (!pinnedCategories.some(pinned => pinned.name === category)) { %>
+    <%= renderCategorySection(category) %>
+  <% } %>
+<% }); %>
+
+<!-- Add Swiper JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Swiper/8.4.7/swiper-bundle.min.js"></script>
+
+<!-- Initialize Swiper -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const swipers = document.querySelectorAll('.swiper-container');
+    swipers.forEach(swiperContainer => {
+      const slidesCount = swiperContainer.querySelectorAll('.swiper-slide').length;
+      // Max slidesPerView in breakpoints below is 6, so only loop when we have more than 6 slides
+      const shouldLoop = slidesCount > 6;
+      new Swiper(swiperContainer, {
+        slidesPerView: 2,
+        spaceBetween: 10,
+        loop: shouldLoop,
+        watchOverflow: true,
+        navigation: {
+          nextEl: ".swiper-button-next",
+          prevEl: ".swiper-button-prev",
+        },
+        breakpoints: {
+          340: {
+            slidesPerView: 2,
+            spaceBetween: 10,
+          },
+          480: {
+            slidesPerView: 3,
+            spaceBetween: 15,
+          },
+          678: {
+            slidesPerView: 4,
+            spaceBetween: 20,
+          },
+          960: {
+            slidesPerView: 5,
+            spaceBetween: 25,
+          },
+          1280: {
+            slidesPerView: 6,
+            spaceBetween: 30,
+          },
+        },
+      });
+    });
+
+    document.addEventListener("click", (e) => {
+      const card = e.target.closest(".card");
+      if (card && !e.target.closest(".addToCartBtn") && !e.target.closest('.fav-btn')) {
+        location.href = `/view/product/${card.getAttribute("data-id")}`;
+      }
+    });
+  });
+</script>
+
+<!-- Wishlist favorites (home cards) via server API with optimistic UI -->
+<script>
+  (function(){
+    let cardFavs = new Set();
+    async function loadFavs(){
+      try {
+        const res = await fetch('/api/wishlist');
+        if (!res.ok) throw new Error('Failed');
+        const data = await res.json();
+        const list = (data && data.favorites && Array.isArray(data.favorites.products)) ? data.favorites.products : [];
+        cardFavs = new Set(list.map(String));
+      } catch (_) {}
+    }
+    function paint(){
+      document.querySelectorAll('.card').forEach(card => {
+        const id = String(card.getAttribute('data-id'));
+        const btn = card.querySelector('.fav-btn');
+        const icon = btn?.querySelector('i');
+        if (!btn || !icon) return;
+        if (cardFavs.has(id)) { btn.classList.add('active'); icon.classList.remove('fa-regular'); icon.classList.add('fa-solid'); }
+        else { btn.classList.remove('active'); icon.classList.remove('fa-solid'); icon.classList.add('fa-regular'); }
+      });
+    }
+    document.addEventListener('DOMContentLoaded', async ()=>{ await loadFavs(); paint(); });
+    document.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.fav-btn');
+      const card = e.target.closest('.card');
+      if (!btn || !card) return;
+      e.preventDefault(); e.stopPropagation();
+      const id = String(card.getAttribute('data-id'));
+      const wasFav = cardFavs.has(id);
+      // optimistic
+      if (wasFav) cardFavs.delete(id); else cardFavs.add(id);
+      paint();
+      try {
+        const res = await fetch('/api/wishlist/toggle', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'product', id })
+        });
+        if (!res.ok) throw new Error('Failed');
+        const data = await res.json();
+        if (data && data.favorites && Array.isArray(data.favorites.products)) {
+          cardFavs = new Set(data.favorites.products.map(String));
+          paint();
+          try {
+            const action = data && data.action;
+            const msg = action === 'removed'
+              ? 'Removed from favorites'
+              : action === 'added'
+                ? 'Added to favorites'
+                : (cardFavs.has(id) ? 'Added to favorites' : 'Removed from favorites');
+            if (typeof successAlert === 'function') successAlert(msg);
+          } catch (_) {}
+        }
+      } catch (err) {
+        // revert
+        if (wasFav) cardFavs.add(id); else cardFavs.delete(id);
+        paint();
+        try { if (typeof errorAlert === 'function') errorAlert('Failed to update favorites'); } catch (_) {}
+      }
+    });
+  })();
+</script>
+
+<style>  
+  .swiper-button-next,
+  .swiper-button-prev
+   {    border-radius: 0px 16px  16px 0;
+
+    color: var(--primary-light);
+    width: 38px;
+    height: 50%;
+    background-color: #fff;
+    top: 40%;
+}
+  .swiper-button-next{
+    border-radius: 16px 0 0 16px;
+    right: -4%;
+  }
+  .swiper-button-prev {
+    left: -4%;  
+}
+
+@media (min-width: 1024px) {
+  .swiper-button-next
+   {
+    right: -3%;
+  }
+  .swiper-button-prev {
+    left: -3%;
+  }
+}
+@media (min-width: 1280px) {
+  .swiper-button-next
+   {
+    right: -2%;
+  }
+  .swiper-button-prev {
+    left: -2%;
+  }
+}
+
+.button-54 {
+  font-family: "Open Sans", sans-serif;
+  font-size: 16px;
+  letter-spacing: 2px;
+  text-decoration: none;
+  text-transform: uppercase;
+  color: var(--primary-light);
+  cursor: pointer;
+  border: 3px solid;
+  padding: 0.25em 0.5em;
+  box-shadow: 1px 1px 0px 0px, 2px 2px 0px 0px, 3px 3px 0px 0px, 4px 4px 0px 0px, 5px 5px 0px 0px;
+  position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  transition: 0.3s ease-in-out;
+}
+.dark.button-54 {
+    color: var(--primary-dark);
+
+}
+.button-54:active {
+  box-shadow: 0px 0px 0px 0px;
+  top: 5px;
+  left: 5px;
+}
+
+@media (min-width: 768px) {
+  .button-54 {
+    padding: 0.25em 0.75em;
+  }
+}
+
+
+  .dark .swiper-button-next,
+  .dark .swiper-button-prev {
+    color: var(--primary-dark);
+  }
+
+  .swiper-button-next::after,
+  .swiper-button-prev::after {
+    font-size: 24px;
+  }
+
+  @media (max-width: 640px) {
+    .swiper-button-next::after,
+    .swiper-button-prev::after {
+      font-size: 18px;
+    }
+  }
+
+  /* Home card heart placement: bottom-right, left of cart */
+  .home-card { position: relative; }
+  .home-card .fav-btn {
+    top: auto;
+    right: 3.25rem; /* keep space for cart btn */
+    bottom: 0.25rem; /* lower slightly */
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+  .dark .home-card .fav-btn { background: transparent !important; color: #ef4444; }
+  .home-card .fav-btn.active { background: transparent !important; }
+</style>

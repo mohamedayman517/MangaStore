@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manage Banner</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="/css/build.min.css" />
+    <style>
+      input[type="number"]::-webkit-outer-spin-button,
+      input[type="number"]::-webkit-inner-spin-button {
+        display: none;
+      }
+      .fancy i {
+        transition: all 0.3s ease-in-out;
+      }
+
+      .fancy:hover i {
+        color: white;
+        background: black;
+      }
+      .fancy:hover span {
+        color: white;
+        padding-left: 1.5em;
+      }
+      /* From Uiverse.io by adamgiebl */
+      .dots-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        width: 100%;
+      }
+
+      .dot {
+        height: 20px;
+        width: 20px;
+        margin-right: 10px;
+        border-radius: 10px;
+        background-color: #b3d4fc;
+        animation: pulse 1.5s infinite ease-in-out;
+      }
+
+      .dot:last-child {
+        margin-right: 0;
+      }
+
+      .dot:nth-child(1) {
+        animation-delay: -0.3s;
+      }
+
+      .dot:nth-child(2) {
+        animation-delay: -0.1s;
+      }
+
+      .dot:nth-child(3) {
+        animation-delay: 0.1s;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(0.8);
+          background-color: #b3d4fc;
+          box-shadow: 0 0 0 0 rgba(178, 212, 252, 0.7);
+        }
+
+        50% {
+          transform: scale(1.2);
+          background-color: #6793fb;
+          box-shadow: 0 0 0 10px rgba(178, 212, 252, 0);
+        }
+
+        100% {
+          transform: scale(0.8);
+          background-color: #b3d4fc;
+          box-shadow: 0 0 0 0 rgba(178, 212, 252, 0.7);
+        }
+      }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+  </head>
+  <body class="bg-gray-50 relative">
+    <%- include("./modals/alerts-popups") %><%- include("../partials/navbar") %>
+    <%- include("../partials/admin-back", { adminHomePath: '/admin' }) %>
+    <div
+      class="flex -top-0 flex-col items-center justify-center bg-gradient-to-br from-zinc-500 to-zinc-700 bg-opacity-80 fixed w-screen h-screen backdrop-blur-md hidden"
+      style="z-index: 100"
+      id="loadingContainer">
+      <section class="dots-container">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </section>
+    </div>
+    <main class="max-w-3xl mx-auto bg-white p-6 pb-64 shadow-md rounded-lg mt-16">
+      <h1 class="text-2xl font-semibold mb-6">Manage Banner</h1>
+
+      <!-- Form Section -->
+      <form id="bannerForm">
+        <!-- Main Title -->
+        <div class="mb-4">
+          <label for="mainTitle" class="block text-sm font-medium text-gray-700">Main Title</label>
+          <input
+            id="mainTitle"
+            type="text"
+            class="mt-1 p-2 w-full border rounded-md focus:ring-blue-500 focus:border-blue-500" />
+        </div>
+
+        <!-- Add Image Upload Field -->
+        <div class="mb-4">
+          <label for="bannerImage" class="block text-sm font-medium text-gray-700">Banner Image</label>
+          <input
+            id="bannerImage"
+            type="file"
+            accept="image/*"
+            class="mt-1 p-2 w-full border rounded-md focus:ring-blue-500 focus:border-blue-500" />
+          <img id="previewImage" src="" alt="Preview" class="mt-2 w-32 h-32 object-cover rounded-md hidden" />
+        </div>
+        <!-- Or Image URL -->
+        <div class="mb-4">
+          <label for="imageUrl" class="block text-sm font-medium text-gray-700">Or Image URL</label>
+          <input
+            id="imageUrl"
+            type="url"
+            placeholder="https://..."
+            class="mt-1 p-2 w-full border rounded-md focus:ring-blue-500 focus:border-blue-500" />
+        </div>
+
+        <!-- Body -->
+        <div class="mb-4">
+          <label for="body" class="block text-sm font-medium text-gray-700">Body</label>
+          <textarea
+            id="body"
+            class="mt-1 p-2 w-full border rounded-md focus:ring-blue-500 focus:border-blue-500"></textarea>
+        </div>
+
+        <!-- Subtitle -->
+        <div class="mb-4">
+          <label for="subtitle" class="block text-sm font-medium text-gray-700">Subtitle</label>
+          <input
+            id="subtitle"
+            type="text"
+            class="mt-1 p-2 w-full border rounded-md focus:ring-blue-500 focus:border-blue-500" />
+        </div>
+
+        <!-- Action Button -->
+        <div class="mb-4">
+          <label for="actionLink" class="block text-sm font-medium text-gray-700">Action Button Text</label>
+          <input
+            id="actionText"
+            type="text"
+            class="mt-1 p-2 w-full border rounded-md focus:ring-blue-500 focus:border-blue-500" />
+        </div>
+        <div class="mb-4">
+          <label for="actionLink" class="block text-sm font-medium text-gray-700">Action Button Link</label>
+          <input
+            id="actionLink"
+            type="url"
+            class="mt-1 p-2 w-full border rounded-md focus:ring-blue-500 focus:border-blue-500" />
+        </div>
+
+        <!-- Enable/Disable Toggle -->
+        <div class="mb-4 flex items-center">
+          <input
+            id="isEnabled"
+            type="checkbox"
+            class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+          <label for="isEnabled" class="ml-2 text-sm text-gray-700">Enable banner</label>
+        </div>
+
+        <!-- Mode: Auto | Manual -->
+        <div class="mb-4">
+          <span class="block text-sm font-medium text-gray-700 mb-1">Mode</span>
+          <div class="flex items-center gap-6">
+            <label class="flex items-center gap-2">
+              <input type="radio" name="mode" id="modeAuto" value="auto" class="text-blue-600" />
+              <span class="text-sm">Auto (random product)</span>
+            </label>
+            <label class="flex items-center gap-2">
+              <input type="radio" name="mode" id="modeManual" value="manual" class="text-blue-600" />
+              <span class="text-sm">Manual (specific product)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Manual product -->
+        <div id="manualSection" class="mb-4 hidden">
+          <label for="manualProductId" class="block text-sm font-medium text-gray-700">Manual Product ID</label>
+          <input id="manualProductId" type="text" placeholder="e.g. product-id" class="mt-1 p-2 w-full border rounded-md focus:ring-blue-500 focus:border-blue-500" />
+        </div>
+
+        <!-- Auto controls -->
+        <div id="autoSection" class="mb-4 hidden">
+          <button id="randomizeNow" type="button" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-black text-white font-semibold shadow hover:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-black">
+            <i class="fa-solid fa-dice"></i>
+            <span>Randomize Now</span>
+          </button>
+          <p class="text-xs text-gray-500 mt-2">Picks a new random product immediately (also changes daily automatically).</p>
+        </div>
+
+        <!-- Auto Publish & Schedule -->
+        <div class="mb-2 flex items-center">
+          <input id="autoPublish" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+          <label for="autoPublish" class="ml-2 text-sm text-gray-700">Enable automatic schedule</label>
+        </div>
+        <div class="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label for="scheduleStart" class="block text-sm font-medium text-gray-700">Start</label>
+            <input id="scheduleStart" type="datetime-local" class="mt-1 p-2 w-full border rounded-md focus:ring-blue-500 focus:border-blue-500" />
+          </div>
+          <div>
+            <label for="scheduleEnd" class="block text-sm font-medium text-gray-700">End</label>
+            <input id="scheduleEnd" type="datetime-local" class="mt-1 p-2 w-full border rounded-md focus:ring-blue-500 focus:border-blue-500" />
+          </div>
+        </div>
+
+        <!-- Bottom spacer so fixed Save bar doesn't cover content -->
+        <div aria-hidden="true" style="height: 96px;"></div>
+
+        <!-- Save bar moved outside the form -->
+      </form>
+    </main>
+
+    <!-- Global Fixed Save Bar (forced visible) -->
+    <div id="globalSaveBar" style="position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,0.96);backdrop-filter:saturate(120%) blur(4px);box-shadow:0 -2px 10px rgba(0,0,0,.08);z-index:9999;padding:12px;border-top:1px solid #e5e7eb;">
+      <div style="max-width:960px;margin:0 auto;">
+        <button id="saveButton" type="button" style="width:100%;background:#2563eb;color:#fff;padding:12px 16px;border-radius:8px;font-weight:600;">Save</button>
+      </div>
+    </div>
+
+    <!-- Backup Floating Save FAB (temporarily hidden to avoid covering content) -->
+    <button id="saveFab" title="Save (Ctrl+S)" style="position:fixed;right:16px;bottom:96px;width:56px;height:56px;border-radius:50%;background:#2563eb;color:#fff;box-shadow:0 6px 18px rgba(0,0,0,.2);display:none;align-items:center;justify-content:center;font-weight:700;z-index:10000;">S</button>
+
+    <script>
+      $(document).ready(function () {
+        console.log('[banner] page ready, binding save button');
+        // Ensure the full-screen loader does not cover the page
+        $("#loadingContainer").hide();
+        $("#globalSaveBar").show();
+        function showAlert(selector, message, duration = 3000) {
+          const alert = $(selector);
+          alert.find(".popup-text").text(message);
+          alert.addClass("active").removeClass("!hidden");
+          setTimeout(() => {
+            alert.removeClass("active").addClass("!hidden");
+          }, duration);
+        }
+
+        const successAlert = (msg) => showAlert("#success-alert", msg);
+        const errorAlert = (err) => showAlert("#err-alert", `Error: ${err}`);
+        const warnAlert = (warn) => showAlert("#warn-alert", `Warning: ${warn}`);
+        const infoAlert = (msg) => showAlert("#info-alert", msg);
+
+        // Fetch existing data and set preview image
+        $.get("/admin/banner-data", function (data) {
+          $("#mainTitle").val(data.mainTitle);
+          $("#subtitle").val(data.subtitle);
+          $("#body").val(data.body);
+          $("#actionText").val(data.actionText);
+          $("#actionLink").val(data.actionLink);
+          $("#isEnabled").prop("checked", data.isEnabled);
+          const mode = (data.mode === 'auto' ? 'auto' : 'manual');
+          $(mode === 'auto' ? "#modeAuto" : "#modeManual").prop('checked', true);
+          $("#manualProductId").val(data.manualProductId || "");
+          $("#autoPublish").prop("checked", !!data.autoPublish);
+          if (data.scheduleStart) {
+            const dt = new Date(data.scheduleStart);
+            $("#scheduleStart").val(new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().slice(0, 16));
+          }
+          if (data.scheduleEnd) {
+            const dt = new Date(data.scheduleEnd);
+            $("#scheduleEnd").val(new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().slice(0, 16));
+          }
+
+          if (data.image) {
+            $("#previewImage").attr("src", data.image).removeClass("hidden");
+            $("#imageUrl").val(data.image);
+          }
+          updateModeVisibility();
+        });
+
+        // Handle Image Upload Preview
+        $("#bannerImage").on("change", function () {
+          const file = this.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+              $("#previewImage").attr("src", e.target.result).removeClass("hidden");
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+
+        // Core save handler
+        function currentMode(){ return $("#modeAuto").is(":checked") ? "auto" : "manual"; }
+        function updateModeVisibility(){
+          const m = currentMode();
+          $("#manualSection").toggleClass("hidden", m !== 'manual');
+          $("#autoSection").toggleClass("hidden", m !== 'auto');
+          if (m === 'auto') {
+            // make sure the button is visible to the user
+            const el = document.getElementById('randomizeNow');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }
+        $(document).on('change', '#modeAuto, #modeManual', updateModeVisibility);
+
+        const performSave = () => {
+          const formData = new FormData();
+          const bannerData = {
+            mainTitle: $("#mainTitle").val(),
+            subtitle: $("#subtitle").val(),
+            body: $("#body").val(),
+            actionText: $("#actionText").val(),
+            actionLink: $("#actionLink").val(),
+            isEnabled: $("#isEnabled").is(":checked"),
+            mode: currentMode(),
+            manualProductId: $("#manualProductId").val() || null,
+            autoPublish: $("#autoPublish").is(":checked"),
+            scheduleStart: $("#scheduleStart").val() || null,
+            scheduleEnd: $("#scheduleEnd").val() || null,
+          };
+
+          // Add the image file to the FormData if provided
+          const imageFile = $("#bannerImage")[0].files[0];
+          if (imageFile) {
+            formData.append("image", imageFile);
+          } else if ($("#imageUrl").val()) {
+            bannerData.imageUrl = $("#imageUrl").val();
+          }
+          // Add banner data to the FormData
+          formData.append("bannerData", JSON.stringify(bannerData));
+
+          $.ajax({
+            url: "/admin/save-banner",
+            type: "POST",
+            processData: false,
+            contentType: false,
+            data: formData,
+            success: function (response) {
+              successAlert(response.message);
+            },
+            error: function (xhr) {
+              const response = JSON.parse(xhr.responseText);
+              errorAlert(`Failed to update banner: ${response.message}`);
+            },
+          });
+        };
+
+        // Randomize Now
+        $(document).on('click', '#randomizeNow', function(){
+          $.post('/admin/banner-randomize')
+            .done(function(res){ infoAlert('Randomized'); })
+            .fail(function(){ errorAlert('Failed to randomize'); });
+        });
+
+        // Bind both buttons and keyboard shortcut
+        $("#saveButton").on("click", performSave);
+        $("#saveFab").on("click", performSave);
+        $(document).on("keydown", function (e) {
+          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+            e.preventDefault();
+            performSave();
+          }
+        });
+        // Debug visibility
+        console.log('saveButton exists:', !!document.getElementById('saveButton'));
+        console.log('saveFab exists:', !!document.getElementById('saveFab'));
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include("./partials/meta") %>
+    <title>Provide Required Info</title>
+    <link rel="stylesheet" href="/css/framework.css" />
+    <link rel="stylesheet" href="/css/build.min.css" />
+  </head>
+  <body class="bg-[#fdf4cb] dark:bg-background-dark text-text-light dark:text-text-dark">
+    <%- include("./partials/header") %>
+    <main class="min-h-screen container mx-auto pt-24 px-4">
+      <div class="max-w-md mx-auto glass border border-secondary-light/20 dark:border-secondary-dark/20 rounded-xl p-6">
+        <h1 class="text-xl font-semibold text-primary-light mb-2">Additional Information Required</h1>
+        <p class="text-sm text-text-light/80 dark:text-text-dark/80 mb-4">
+          <span class="font-medium"><%= product.name %></span> requires additional information before purchase.
+        </p>
+
+        <form id="cfForm" class="space-y-4">
+          <div>
+            <label for="customerFieldInput" class="block text-sm font-medium mb-1"><%= product.customerFieldLabel || 'Required information' %></label>
+            <input id="customerFieldInput" type="text" class="w-full border rounded-md p-2" placeholder="Enter here" required />
+          </div>
+          <button type="submit" class="w-full px-4 py-2 rounded-lg bg-primary-light hover:bg-primary-light/90 dark:bg-primary-dark dark:hover:bg-primary-dark/90 text-background-light dark:text-background-dark font-semibold">
+            Save and Continue
+          </button>
+        </form>
+
+        <p id="errorMsg" class="hidden mt-3 text-sm text-red-600"></p>
+
+        <div class="mt-4 text-sm">
+          <a href="/view/product/<%= product.id %>" class="text-primary-light hover:underline">Back to product</a>
+        </div>
+      </div>
+      <!-- Data holder to pass server values without breaking JS linting -->
+      <div id="cfData"
+           data-product-id="<%= product.id %>"
+           data-label="<%= product.customerFieldLabel || 'Required information' %>"
+           data-next="<%= next %>"
+           class="hidden"></div>
+    </main>
+
+    <script>
+      (function(){
+        const form = document.getElementById('cfForm');
+        const input = document.getElementById('customerFieldInput');
+        const errorMsg = document.getElementById('errorMsg');
+        const dataEl = document.getElementById('cfData');
+        const productId = dataEl?.dataset.productId || '';
+        const label = dataEl?.dataset.label || 'Required information';
+        const nextUrl = dataEl?.dataset.next || '';
+
+        // Pre-fill if previously stored
+        try {
+          const existing = sessionStorage.getItem('customerField:' + productId);
+          if (existing) {
+            const parsed = JSON.parse(existing);
+            if (parsed && parsed.value) input.value = parsed.value;
+          }
+        } catch(_) {}
+
+        form.addEventListener('submit', (e) => {
+          e.preventDefault();
+          errorMsg.classList.add('hidden');
+          const value = (input.value || '').trim();
+          if (!value) { return; }
+          try {
+            const payload = { label, value };
+            sessionStorage.setItem('customerField:' + productId, JSON.stringify(payload));
+          } catch (err) {
+            errorMsg.textContent = 'Failed to save your input locally. Please check your browser storage settings.';
+            errorMsg.classList.remove('hidden');
+            return;
+          }
+          // Redirect back
+          try {
+            window.location.assign(nextUrl || `/view/product/${productId}`);
+          } catch(_) {
+            window.location.href = nextUrl || `/view/product/${productId}`;
+          }
+        });
+      })();
+    </script>
+
+    <%- include("./partials/footer") %>
+  </body>
+</html>

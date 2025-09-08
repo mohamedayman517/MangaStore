@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="/css/build.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer" />
+    <style>
+      body {
+        background: linear-gradient(to bottom, #1e1e2f, #2a2a40);
+        color: #f8f9fa;
+        font-family: "Poppins", sans-serif;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        font-weight: 600;
+        text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.8);
+      }
+
+      section {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        justify-content: center;
+        padding: 1rem 2rem;
+      }
+
+      .card {
+        width: 32%;
+        cursor: pointer;
+        height: 350px;
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-around;
+        text-align: center;
+        padding: 1.5rem;
+        position: relative;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
+        overflow: hidden;
+      }
+
+      .card:hover {
+        transform: translateY(-10px);
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+      }
+
+      .card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background: linear-gradient(135deg, rgba(255, 138, 0, 0.1), rgba(229, 46, 113, 0.1), rgba(155, 89, 182, 0.1));
+        filter: blur(20px);
+        opacity: 0.6;
+      }
+
+      .card i {
+        font-size: 3rem;
+        color: #ffcc00;
+        text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7);
+      }
+
+      .card .title {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #ffffff;
+      }
+
+      .card .body,
+      .card .body i {
+        font-size: 1.2rem;
+        color: #d1d1d1;
+        cursor: pointer;
+      }
+      .card:hover .body i {
+        transform: translateX(10px);
+      }
+      .card .body i {
+        margin-left: 0.5rem;
+        color: #ffcc00;
+        transition: 0.3s;
+      }
+
+      @media (max-width: 768px) {
+        .card {
+          width: 90%;
+        }
+      }
+    </style>
+  </head>
+  <body class="relative">
+    <%- include("./partials/navbar") %>
+    <div class="fixed top-4 right-6 z-50">
+      <a
+        href="/logout"
+        class="inline-flex items-center justify-center py-2 px-4 rounded-md bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors shadow">
+        <i class="fas fa-right-from-bracket mr-2"></i>
+        Logout
+      </a>
+    </div>
+    <h1 class="pt-24 ml-10 mb-3">Welcome, Admin!</h1>
+    <section class="mb-10">
+      <div class="card" data-url="/admin/categories">
+        <i class="fa-solid fa-layer-group"></i>
+        <div class="title">Manage Categories</div>
+        <div class="body">Go to your categories and manage them! <i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+      <div class="card" data-url="/users">
+        <i class="fa-solid fa-users"></i>
+        <div class="title">Manage Users</div>
+        <div class="body">View and manage user profiles! <i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+      <div class="card" data-url="/admin/slider">
+        <i class="fa-solid fa-sliders-h"></i>
+        <div class="title">Manage Sliders</div>
+        <div class="body">Customize your website sliders! <i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+      <div class="card" data-url="/admin/transactions">
+        <i class="fa-solid fa-receipt"></i>
+        <div class="title">View Transactions</div>
+        <div class="body">Check transaction history! <i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+      <div class="card" data-url="/admin/gifts">
+        <i class="fa-solid fa-gift"></i>
+        <div class="title">Gifts</div>
+        <div class="body">View and manage gift orders <i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+      <div class="card" data-url="/admin/products">
+        <i class="fa-solid fa-box-open"></i>
+        <div class="title">Manage Products</div>
+        <div class="body">Add, update, or remove products! <i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+      <div class="card" data-url="/admin/coupons">
+        <i class="fa-solid fa-ticket-alt"></i>
+        <div class="title">Manage Coupons</div>
+        <div class="body">Create and edit coupon codes! <i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+      <div class="card" data-url="/admin/discounts">
+        <i class="fa-solid fa-tags"></i>
+        <div class="title">Manage Discounts</div>
+        <div class="body">Create Discounts for your customers! <i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+      <div class="card" data-url="/admin/banner">
+        <i class="fa-solid fa-rectangle-list"></i>
+        <div class="title">Banner</div>
+        <div class="body">Create a new banner item on home page <i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+      <div class="card" data-url="/admin/reviews">
+        <i class="fa-solid fa-star-half-stroke"></i>
+        <div class="title">Reviews</div>
+        <div class="body">View customer order ratings <i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+      <div class="card" data-url="/admin/tickets">
+        <i class="fa-solid fa-headset"></i>
+        <div class="title">Support</div>
+        <div class="body">Manage customer tickets <i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+      <div class="card" data-url="/admin/tickets?type=custom">
+        <i class="fa-solid fa-clipboard-list"></i>
+        <div class="title">Custom Requests</div>
+        <div class="body">Manage custom request tickets <i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+      <div class="card" data-url="/admin/q&a">
+        <i class="fa-solid fa-question-circle"></i>
+        <div class="title">Q&A</div>
+        <div class="body">Manage customer questions and answers <i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+      <div class="card" data-url="/pin-category">
+        <i class="fa-solid fa-thumbtack"></i>
+        <div class="title">Pin Category</div>
+        <div class="body">Pin a category for home page <i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+      <div class="card" data-url="/admin/home-sections">
+        <i class="fa-solid fa-star"></i>
+        <div class="title">Home Sections</div>
+        <div class="body">Manage custom sections on home page <i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+      <div class="card" data-url="/batch-operations">
+        <i class="fa-solid fa-play"></i>
+        <div class="title">Run script</div>
+        <div class="body">Run a script for batch-operations <i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+      <div class="card" data-url="/marketing-emails">
+        <i class="fa-solid fa-envelope"></i>
+        <div class="title">Marketing emails</div>
+        <div class="body">Send email marketing messages <i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+      <div class="card" data-url="/admin/exports">
+        <i class="fa-solid fa-file-export"></i>
+        <div class="title">Exports to Sheets</div>
+        <div class="body">Export stocks, points, and transactions <i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+      <!-- Batch operation file -->
+      <div class="card" data-url="/update-cache">
+        <i class="fa-solid fa-sync-alt"></i>
+        <div class="title">Update Cache</div>
+        <div class="body">Refresh the cache for the admin panel <i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+    </section>
+    <script>
+      document.querySelectorAll(".card").forEach((card) => {
+        card.addEventListener("click", () => {
+          window.location.href = card.dataset.url;
+        });
+      });
+    </script>
+  </body>
+</html>

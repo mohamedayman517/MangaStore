@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manga Store - View Ticket</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="/css/build.min.css" />
+    <style>
+      .loaderBtn.active {
+        width: 30px;
+        max-height: 30px;
+        aspect-ratio: 1;
+        --c: no-repeat linear-gradient(#000 0 0);
+        background: var(--c) 0% 50%, var(--c) 50% 50%, var(--c) 100% 50%;
+        background-size: 20% 100%;
+        animation: l1 1s infinite linear;
+      }
+      @keyframes l1 {
+        0% {
+          background-size: 20% 100%, 20% 100%, 20% 100%;
+        }
+        33% {
+          background-size: 20% 10%, 20% 100%, 20% 100%;
+        }
+        50% {
+          background-size: 20% 100%, 20% 10%, 20% 100%;
+        }
+        66% {
+          background-size: 20% 100%, 20% 100%, 20% 10%;
+        }
+        100% {
+          background-size: 20% 100%, 20% 100%, 20% 100%;
+        }
+      }
+      aside {
+        transform: translateX(-120%);
+      }
+      @media (min-width: 1024px) {
+        aside {
+          transform: translateX(0%);
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100">
+    <%- include("../partials/navbar") %>
+    <%- include("../partials/admin-back") %> <%- include("../partials/alerts-popups") %>
+    <main class="min-h-screen flex w-full gap-3 pt-16 mb-10">
+      <div class="min-h-screen bg-gray-100 w-full">
+        <div class="container mx-auto pb-6 bg-white shadow-md rounded-md min-h-screen">
+          <div class="p-6 flex flex-col gap-4">
+            <div class="flex flex-col gap-4 md:px-10 px-2">
+              <div
+                class="w-full h-20 flex justify-between items-center border-b-2 border-gray-200 font-semibold text-sm xs:text-base md:text-lg flex-col xs:flex-row gap-1 pb-2 xs:pb-0 xs:gap-0">
+                <h2><%= ticket.id %></h2>
+                <p
+                  class="<%= ticket.status === 'opened' ? 'text-orange-600 bg-orange-200/50' : ticket.status === 'resolved' ? 'text-green-600 bg-green-200/75': ticket.status === 'closed' ? 'text-red-600 bg-red-200/75' : 'text-yellow-600 bg-yellow-200/75' %> px-3 py-1.5 rounded-full font-bold">
+                  <%= ticket.status %>
+                </p>
+              </div>
+              <div>
+                <h2 class="text-xl font-bold sm:text-2xl">Client Details</h2>
+                <div class="flex flex-col gap-2 mt-3 border-b border-b-gray-300 pb-2">
+                  <div class="flex flex-col justify-start items-start gap-3">
+                    <p class="text-sm sm:text-lg font-semibold">Name: <%= ticket.name %></p>
+                    <p class="text-sm sm:text-lg font-semibold">Email: <%= ticket.email %></p>
+                    <p class="text-sm sm:text-lg font-semibold">
+                      Created At: <%= new Date(ticket.createdAt.toDate()).toLocaleString("en-US", { year: 'numeric',
+                      month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true }) %>
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-3 w-full flex flex-col justify-start items-start px-3 min-h-96 max-h-max pb-6 pt-2">
+                <div class="flex justify-start items-center gap-3 select-none">
+                  <div
+                    class="rounded-full h-12 w-12 overflow-hidden bg-white border-2 border-black flex items-center justify-center">
+                    <i class="fa-regular fa-user text-xl"></i>
+                  </div>
+                  <div class="flex flex-col gap-2 text-xl font-bold md:text-2xl">
+                    <p>Client:</p>
+                  </div>
+                </div>
+                <div class="flex flex-col gap-2 w-full mt-3">
+                  <div class="flex justify-start items-center gap-3">
+                    <p class="text-sm sm:text-lg font-semibold">Subject:</p>
+                    <p class="text-sm sm:text-lg"><%= ticket.description %></p>
+                  </div>
+                  <% if (ticket.issueCategory === 'CustomRequest') { %>
+                  <div class="flex flex-wrap gap-6 items-center mt-2">
+                    <div class="flex items-center gap-2">
+                      <p class="text-sm sm:text-lg font-semibold">Client Offered Price:</p>
+                      <p class="text-sm sm:text-lg"><%= (ticket.offeredPrice !== undefined && ticket.offeredPrice !== null) ? (ticket.offeredPrice + ' USD') : 'N/A' %></p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <p class="text-sm sm:text-lg font-semibold">Admin Offer Price:</p>
+                      <p class="text-sm sm:text-lg"><%= (ticket.adminOfferPrice !== undefined && ticket.adminOfferPrice !== null) ? (ticket.adminOfferPrice + ' USD') : 'N/A' %></p>
+                    </div>
+                  </div>
+                  <% } %>
+                  <div class="flex justify-start items-center gap-3">
+                    <p class="text-sm sm:text-lg font-semibold">Category:</p>
+                    <p class="text-sm sm:text-lg"><%= ticket.issueCategory %></p>
+                  </div>
+                  <div class="flex justify-start items-center gap-3">
+                    <p class="text-sm sm:text-lg font-semibold">Description:</p>
+                    <p class="text-sm sm:text-lg"><%= ticket.description %></p>
+                  </div>
+                  <div class="flex flex-col sm:flex-row justify-start items-start gap-3">
+                    <p class="text-sm sm:text-lg font-semibold">Attachments:</p>
+                    <div class="flex gap-4 flex-col">
+                      <% ticket.attachments.forEach(attachment => { %>
+                      <a href="<%= attachment.file %>" target="_blank" class="text-blue-500 underline"
+                        ><%= attachment.fileName %> (<%= (attachment.fileSize / (1024 * 1024)).toFixed(2) %> MB)</a
+                      >
+                      <% }) %>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-6 bg-gray-50/50 rounded-md min-h-min max-h-max">
+            <h2 class="text-xl font-bold sm:text-2xl">Replies</h2>
+            <div class="flex flex-col gap-4 px-2 sm:px-6">
+              <% ticket.messages.forEach(message => { %>
+              <div class="flex flex-col gap-2 mt-5 pb-2 border-b-2 border-b-gray-300">
+                <div class="flex justify-start items-start gap-3 select-none flex-col">
+                  <div class="flex flex-row gap-2 text-sm xs:text-base font-bold md:text-2xl">
+                    <div
+                      class="rounded-full h-10 w-10 sm:w-12 sm:h-12 overflow-hidden bg-white border-2 border-black flex justify-center items-center">
+                      <% if ( message.senderType === 'client' ) { %>
+                      <i class="fa-regular fa-user text-lg sm:text-xl"></i>
+                      <% } else { %>
+                      <i class="fa-solid fa-headset text-lg sm:text-xl"></i>
+                      <% } %>
+                    </div>
+                    <p><%= message.senderType === 'client' ? 'Client' : 'Support' %>:</p>
+                  </div>
+                </div>
+                <div class="flex flex-col justify-between items-start text-sm xs:text-base sm:text-lg">
+                  <p>
+                    <span class="font-medium">Replied at: </span> <%= new
+                    Date(message.createdAt.toDate()).toLocaleString("en-us") %>
+                  </p>
+                  <p>
+                    <span class="font-semibold text-sm xs:text-base sm:text-lg"> Message: </span> <%= message.message %>
+                  </p>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-4 justify-start items-start">
+                  <h2 class="font-medium text-sm xs:text-base sm:text-lg">Attachments:</h2>
+                  <div class="flex gap-4 flex-col text-sm xs:text-base sm:text-lg">
+                    <% if (message.attachments) { %> <% message.attachments.forEach(attachment => { %>
+                    <a href="<%= attachment.file %>" target="_blank" class="text-blue-500 underline"
+                      ><%= attachment.fileName %> (<%= (attachment.fileSize / (1024 * 1024)).toFixed(2) %> MB)</a
+                    >
+                    <% }) %> <% } %>
+                  </div>
+                </div>
+              </div>
+              <% }) %>
+            </div>
+
+            <div class="px-3 sm:px-6 py-6 bg-white rounded-md mt-6">
+              <h2 class="text-lg sm:text-2xl font-semibold mb-6 text-orange-500">Reply to Ticket</h2>
+              <form id="ticketForm">
+                <div class="flex justify-start items-center gap-2 mb-2">
+                  <span class="font-bold text-lg text-orange-500"> Status: </span>
+                  <select
+                    id="changeStatus"
+                    class="border-2 border-orange-500 focus:border-orange-700 cursor-pointer p-1 rounded-md">
+                    <option value="replied">Replied</option>
+                    <option value="resolved">Resolved</option>
+                    <option value="closed">Closed</option>
+                  </select>
+                </div>
+                <% if (ticket.issueCategory === 'CustomRequest') { %>
+                <div class="mb-4">
+                  <label class="block font-bold text-orange-500">Admin Offer Price (USD)</label>
+                  <input type="number" step="0.01" min="0" id="adminOfferPrice" value="<%= (ticket.adminOfferPrice !== undefined && ticket.adminOfferPrice !== null) ? ticket.adminOfferPrice : '' %>"
+                    class="w-full p-2 border-2 rounded-md border-orange-500 focus:border-orange-700" placeholder="e.g., 19.99" />
+                  <p class="text-xs text-gray-500 mt-1">Optional. Leave empty to keep current value.</p>
+                </div>
+                <% } %>
+                <div class="mb-4">
+                  <label class="block font-bold text-orange-500">Message</label>
+                  <textarea
+                    id="message"
+                    class="w-full p-2 border-2 rounded-md border-orange-500 focus:border-orange-700"
+                    maxlength="5000"
+                    required
+                    placeholder="Reply to the ticket"></textarea>
+                </div>
+                <div class="mb-4">
+                  <label for="file" class="block text-orange-700 mb-2">Attachments</label>
+                  <label
+                    for="file"
+                    id="fileUpload"
+                    class="file-upload-label cursor-pointer flex flex-col items-center justify-center border-2 border-dashed border-orange-300 rounded-md p-4 hover:border-orange-400">
+                    <i class="fas fa-cloud-upload-alt text-4xl text-orange-700"></i>
+                    <span class="text-orange-700">Upload Files</span>
+                    <input type="file" id="fileInput" name="file" class="hidden" multiple />
+                  </label>
+                  <div id="fileAlert"></div>
+                </div>
+                <div class="mb-4">
+                  <button
+                    type="submit"
+                    id="submitButton"
+                    class="btn lg:hover:bg-orange-700 transition-all duration-300 active:bg-orange-800 bg-orange-600 text-white border border-orange-600 disabled:bg-orange-300/75 disabled:cursor-not-allowed border-solid w-full h-10 lg:h-12 lg:text-lg p-2 text-sm rounded-lg flex flex-row items-center justify-center">
+                    <span class="btnWord"> Send reply </span>
+                    <span class="loaderBtn"></span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <script src="/js/script/view-tickets.js"></script>
+  </body>
+</html>

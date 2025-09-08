@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %> | Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-bs5.min.css" />
+    <style>
+      .email-preview {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        background-color: #f9f9f9;
+      }
+      .stats-card {
+        transition: transform 0.3s;
+        border-left: 4px solid #0d6efd;
+      }
+      .stats-card:hover {
+        transform: translateY(-5px);
+      }
+      .loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      }
+      .loading-spinner {
+        width: 3rem;
+        height: 3rem;
+      }
+      .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+      }
+      .template-btn {
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .template-btn:hover {
+        background-color: #f8f9fa;
+      }
+      .drafts-dropdown {
+        max-height: 300px;
+        overflow-y: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <%- include('partials/admin-back') %>
+    <div class="container-fluid py-4">
+      <div class="row mb-4">
+        <div class="col-12">
+          <h2 class="fs-1">Marketing Emails</h2>
+          <p class="text-muted">Create and send promotional emails to your customers</p>
+        </div>
+      </div>
+
+      <div class="row">
+        <!-- Stats Cards -->
+        <div class="col-md-3 mb-4">
+          <div class="card stats-card border-0 shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title text-primary">Total Sent</h5>
+              <h2 class="display-6"><%= totalSent %></h2>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3 mb-4">
+          <div class="card stats-card border-0 shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title text-primary">Open Rate</h5>
+              <h2 class="display-6"><%= openRate %>%</h2>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3 mb-4">
+          <div class="card stats-card border-0 shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title text-primary">Click Rate</h5>
+              <h2 class="display-6"><%= clickRate %>%</h2>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3 mb-4">
+          <div class="card stats-card border-0 shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title text-primary">Unsubscribes</h5>
+              <h2 class="display-6"><%= unsubscribeRate %>%</h2>
+              <button id="syncUnsubscribedBtn" class="btn btn-sm btn-outline-primary mt-2">Sync Unsubscribed</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-lg-8">
+          <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white">
+              <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Create Email Campaign</h5>
+                <div class="dropdown">
+                  <button
+                    class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                    type="button"
+                    id="templatesDropdown"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                    Templates
+                  </button>
+                  <ul class="dropdown-menu" aria-labelledby="templatesDropdown">
+                    <li><a class="dropdown-item template-btn" data-template="welcome">Welcome Email</a></li>
+                    <li><a class="dropdown-item template-btn" data-template="promotion">Promotion Announcement</a></li>
+                    <li><a class="dropdown-item template-btn" data-template="newsletter">Monthly Newsletter</a></li>
+                    <li><hr class="dropdown-divider" /></li>
+                    <li><a class="dropdown-item" href="#" id="loadDraftsBtn">Load Saved Drafts</a></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              <form id="emailForm" method="POST" action="/api/marketing/emails">
+                <div class="mb-3">
+                  <label for="emailSubject" class="form-label">Email Subject</label>
+                  <input type="text" class="form-control" id="emailSubject" name="subject" required />
+                </div>
+
+                <div class="mb-3">
+                  <label for="audienceSegment" class="form-label">Target Audience</label>
+                  <select class="form-select" id="audienceSegment" name="audienceSegment">
+                    <option value="all">All Customers</option>
+                    <option value="new">New Customers (Last 30 days)</option>
+                    <option value="frequent">Frequent Buyers</option>
+                    <option value="inactive">Inactive Customers (90+ days)</option>
+                    <option value="abandoned">Abandoned Cart</option>
+                  </select>
+                </div>
+
+                <div class="mb-3">
+                  <label for="emailContent" class="form-label">Email Content</label>
+                  <textarea id="emailContent" name="content" class="form-control"></textarea>
+                </div>
+
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <label class="form-label">Send Options</label>
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="sendOption" id="sendNow" value="now" checked />
+                      <label class="form-check-label" for="sendNow"> Send Immediately </label>
+                    </div>
+                    <div class="form-check">
+                      <input
+                        class="form-check-input"
+                        type="radio"
+                        name="sendOption"
+                        id="scheduleLater"
+                        value="scheduled" />
+                      <label class="form-check-label" for="scheduleLater"> Schedule for Later </label>
+                    </div>
+                  </div>
+                  <div class="col-md-6" id="scheduleContainer" style="display: none">
+                    <label for="scheduleDate" class="form-label">Schedule Date & Time</label>
+                    <input type="datetime-local" class="form-control" id="scheduleDate" name="scheduleDate" />
+                  </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                  <button type="button" class="btn btn-outline-secondary" id="previewBtn">Preview</button>
+                  <button type="button" class="btn btn-secondary" id="saveDraftBtn">Save Draft</button>
+                  <button type="submit" class="btn btn-primary" id="sendEmailBtn">Send Email</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white">
+              <h5 class="card-title mb-0">Email Preview</h5>
+            </div>
+            <div class="card-body">
+              <div class="email-preview" id="emailPreviewContainer">
+                <h4 id="previewSubject">Your Email Subject</h4>
+                <div id="previewContent" class="mt-3">
+                  <p>Email content will appear here...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card shadow-sm border-0">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+              <h5 class="card-title mb-0">Recent Campaigns</h5>
+              <a href="/marketing-emails/campaigns" class="btn btn-sm btn-link">View All</a>
+            </div>
+            <div class="list-group list-group-flush" id="recentCampaignsList">
+              <% if (typeof recentCampaigns !== 'undefined' && recentCampaigns.length > 0) { %> <%
+              recentCampaigns.forEach(function(campaign) { %>
+              <a href="/marketing-emails/campaigns/<%= campaign.id %>" class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                  <h6 class="mb-1"><%= campaign.subject %></h6>
+                  <small><%= new Date(campaign.sentAt).toLocaleDateString() %></small>
+                </div>
+                <p class="mb-1 text-muted small">Sent to <%= campaign.recipientCount %> customers</p>
+                <small><%= campaign.openRate %>% open rate</small>
+              </a>
+              <% }); %> <% } else { %>
+              <div class="list-group-item text-center text-muted py-4">
+                <p>No campaigns sent yet</p>
+              </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="loading" style="display: none">
+      <div class="spinner-border text-primary loading-spinner" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container"></div>
+
+    <!-- Drafts Modal -->
+    <div class="modal fade" id="draftsModal" tabindex="-1" aria-labelledby="draftsModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="draftsModalLabel">Saved Drafts</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="list-group drafts-dropdown" id="draftsList">
+              <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-bs5.min.js"></script>
+    <script>
+      $(document).ready(function () {
+        // Initialize rich text editor
+        $("#emailContent").summernote({
+          placeholder: "Write your email content here...",
+          height: 300,
+          toolbar: [
+            ["style", ["style"]],
+            ["font", ["bold", "underline", "clear"]],
+            ["color", ["color"]],
+            ["para", ["ul", "ol", "paragraph"]],
+            ["insert", ["link", "picture"]],
+            ["view", ["fullscreen", "codeview"]],
+          ],
+          callbacks: {
+            onImageUpload: function (files) {
+              // Custom image upload handler
+              for (let i = 0; i < files.length; i++) {
+                uploadImage(files[i]);
+              }
+            },
+          },
+        });
+
+        // Toggle schedule date input
+        $('input[name="sendOption"]').change(function () {
+          if ($(this).val() === "scheduled") {
+            $("#scheduleContainer").show();
+          } else {
+            $("#scheduleContainer").hide();
+          }
+        });
+
+        // Preview functionality
+        $("#previewBtn").click(function () {
+          const subject = $("#emailSubject").val() || "Your Email Subject";
+          const content = $("#emailContent").summernote("code");
+
+          $("#previewSubject").text(subject);
+          $("#previewContent").html(content);
+        });
+
+        // Form submission
+        $("#emailForm").submit(function (e) {
+          e.preventDefault();
+          showLoading();
+
+          // Convert form to PATCH request for sending emails
+          const formData = new FormData(this);
+          const jsonData = Object.fromEntries(formData);
+
+          fetch("/api/marketing/emails", {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(jsonData),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              hideLoading();
+              if (data.success) {
+                showToast("Success", data.message, "success");
+                resetForm();
+              } else {
+                showToast("Error", data.error || "Failed to create email campaign", "danger");
+              }
+            })
+            .catch((error) => {
+              hideLoading();
+              console.error("Error:", error);
+              showToast("Error", "Failed to create email campaign", "danger");
+            });
+        });
+
+        // Save draft functionality
+        $("#saveDraftBtn").click(function () {
+          showLoading();
+          const formData = new FormData($("#emailForm")[0]);
+          const jsonData = Object.fromEntries(formData);
+          jsonData.status = "draft";
+
+          fetch("/api/marketing/emails/drafts", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(jsonData),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              hideLoading();
+              if (data.success) {
+                showToast("Success", "Draft saved successfully!", "success");
+              } else {
+                showToast("Error", data.error || "Failed to save draft", "danger");
+              }
+            })
+            .catch((error) => {
+              hideLoading();
+              console.error("Error:", error);
+              showToast("Error", "Failed to save draft", "danger");
+            });
+        });
+
+        // Sync unsubscribed users
+        $("#syncUnsubscribedBtn").click(function () {
+          showLoading();
+          fetch("/api/syncUnsubscribed", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              hideLoading();
+              if (data.success) {
+                showToast("Success", data.message, "success");
+              } else {
+                showToast("Error", data.error || "Failed to sync unsubscribed users", "danger");
+              }
+            })
+            .catch((error) => {
+              hideLoading();
+              console.error("Error:", error);
+              showToast("Error", "Failed to sync unsubscribed users", "danger");
+            });
+        });
+
+        // Load drafts
+        $("#loadDraftsBtn").click(function () {
+          $("#draftsModal").modal("show");
+          loadDrafts();
+        });
+
+        // Email templates
+        $(".template-btn").click(function () {
+          const template = $(this).data("template");
+          loadTemplate(template);
+        });
+
+        // Helper functions
+        function showLoading() {
+          $(".loading").show();
+        }
+
+        function hideLoading() {
+          $(".loading").hide();
+        }
+
+        function showToast(title, message, type) {
+          const toastId = "toast-" + Date.now();
+          const toast = `
+            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true" id="${toastId}">
+              <div class="toast-header bg-${type} text-white">
+                <strong class="me-auto">${title}</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+              </div>
+              <div class="toast-body">
+                ${message}
+              </div>
+            </div>
+          `;
+
+          $(".toast-container").append(toast);
+          const toastElement = new bootstrap.Toast(document.getElementById(toastId), {
+            autohide: true,
+            delay: 5000,
+          });
+          toastElement.show();
+
+          // Remove toast from DOM after it's hidden
+          $(`#${toastId}`).on("hidden.bs.toast", function () {
+            $(this).remove();
+          });
+        }
+
+        function resetForm() {
+          $("#emailForm")[0].reset();
+          $("#emailContent").summernote("code", "");
+          $("#previewSubject").text("Your Email Subject");
+          $("#previewContent").html("<p>Email content will appear here...</p>");
+        }
+
+        function loadDrafts() {
+          $("#draftsList").html(`
+            <div class="text-center py-4">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+          `);
+
+          fetch("/api/marketing/emails/drafts")
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.drafts && data.drafts.length > 0) {
+                let draftsHtml = "";
+                data.drafts.forEach((draft) => {
+                  const date = new Date(draft.createdAt).toLocaleDateString();
+                  draftsHtml += `
+                    <a href="#" class="list-group-item list-group-item-action draft-item" data-id="${draft.id}">
+                      <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">${draft.subject || "(No subject)"}</h6>
+                        <small>${date}</small>
+                      </div>
+                      <p class="mb-1 text-muted small text-truncate">${stripHtml(draft.content).substring(0, 50)}...</p>
+                    </a>
+                  `;
+                });
+                $("#draftsList").html(draftsHtml);
+
+                // Add click event for draft items
+                $(".draft-item").click(function () {
+                  const draftId = $(this).data("id");
+                  loadDraft(draftId);
+                  $("#draftsModal").modal("hide");
+                });
+              } else {
+                $("#draftsList").html('<div class="text-center py-4 text-muted">No saved drafts found</div>');
+              }
+            })
+            .catch((error) => {
+              console.error("Error loading drafts:", error);
+              $("#draftsList").html('<div class="text-center py-4 text-danger">Failed to load drafts</div>');
+            });
+        }
+
+        function loadDraft(draftId) {
+          showLoading();
+          fetch(`/api/marketing/emails/drafts/${draftId}`)
+            .then((response) => response.json())
+            .then((draft) => {
+              $("#emailSubject").val(draft.subject || "");
+              $("#emailContent").summernote("code", draft.content || "");
+              $("#audienceSegment").val(draft.audienceSegment || "all");
+
+              // Update preview
+              $("#previewSubject").text(draft.subject || "Your Email Subject");
+              $("#previewContent").html(draft.content || "<p>Email content will appear here...</p>");
+
+              hideLoading();
+              showToast("Success", "Draft loaded successfully", "success");
+            })
+            .catch((error) => {
+              console.error("Error loading draft:", error);
+              hideLoading();
+              showToast("Error", "Failed to load draft", "danger");
+            });
+        }
+
+        function loadTemplate(templateName) {
+          let subject = "";
+          let content = "";
+
+          switch (templateName) {
+            case "welcome":
+              subject = "Welcome to Our Store!";
+              content = `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                  <h2 style="color: #0d6efd;">Welcome to Our Store!</h2>
+                  <p>Thank you for joining our community. We're excited to have you on board!</p>
+                  <p>Here are some benefits you can enjoy as our customer:</p>
+                  <ul>
+                    <li>Exclusive access to new products</li>
+                    <li>Special discounts for members</li>
+                    <li>Free shipping on orders over $50</li>
+                  </ul>
+                  <p>Start exploring our collection today!</p>
+                  <div style="margin: 30px 0;">
+                    <a href="#" style="background-color: #0d6efd; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Shop Now</a>
+                  </div>
+                  <p>If you have any questions, feel free to contact our support team.</p>
+                  <p>Best regards,<br>The Store Team</p>
+                </div>
+              `;
+              break;
+            case "promotion":
+              subject = "Special Offer Inside - Limited Time Only!";
+              content = `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                  <h2 style="color: #dc3545;">Special Offer - 25% OFF Everything!</h2>
+                  <p>We're excited to announce our biggest sale of the season!</p>
+                  <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
+                    <h3 style="color: #dc3545; margin-top: 0;">Use code: SPECIAL25</h3>
+                    <p style="font-size: 18px;">Valid until [Date]</p>
+                  </div>
+                  <p>Don't miss this opportunity to get your favorite products at amazing prices.</p>
+                  <div style="margin: 30px 0; text-align: center;">
+                    <a href="#" style="background-color: #dc3545; color: white; padding: 12px 25px; text-decoration: none; border-radius: 4px; font-weight: bold;">Shop the Sale</a>
+                  </div>
+                  <p><em>Hurry, offer ends soon!</em></p>
+                </div>
+              `;
+              break;
+            case "newsletter":
+              subject = "Monthly Newsletter - What's New This Month";
+              content = `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                  <h2 style="color: #198754;">Our Monthly Newsletter</h2>
+                  <p>Hello there! Here's what's happening this month:</p>
+                  
+                  <div style="margin: 25px 0; border-left: 4px solid #198754; padding-left: 15px;">
+                    <h3 style="margin-top: 0;">New Arrivals</h3>
+                    <p>Check out our latest collection of products that just arrived in store.</p>
+                    <a href="#" style="color: #198754; text-decoration: none;">View New Arrivals →</a>
+                  </div>
+                  
+                  <div style="margin: 25px 0; border-left: 4px solid #198754; padding-left: 15px;">
+                    <h3 style="margin-top: 0;">Customer Spotlight</h3>
+                    <p>Meet Sarah, who transformed her space using our products.</p>
+                    <a href="#" style="color: #198754; text-decoration: none;">Read Sarah's Story →</a>
+                  </div>
+                  
+                  <div style="margin: 25px 0; border-left: 4px solid #198754; padding-left: 15px;">
+                    <h3 style="margin-top: 0;">Upcoming Events</h3>
+                    <p>Join us for our virtual workshop on [Date].</p>
+                    <a href="#" style="color: #198754; text-decoration: none;">Register Now →</a>
+                  </div>
+                  
+                  <p>We hope you enjoyed this month's newsletter!</p>
+                  <p>Until next time,<br>The Team</p>
+                </div>
+              `;
+              break;
+          }
+
+          if (subject && content) {
+            $("#emailSubject").val(subject);
+            $("#emailContent").summernote("code", content);
+
+            // Update preview
+            $("#previewSubject").text(subject);
+            $("#previewContent").html(content);
+
+            showToast("Template Loaded", `"${subject}" template has been loaded`, "info");
+          }
+        }
+
+        function stripHtml(html) {
+          const tmp = document.createElement("DIV");
+          tmp.innerHTML = html;
+          return tmp.textContent || tmp.innerText || "";
+        }
+
+        function uploadImage(file) {
+          const formData = new FormData();
+          formData.append("image", file);
+
+          fetch("/api/upload-image", {
+            method: "POST",
+            body: formData,
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.url) {
+                $("#emailContent").summernote("insertImage", data.url);
+              } else {
+                showToast("Error", "Failed to upload image", "danger");
+              }
+            })
+            .catch((error) => {
+              console.error("Error uploading image:", error);
+              showToast("Error", "Failed to upload image", "danger");
+            });
+        }
+      });
+    </script>
+  </body>
+</html>

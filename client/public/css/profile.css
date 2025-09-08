@@ -1,0 +1,22 @@
+:root {
+  --primary-color: #fdf4cb;
+  --dark-primary-color: #121212;
+}
+.profilePopup::after {
+  content: "";
+  position: absolute;
+  top: 4.25rem;
+  right: 11.2rem;
+  width: 20px;
+  height: 20px;
+  transform: rotate(45deg);
+  background-color: var(--primary-color);
+}
+.dark .profilePopup::after {
+  background-color: var(--dark-primary-color);
+}
+@media (max-width: 1024px) {
+  .profilePopup::after {
+    right: 8rem;
+  }
+}

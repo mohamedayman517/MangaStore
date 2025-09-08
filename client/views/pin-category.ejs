@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pin Category</title>
+    <link rel="stylesheet" href="/css/build.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer" />
+    <!-- <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" /> -->
+  </head>
+  <body class="bg-gray-100">
+    <%- include("./partials/alerts-popups") %>
+    <%- include("./partials/navbar") %>
+    <%- include("./partials/admin-back") %>
+    <div class="container mx-auto p-4 mt-16">
+      <h1 class="text-2xl font-bold mb-4">Categories</h1>
+      <ul class="space-y-2">
+        <% categories.forEach(category => { %>
+        <li class="flex items-center justify-between bg-white p-4 rounded shadow">
+          <span class="text-lg"><%= category.name %></span>
+          <% if (pinnedCategories.some(pinned => pinned.name === category.name)) { %>
+          <button class="bg-red-500 text-white px-4 py-2 rounded" onclick="unpinCategory('<%= category.name %>')">
+            Unpin
+          </button>
+          <% } else { %>
+          <button class="bg-blue-500 text-white px-4 py-2 rounded" onclick="pinCategory('<%= category.name %>')">
+            Pin
+          </button>
+          <% } %>
+        </li>
+        <% }) %>
+      </ul>
+    </div>
+
+    <script>
+      async function pinCategory(categoryName) {
+        // Add your logic to pin the category
+        // Example: send a request to the backend to pin the category
+        const response = await fetch("/pin-category", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ categoryName }),
+        });
+        if (response.ok) {
+          successAlert("Category pinned successfully");
+          // Reload the page after pinning the category
+          setTimeout(() => {
+            location.reload();
+          }, 300);
+        } else {
+          console.error("Failed to pin the category");
+          errorAlert("Failed to pin the category");
+        }
+      }
+
+      function unpinCategory(categoryName) {
+        // Add your logic to unpin the category
+        // Example: send a request to the backend to unpin the category
+        fetch("/pin-category", {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ categoryName }),
+        })
+          .then((response) => {
+            if (response.ok) {
+              successAlert("Category unpinned successfully");
+              // Reload the page after unpinning the category
+              setTimeout(() => {
+                location.reload();
+              }, 300);
+            } else {
+              console.error("Failed to unpin the category");
+              errorAlert("Failed to unpin the category");
+            }
+          })
+          .catch((error) => {
+            console.error("Failed to unpin the category", error);
+            errorAlert("Failed to unpin the category");
+          });
+      }
+    </script>
+  </body>
+</html>

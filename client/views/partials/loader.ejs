@@ -1,0 +1,59 @@
+<div
+  id="loadingContainer"
+  class="fixed w-screen h-screen bg-background-light dark:bg-background-dark flex items-center justify-center top-0 z-[1000] transition-opacity duration-500">
+  <div class="relative flex items-center justify-center">
+    <div class="loader"></div>
+    <img id="loadingLogo" src="/pics/logo.png" alt="Loading Logo" class="absolute w-[80px] h-[80px]" />
+  </div>
+</div>
+
+<style>
+  /* Loader - Rotates Once, Pauses for 0.3s */
+  .loader {
+    width: 150px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 8px solid;
+    border-color: #febe19 #0000;
+    animation: loaderAnim 1.3s infinite ease-in-out;
+  }
+
+  @keyframes loaderAnim {
+    0% {
+      transform: rotate(0);
+    }
+    95% {
+      transform: rotate(360deg);
+    } /* Full rotation */
+    100% {
+      transform: rotate(360deg);
+    } /* Pause */
+  }
+
+  /* Reverse Logo Rotation */
+  #loadingLogo {
+    animation: logoAnim 1.3s infinite ease-in-out;
+  }
+
+  @keyframes logoAnim {
+    0% {
+      transform: rotate(0);
+    }
+    95% {
+      transform: rotate(-360deg);
+    } /* Reverse rotation */
+    100% {
+      transform: rotate(-360deg);
+    } /* Pause */
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    setTimeout(() => {
+      const loader = document.getElementById("loadingContainer");
+      loader.style.opacity = "0";
+      setTimeout(() => loader.remove(), 500);
+    }, 1500); // Extended slightly to match animation timing
+  });
+</script>

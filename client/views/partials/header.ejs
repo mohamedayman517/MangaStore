@@ -1,0 +1,199 @@
+<header
+  class="border-b border-b-primary-light dark:border-b-primary-dark p-4 text-center fixed top-0 w-full left-0 flex justify-between px-5 pr-9 lg:px-20 z-10 bg-background-light dark:bg-background-dark shadow-md dark:shadow-lg"
+  style="z-index: 110">
+  <div class="flex gap-5 justify-center items-center text-primary-light dark:text-primary-dark">
+    <div class="flex gap-6 items-center">
+      <i class="fa fa-bars text-xl cursor-pointer lg:!hidden transition-opacity duration-300" id="menuBtn"></i>
+      <h1 class="text-xl lg:text-3xl font-bold">
+        <a href="/" class="flex items-center gap-2 flex-row-reverse"
+          ><span class="hidden lg:block">Manga Store</span
+          ><img src="/pics/logo.png" alt="Logo" class="h-full w-auto max-h-8"
+        /></a>
+      </h1>
+    </div>
+    <div class="hidden lg:flex gap-5" id="menu-pc">
+      <a
+        href="/"
+        class="hover:text-secondary-light dark:hover:text-primary-light font-medium transition-colors duration-200"
+        >Home</a
+      >
+      <a
+        href="/support/tickets"
+        class="hover:text-secondary-light dark:hover:text-primary-light font-medium transition-colors duration-200"
+        >Support</a
+      >
+      <a
+        href="/products"
+        class="hover:text-secondary-light dark:hover:text-primary-light font-medium transition-colors duration-200"
+        >Products</a
+      >
+      <a
+        href="/orders"
+        class="hover:text-secondary-light dark:hover:text-primary-light font-medium transition-colors duration-200"
+        >Orders</a
+      >
+      <a
+        href="/support/custom-request"
+        class="hover:text-secondary-light dark:hover:text-primary-light font-medium transition-colors duration-200"
+        >Custom Request</a
+      >
+    </div>
+  </div>
+  <div class="flex gap-3 justify-center items-center">
+    <div class="mr-8 relative">
+      <form
+        action=""
+        class="relative flex items-center border-2 border-transparent rounded-full focus-within:border-primary-light dark:focus-within:border-primary-dark transition-all duration-300">
+        <input
+          type="search"
+          placeholder="Search"
+          id="searchInput"
+          class="bg-transparent text-text-light dark:text-text-dark text-base w-0 opacity-0 p-0 outline-none transition-all duration-300 ease-in-out focus:w-64 focus:opacity-100 focus:p-0.5 focus:pl-12 dark:placeholder-primary-dark placeholder-primary-light"
+          onfocus="handleSearchFocus(true)"
+          onblur="handleSearchFocus(false)" />
+        <div
+          class="absolute left-3 top-1/2 transform -translate-y-1/2 text-primary-light dark:text-primary-dark cursor-pointer transition-all duration-300 ease-in-out">
+          <label for="searchInput" class="cursor-pointer">
+            <svg viewBox="0 0 1000 1000" fill="currentColor" class="w-5 h-5">
+              <path
+                d="M408 745a337 337 0 1 0 0-674 337 337 0 0 0 0 674zm239-19a396 396 0 0 1-239 80 398 398 0 1 1 319-159l247 248a56 56 0 0 1 0 79 56 56 0 0 1-79 0L647 726z" />
+            </svg>
+          </label>
+        </div>
+        <button
+          type="submit"
+          aria-label="Search"
+          class="hidden focus:block cursor-pointer absolute right-4 top-1/2 transform -translate-y-1/2 bg-transparent text-gray-400 hover:text-white transition-all">
+          <svg viewBox="0 0 1000 1000" fill="currentColor" class="w-6 h-6">
+            <path
+              d="M408 745a337 337 0 1 0 0-674 337 337 0 0 0 0 674zm239-19a396 396 0 0 1-239 80 398 398 0 1 1 319-159l247 248a56 56 0 0 1 0 79 56 56 0 0 1-79 0L647 726z" />
+          </svg>
+        </button>
+      </form>
+
+      <!-- Search Results Container -->
+      <div
+        id="searchResults"
+        class="absolute mt-2 w-full max-h-96 overflow-y-auto bg-background-light dark:bg-background-dark border border-primary-light dark:border-primary-dark rounded-lg shadow-lg z-50 hidden">
+        <div class="p-2 text-sm text-text-light dark:text-text-dark" id="searchResultsContent">
+          <!-- Search results will be populated here -->
+        </div>
+      </div>
+    </div>
+
+    <i
+      class="fa fa-user text-lg cursor-pointer text-primary-light dark:text-primary-dark transition-opacity duration-300"
+      id="profile-icon"
+      title="Account"
+      aria-label="Account"></i>
+
+    <a href="/wishlist" class="relative flex justify-center items-center" title="Wishlist" aria-label="Wishlist">
+      <i class="fa fa-heart text-xl cursor-pointer text-primary-light dark:text-primary-dark transition-opacity duration-300"></i>
+    </a>
+    <div class="relative flex justify-center items-center">
+      <span
+        id="cart-counter"
+        class="counter font-bold absolute -top-3 -right-4 rounded-full bg-secondary-light dark:bg-secondary-dark text-background-light dark:text-text-dark text-xs flex justify-center items-center w-5 h-5 transition-opacity duration-300"
+        >0</span
+      >
+      <i
+        class="fa fa-shopping-cart text-xl cursor-pointer text-primary-light dark:text-primary-dark transition-opacity duration-300"
+        id="cart-icon"></i>
+    </div>
+    <div class="flex items-center gap-3 justify-center ml-3" id="currency-toggle">
+      <img src="" alt="" id="currency-flag" class="w-8 h-6 cursor-pointer" />
+    </div>
+  </div>
+</header>
+
+<%- include("./navbar") %> <%- include("./profile-popup") %>
+
+<script src="/js/dark-mode.js"></script>
+<script src="/js/search.js"></script>
+<script src="/js/currency-exchange.js"></script>
+<script src="/js/cart.js"></script>
+
+<script>
+  // Replace header account icon with user's avatar when logged in
+  (function () {
+    // Ensure DOM is ready
+    if (!window.fetch) return;
+    fetch('/me/avatar', { credentials: 'same-origin' })
+      .then(async (res) => {
+        if (!res.ok) return null;
+        try { return await res.json(); } catch { return null; }
+      })
+      .then((data) => {
+        if (!data || !data.photoURL) return;
+
+        var photoURL = data.photoURL;
+        // Proxy external URLs to avoid ORB/CORS
+        try {
+          var u = new URL(photoURL);
+          if (u.protocol === 'http:' || u.protocol === 'https:') {
+            photoURL = '/avatar?url=' + encodeURIComponent(photoURL);
+          }
+        } catch (_) {
+          // Not a full URL; keep as-is (likely local path)
+        }
+
+        var iconEl = document.getElementById('profile-icon');
+        if (!iconEl) return;
+
+        // Create avatar image next to the existing icon
+        var img = document.createElement('img');
+        img.src = photoURL;
+        img.alt = 'Avatar';
+        img.width = 32; img.height = 32;
+        img.className = 'w-8 h-8 rounded-full object-cover cursor-pointer';
+        img.id = 'profile-avatar';
+
+        // Keep dropdown behavior: clicking avatar should open the same popup
+        try {
+          var profilePopup = document.getElementById('profilePopup');
+          img.addEventListener('click', function(){ if (profilePopup) profilePopup.classList.toggle('hidden'); });
+        } catch(_) {}
+
+        // Insert image and hide the old icon (retain element for existing listeners)
+        var parent = iconEl.parentNode;
+        if (parent) parent.insertBefore(img, iconEl);
+        iconEl.classList.add('hidden');
+      })
+      .catch(function(){ /* silent */ });
+  })();
+</script>
+
+<!-- Floating FAQ Chat Widget (global) -->
+<div id="faq-chat" class="fixed bottom-4 right-4" style="z-index: 9999;">
+  <!-- Panel -->
+  <div id="faq-chat-panel" class="hidden w-80 max-h-[75vh] overflow-hidden rounded-xl shadow-2xl border border-primary-light/30 dark:border-primary-dark/30 bg-background-light dark:bg-background-dark">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-primary-light/20 dark:border-primary-dark/20 bg-primary-light/10 dark:bg-primary-dark/10">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">💬</span>
+        <h3 class="text-sm font-semibold text-primary-light dark:text-primary-dark">أسئلة شائعة</h3>
+      </div>
+      <button id="faq-chat-close" class="text-text-light/70 dark:text-text-dark/70 hover:text-primary-light dark:hover:text-primary-dark" aria-label="Close">✕</button>
+    </div>
+    <div id="faq-chat-content" class="p-3 space-y-2 overflow-y-auto" style="scrollbar-width: thin;">
+      <div class="text-xs text-text-light/60 dark:text-text-dark/60">جاري التحميل...</div>
+    </div>
+    <!-- Divider -->
+    <div class="h-px bg-primary-light/20 dark:bg-primary-dark/20 mx-2"></div>
+    <!-- Chat messages area -->
+    <div id="chat-messages" class="px-3 py-2 space-y-2 overflow-y-auto" style="max-height: 34vh; scrollbar-width: thin;">
+      <div class="text-xs text-text-light/60 dark:text-text-dark/60">اسألني عن الطلبات، المنتجات أو الدعم.</div>
+    </div>
+    <!-- Composer -->
+    <form id="chat-form" class="flex items-center gap-2 p-2 border-t border-primary-light/20 dark:border-primary-dark/20">
+      <input id="chat-input" type="text" autocomplete="off" placeholder="اكتب رسالتك..." class="flex-1 text-sm px-3 py-2 rounded-md bg-background-light dark:bg-background-dark border border-primary-light/30 dark:border-primary-dark/30 text-text-light dark:text-text-dark outline-none focus:ring-2 focus:ring-primary-light/40" />
+      <button type="submit" class="shrink-0 px-3 py-2 rounded-md bg-secondary-light text-white text-sm hover:opacity-90">إرسال</button>
+    </form>
+  </div>
+  <!-- Toggle Button -->
+  <button id="faq-chat-toggle" class="w-14 h-14 aspect-square rounded-full p-0 shadow-xl bg-secondary-light text-white flex items-center justify-center hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary-light">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-7 h-7">
+      <path d="M2.25 12c0-4.556 4.037-8.25 9-8.25s9 3.694 9 8.25-4.037 8.25-9 8.25c-1.048 0-2.053-.163-2.991-.466-.35-.113-.727-.088-1.06.07L3.9 21.53a.75.75 0 0 1-1.05-1.05l1.676-1.3c.292-.226.376-.63.2-.965A8.934 8.934 0 0 1 2.25 12Z"/>
+    </svg>
+  </button>
+  <script src="/js/faq-chat.js"></script>
+  </div>

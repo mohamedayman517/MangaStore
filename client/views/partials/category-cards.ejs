@@ -1,0 +1,141 @@
+<section class="w-full px-2 md:px-32 my-6 relative z-0">
+  <!-- Horizontal scrollable carousel (shows 3 on desktop) -->
+  <div class="cat-hscroll" id="cat-hscroll">
+    <div class="cat-track">
+    <%
+      // Defaults (always shown)
+      const defaultCats = [
+        { name: 'Top Sellers 🔥', icon: 'fa-fire' },
+        { name: 'Microsoft Store', icon: 'fa-brands fa-windows' },
+        { name: 'Ps Accounts', icon: 'fa-brands fa-playstation' },
+        { name: 'Ps Plus', icon: 'fa-plus' },
+        { name: 'Accounts', icon: 'fa-user' },
+        { name: 'Steam Wallet Codes', icon: 'fa-brands fa-steam' },
+      ];
+
+      // DB categories (strings or {name, icon})
+      const src = Array.isArray(allCategories) ? allCategories : [];
+      // Names to hide from display
+      const hiddenNames = new Set(['Games Codes (Steam)']);
+      const normalize = (item) => {
+        const name = typeof item === 'string' ? item : (item && item.name);
+        if (!name) return null;
+        const known = defaultCats.find(d => d.name === name);
+        const icon = (item && item.icon) || (known && known.icon) || 'fa-folder';
+        return hiddenNames.has(name) ? null : { name, icon };
+      };
+      const dbCats = src.map(normalize).filter(Boolean);
+
+      // Merge without duplicates by name (defaults first)
+      const used = new Set();
+      const merged = [];
+      defaultCats.forEach(c => { if (!used.has(c.name)) { used.add(c.name); merged.push(c); } });
+      dbCats.forEach(c => { if (!used.has(c.name)) { used.add(c.name); merged.push(c); } });
+    %>
+
+    <% merged.filter(c => !hiddenNames.has(c.name)).forEach((c) => { %>
+      <a href="/products?page=1&search=&categories=<%= encodeURIComponent(c.name) %>&minPrice=&maxPrice="
+         class="cat-card group relative rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-200"
+         data-cat="<%= c.name %>">
+        <div class="absolute inset-0 cat-transparent"></div>
+        <div class="relative h-36 sm:h-40 md:h-44 p-4 flex flex-col justify-between text-text-light dark:text-text-dark">
+          <div class="flex items-start justify-between">
+            <i class="fa-solid <%= c.icon %> text-2xl sm:text-3xl drop-shadow"></i>
+            <span class="opacity-90 text-xs bg-primary-light/20 dark:bg-primary-dark/20 px-2 py-1 rounded-full shadow">Category</span>
+          </div>
+          <div class="">
+            <h3 class="text-lg sm:text-xl font-bold drop-shadow-md text-right"><%= c.name %></h3>
+            <p class="text-[11px] sm:text-xs opacity-90">Explore <%= c.name %></p>
+          </div>
+        </div>
+      </a>
+    <% }) %>
+    <% if (merged.length === 0) { %>
+      <div class="col-span-full text-center text-gray-500 py-10">No categories found</div>
+    <% } %>
+    </div>
+  </div>
+</section>
+<style>
+  .cat-transparent { 
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+  }
+  
+  .dark .cat-transparent {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+  
+  .group:hover .cat-transparent {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+  
+  .dark .group:hover .cat-transparent {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  /* Horizontal carousel */
+  .cat-hscroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  .cat-hscroll::-webkit-scrollbar { height: 6px; }
+  .cat-hscroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 6px; }
+  .dark .cat-hscroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); }
+
+  .cat-track {
+    display: flex;
+    gap: 1rem; /* matches gap-4 */
+  }
+  .cat-card {
+    flex: 0 0 100%;        /* 1 per view on mobile */
+    scroll-snap-align: start;
+    height: 11rem;         /* align with md:h-44 visuals */
+  }
+  @media (min-width: 640px) { /* sm */
+    .cat-card { flex-basis: 50%; }
+  }
+  @media (min-width: 1024px) { /* lg */
+    .cat-card { flex-basis: 33.3333%; }
+  }
+</style>
+<script>
+  (function(){
+    const container = document.getElementById('cat-hscroll');
+    if (!container) return;
+    let timer = null;
+    const intervalMs = 3500; // auto-advance
+
+    function pageWidth() { return container.clientWidth; }
+    function atEnd() { return container.scrollLeft + container.clientWidth >= container.scrollWidth - 2; }
+    function next() {
+      if (atEnd()) {
+        container.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        container.scrollBy({ left: pageWidth(), behavior: 'smooth' });
+      }
+    }
+    function start() { if (!timer) timer = setInterval(next, intervalMs); }
+    function stop() { if (timer) { clearInterval(timer); timer = null; } }
+
+    // pause on hover and while user is interacting
+    container.addEventListener('mouseenter', stop);
+    container.addEventListener('mouseleave', start);
+    container.addEventListener('touchstart', stop, { passive: true });
+    container.addEventListener('touchend', start, { passive: true });
+
+    // kick off after initial paint
+    setTimeout(start, 500);
+
+    // Category favorites disabled per request; no heart UI or toggle logic
+  })();
+  </script>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include("./partials/meta") %>
+    <title>Manga Store - Replies</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <link rel="stylesheet" href="/css/framework.css" />
+    <link rel="stylesheet" href="/css/build.min.css" />
+    <link rel="stylesheet" href="/css/profile.css" />
+  </head>
+  <body class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark">
+    <%- include("./partials/header") %>
+    <%- include("./partials/alerts-popups") %>
+    <%- include("./partials/loader") %>
+
+    <main class="min-h-screen flex w-full gap-3 pt-16 mb-10">
+      <section class="w-full flex-1 flex mx-auto py-8 flex-col px-6 rounded-lg border-2 border-primary-light/20 dark:border-primary-dark/10">
+        <div class="flex justify-between items-center mb-8 p-4 rounded-lg bg-gradient-to-r from-primary/10 to-accent/10 dark:from-primary-dark/10 dark:to-accent-dark/10">
+          <h1 class="text-lg sm:text-xl md:text-2xl font-semibold text-primary dark:text-primary-dark">Admin Replies</h1>
+          <div class="flex gap-2">
+            <a href="/support/tickets" class="px-4 py-2 rounded-lg border border-primary-light text-primary-light dark:border-primary-dark dark:text-primary-dark hover:bg-primary-light/10 dark:hover:bg-primary-dark/10">
+              <i class="fa-solid fa-list-check mr-2"></i>My Tickets
+            </a>
+          </div>
+        </div>
+
+        <% if (!tickets || tickets.length === 0) { %>
+        <div class="text-center py-10 bg-primary/5 dark:bg-primary-dark/5 rounded-lg mt-4 border-2 border-dashed border-primary/20 dark:border-primary-dark/20">
+          <p class="text-primary-light dark:text-primary-dark text-lg font-medium">No admin replies yet.</p>
+        </div>
+        <% } else { %>
+        <div class="flex flex-col gap-4">
+          <div class="overflow-x-auto rounded-lg border-2 border-secondary-light/20 dark:border-secondary-dark/50">
+            <table class="w-full bg-[#fff1b8] dark:bg-background-dark">
+              <thead>
+                <tr class="bg-secondary-light/20 dark:bg-secondary-dark/5 border-b-2 border-secondary/20 dark:border-secondary-dark/10">
+                  <th class="px-6 py-4 text-left font-semibold">Ticket ID</th>
+                  <th class="px-6 py-4 text-left font-semibold">Subject</th>
+                  <th class="px-6 py-4 text-left font-semibold">Last Reply</th>
+                  <th class="px-6 py-4 text-left font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% tickets.forEach(t => { 
+                  const adminMsgs = (t.messages||[]).filter(m => m.senderType !== 'client');
+                  const lastAdmin = adminMsgs[adminMsgs.length - 1];
+                %>
+                <tr class="border-b border-secondary-light/10 dark:border-secondary-dark/10 hover:bg-primary/5 dark:hover:bg-secondary-dark/5">
+                  <td class="px-6 py-4 text-sm">
+                    <span class="text-primary-light font-medium dark:text-text-dark/80"><%= t.id %></span>
+                  </td>
+                  <td class="px-6 py-4 text-sm text-text-light dark:text-text-dark/80 truncate max-w-xs">
+                    <%= t.description %>
+                  </td>
+                  <td class="px-6 py-4 text-sm text-accent-light/90 dark:text-text-dark/70">
+                    <%= lastAdmin ? new Date(lastAdmin.createdAt.toDate()).toLocaleString('en-us') : '-' %>
+                  </td>
+                  <td class="px-6 py-4 text-sm">
+                    <a href="/support/ticket/view/<%= t.id %>" class="inline-block bg-primary-light text-white hover:bg-primary-light/90 dark:bg-primary-dark dark:hover:bg-primary-dark/90 px-4 py-2 rounded-lg border border-primary-light hover:border-primary-light/90 shadow-sm hover:shadow-md">
+                      View
+                    </a>
+                  </td>
+                </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <% } %>
+      </section>
+    </main>
+
+    <%- include("./partials/footer") %>
+    <script src="/js/cart.js"></script>
+  </body>
+</html>

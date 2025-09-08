@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include("./partials/meta") %>
+    <title>Manga Store - View Product</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="/css/build.min.css" />
+    <link rel="stylesheet" href="/css/framework.css" />
+    <link rel="stylesheet" href="/css/profile.css" />
+    <!-- Product Structured Data for SEO (Schema.org) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": <%- JSON.stringify(product.name) %>,
+      "image": [<%- JSON.stringify(product.images) %>],
+      "description": <%- JSON.stringify(product.description) %>,
+      "sku": <%- JSON.stringify(String(product.id)) %>,
+      "brand": { "@type": "Brand", "name": "Manga Store" },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://store.mohammed-zuhair.online/view/product/<%= product.id %>",
+        "priceCurrency": "<%= currency == 'EG' ? 'EGP' : 'USD' %>",
+        "price": "<%= Number(product.price).toFixed(2) %>",
+        "availability": "https://schema.org/<%= (product.stock === undefined || product.stock > 0) ? 'InStock' : 'OutOfStock' %>",
+        "itemCondition": "https://schema.org/NewCondition"<% if (product.endDate) { %>,
+        "priceValidUntil": "<%= new Date(product.endDate).toISOString().slice(0,10) %>"<% } %>
+      }<% if (typeof product.reviewCount !== 'undefined' && typeof product.ratingValue !== 'undefined') { %>,
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "<%= Number(product.ratingValue).toFixed(1) %>",
+        "reviewCount": "<%= Number(product.reviewCount) %>"
+      }<% } %>
+    }
+    </script>
+  </head>
+  <!-- Using our background colors for the main body -->
+  <body class="bg-[#fdf4cb] dark:bg-background-dark text-text-light dark:text-text-dark">
+    <%- include("./partials/header") %> <%- include("./partials/alerts-popups") %> <%- include("./partials/loader") %>
+
+    <main class="min-h-screen flex flex-col w-full gap-3 pt-16 mb-10 mt-10 container mx-auto">
+      <div class="flex items-center gap-2 text-sm text-text-light/80 dark:text-text-dark/80 px-4">
+        <a href="/"><i class="fa-solid fa-house-chimney"></i></a>
+        <i class="fa-solid fa-angle-right"></i>
+        <a
+          href="/products?category=<%= product.categoryId %>&page=1&search=&categories=<%= product.categoryId %>&minPrice=&maxPrice="
+          ><%= product.categoryId %></a
+        >
+        <i class="fa-solid fa-angle-right <%= product.subcategoryName? '' : 'hidden' %>"></i>
+        <a
+          class="<%= product.subcategoryName? '' : 'hidden' %>"
+          href="/products?category=<%= product.categoryId %>&page=1&search=&categories=<%= product.categoryId %>&minPrice=&maxPrice=&subCategory=<%=
+          product.subcategoryName %>"
+          ><%= product.subcategoryName %></a
+        >
+        <i class="fa-solid fa-angle-right"></i>
+        <a href="/view/product/<%= product.id %>" class="line-clamp-1"><%= product.name %></a>
+      </div>
+      <div id="product" data-id="<%= product.id %>" data-description="<%= product.description %>" data-title="<%=
+      product.name %>" data-price="<%= Number(product.price).toFixed(2) %>" data-img="<%= product.images %>" data-require-customer-field="<%= product.requireCustomerField ? '1' : '0' %>" <% if
+      (product.discount !== null && (new Date() - new Date(product.startDate) > 0) && (new Date() < new
+      Date(product.endDate))) { %> data-discount-startDate="<%= product.startDate %>" data-discount-endDate="<%=
+      product.endDate %>" data-discount-price-after="<%= product.price %>" data-discount-price-before="<%=
+      product.bfDiscount %>" <% } %> class="min-h-max lg:py-40 h-5/6 md:py-10 mt-2 my-auto w-full glass dark:border-2
+      dark:border-primary-dark dark:bg-[#ffffff2b] lg:px-10 xl:px-20 md:px-10 border border-secondary-light/20 shadow-lg
+      rounded-2xl flex flex-col lg:flex-row lg:items-start items-center justify-center lg:justify-start lg:gap-10
+      md:gap-20">
+
+      <!-- Product Image Container -->
+      <div class="flex relative justify-center items-center h-full lg:w-1/2 px-8 min-h-40 w-9/12 py-6 lg:py-0">
+        <img
+          src="<%= product.images %>"
+          alt="<%= product.name %>"
+          class="w-full h-auto object-contain rounded-xl border border-secondary-light/10 dark:border-secondary-dark/10" />
+        <% if (product.label) { %>
+        <div
+          class="absolute top-0 z-10 bg-primary-light dark:bg-primary-dark w-max max-w-40 left-8 rounded-ss-xl flex justify-between items-center p-1 px-2">
+          <span class="card-badge text-xs font-bold text-secondary-light dark:text-text-dark">Sale</span>
+        </div>
+        <% } %>
+      </div>
+
+      <!-- Product Details Container -->
+      <div class="h-full w-full flex items-start justify-center flex-col gap-3 px-10 lg:px-0">
+        <!-- Product Title -->
+        <h1 class="text-xl md:text-2xl font-bold text-primary-light"><%= product.name %></h1>
+
+        <!-- Product Description -->
+        <p class="text-text-light/80 dark:text-text-dark/80 mt-2 text-sm leading-relaxed"><%= product.description %></p>
+
+        <!-- Account Type Options (Two-step selection) -->
+        <% if (Array.isArray(product.accountTypes) && product.accountTypes.length > 0) { %>
+        <% const __labels = Array.from(new Set(product.accountTypes.map(o => o && o.label).filter(Boolean))); %>
+        <div class="mt-5 w-full">
+          <h2 class="text-base font-semibold text-primary-light mb-2">Choose Account Type</h2>
+          <!-- Step 1: Choose Type -->
+          <div id="account-type-labels" class="flex flex-wrap gap-2">
+            <% __labels.forEach(function(lbl, idx){ %>
+              <label class="flex items-center gap-2 px-3 py-1.5 rounded-full border border-secondary-light/40 dark:border-secondary-dark/40 cursor-pointer hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10">
+                <input type="radio" name="accountTypeLabel" class="account-type-label" value="<%= lbl %>" <%= idx === 0 ? 'checked' : '' %> />
+                <span class="text-sm font-medium"><%= lbl %></span>
+              </label>
+            <% }) %>
+          </div>
+
+          <!-- Step 2: Choose Months (depends on selected type) -->
+          <div class="mt-3">
+            <h3 class="text-sm font-semibold text-primary-light mb-1">Choose Duration</h3>
+            <div id="account-type-months" class="flex flex-col gap-2"></div>
+          </div>
+        </div>
+        <% } %>
+
+        <!-- Price and Discount Section -->
+        <div class="mt-6 space-y-3">
+          <% if (product.discount) { %>
+          <!-- Discount Badge -->
+          <div class="card-dsPrice inline-block bg-accent-light/10 dark:bg-accent-dark/10 px-3 py-1 rounded-full">
+            <span class="text-accent-light dark:text-accent-dark font-semibold">
+              Discount: <%= product.discount %>
+            </span>
+          </div>
+
+          <!-- Price Display -->
+          <div class="flex items-center space-x-3">
+            <span class="card-dsPrice text-text-light/50 dark:text-text-dark/50 line-through text-base">
+              <%= product.bfDiscount %> <%= currency == "EG"? 'L.E' : '$' %>
+            </span>
+            <span class="price text-secondary-light dark:text-secondary-dark text-xl font-bold">
+              <%= Number(product.price).toFixed(2)%> <%= currency == "EG"? 'L.E' : '$' %>
+            </span>
+          </div>
+
+          <!-- Timer -->
+          <div id="timer" class="text-sm text-primary-light font-medium"></div>
+          <% } else { %>
+          <!-- Regular Price -->
+          <div class="text-xl font-bold text-secondary-light"><span class="price"><%= Number(product.price).toFixed(2)%></span> <%= currency == "EG"? 'L.E' : '$' %></div>
+          <% } %>
+        </div>
+
+        <!-- Product Coupons Badge -->
+        <% if (typeof coupons !== 'undefined' && coupons && coupons.length > 0) { %>
+        <div class="mt-2">
+          <div class="inline-flex items-center gap-2 bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200 px-3 py-1 rounded-full text-sm">
+            <i class="fa-solid fa-ticket"></i>
+            <span>Coupon available: <strong><%= coupons[0].name %></strong></span>
+            <button id="copyCouponBtn" class="ml-2 px-2 py-0.5 rounded bg-green-600 text-white text-xs">Copy</button>
+          </div>
+          <% if (coupons.length > 1) { %>
+            <p class="text-xs mt-1 text-text-light/70 dark:text-text-dark/70">and <%= coupons.length - 1 %> more coupon(s)</p>
+          <% } %>
+        </div>
+        <script>
+          document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('copyCouponBtn');
+            if (btn) {
+              btn.addEventListener('click', () => {
+                navigator.clipboard.writeText('<%= coupons[0].name %>')
+                  .then(() => successAlert('Coupon code copied'))
+                  .catch(() => errorAlert('Failed to copy coupon'));
+              });
+            }
+          });
+        </script>
+        <% } %>
+
+        <!-- Product Details Section -->
+        <% if (product.details) { %>
+        <div class="mt-6 w-full">
+          <h2 class="text-lg font-semibold text-primary-light mb-3">Product Details</h2>
+          <ul class="space-y-2 text-text-light/80 dark:text-text-dark/80">
+            <% product.details.forEach((detail) => { %> <% for (const [key, value] of Object.entries(detail)) { %>
+            <li class="flex items-center gap-2">
+              <span class="font-medium text-text-light dark:text-text-dark"><%= key %>:</span>
+              <span><%= value %></span>
+            </li>
+            <% } %> <% }) %>
+
+            <li class="flex items-center gap-2">
+              <span class="font-medium text-text-light dark:text-text-dark">Stock:</span>
+              <span
+                class="font-medium text-base <%=product.stock > 0 && product.stock !== undefined? 'text-green-500 font-bold' : 'text-red-500'%>"
+                ><%= product.stock > 0 && product.stock !== undefined? product.stock: 'out of stock' %>
+              </span>
+            </li>
+          </ul>
+        </div>
+        <% } %> <% if (product.stock === undefined || product.stock > 0) { %>
+        <!-- Action Buttons -->
+        <div class="mt-8 flex items-center justify-center gap-4 mb-6 md:mb-0 flex-col lg:flex-row w-full lg:w-auto">
+          <!-- Add to Cart Button -->
+          <button
+            class="addToCartBtn w-full lg:w-auto px-6 py-3 rounded-lg bg-primary-light hover:bg-primary-light/90 dark:bg-primary-dark dark:hover:bg-primary-dark/90 text-background-light dark:text-background-dark font-semibold shadow-lg transition-all duration-200 ease-in-out flex items-center justify-center gap-2">
+            <i class="fa-solid fa-cart-shopping"></i>
+            Add to cart
+          </button>
+
+          <!-- Buy Now Button -->
+          <button
+            id="buy-now"
+            class="w-full lg:w-auto px-6 py-3 rounded-lg bg-background-light dark:bg-background-dark text-primary-light dark:text-primary-dark border-2 border-primary-light dark:border-primary-dark hover:bg-primary-light hover:text-background-light dark:hover:bg-primary-dark dark:hover:text-background-dark font-semibold shadow-md transition-all duration-200 ease-in-out">
+            Buy It Now
+          </button>
+
+          <!-- Gift To Friend Button -->
+          <button
+            id="gift-to-friend"
+            title="Send this product as a gift to a friend"
+            class="w-full lg:w-auto px-6 py-3 rounded-xl bg-primary-light hover:bg-primary-light/90 dark:bg-primary-dark dark:hover:bg-primary-dark/90 text-background-light dark:text-background-dark font-semibold shadow-lg transition-all duration-200 ease-in-out ring-2 ring-primary-light/30 dark:ring-primary-dark/30 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-gift"></i>
+            Gift to Friend
+          </button>
+        </div>
+        <% } %>
+      </div>
+
+      <!-- Embed account types JSON safely to avoid JS linter complaints -->
+      <script id="accountTypesData" type="application/json"><%- JSON.stringify(product.accountTypes || []) %></script>
+
+      <script>
+        // Account type selection logic (two-step): label -> months -> price
+        (function(){
+          const container = document.getElementById('product');
+          const priceEl = document.querySelector('.price');
+          const monthsBox = document.getElementById('account-type-months');
+          const labelRadios = document.querySelectorAll('input.account-type-label');
+          const accountTypes = (() => { try { return JSON.parse(document.getElementById('accountTypesData').textContent || '[]'); } catch(e){ return []; } })();
+
+          function setButtonsEnabled(enabled){
+            const addBtn = document.querySelector('.addToCartBtn');
+            const buyBtn = document.getElementById('buy-now');
+            [addBtn, buyBtn].forEach(btn => { if (btn) { btn.disabled = !enabled; btn.classList.toggle('opacity-60', !enabled); btn.classList.toggle('cursor-not-allowed', !enabled); } });
+          }
+
+          function buildMonths(label){
+            const options = accountTypes.filter(o => o && o.label === label);
+            if (!monthsBox) return;
+            if (!options || options.length === 0){ monthsBox.innerHTML = '<div class="text-sm text-secondary-light">No durations available.</div>'; return; }
+            monthsBox.innerHTML = options.map((opt, idx) => `
+              <label class="flex items-center gap-3 p-2 rounded-md border border-secondary-light/30 dark:border-secondary-dark/30 cursor-pointer hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10">
+                <input type="radio" name="accountTypeMonths" class="account-type-months" data-price="${Number(opt.price).toFixed(2)}" data-months="${Number(opt.months||0)}" value="${Number(opt.months||0)}" />
+                <span class="flex-1 text-sm">
+                  <span class="font-medium">${label}</span>
+                  ${opt.months && Number(opt.months) > 0 ? `<span class="ml-2 text-text-light/70 dark:text-text-dark/70">(${opt.months} months)</span>` : ''}
+                </span>
+                <span class="text-sm font-semibold text-secondary-light dark:text-secondary-dark">${Number(opt.price).toFixed(2)} <%= currency == "EG"? 'L.E' : '$' %></span>
+              </label>
+            `).join('');
+
+            // attach listeners
+            monthsBox.querySelectorAll('input.account-type-months').forEach(r => r.addEventListener('change', () => applySelection(true)));
+            // reset visual price and disable buttons until user selects
+            if (priceEl){ priceEl.textContent = '--'; }
+            setButtonsEnabled(false);
+          }
+
+          function applySelection(enableButtons){
+            const selectedMonths = monthsBox.querySelector('input.account-type-months:checked');
+            if (!selectedMonths) return;
+            const price = Number(selectedMonths.getAttribute('data-price') || container.dataset.price || 0);
+            container.setAttribute('data-price', price.toFixed(2));
+            if (priceEl){ priceEl.textContent = Number(price).toFixed(2); }
+            if (enableButtons) setButtonsEnabled(true);
+          }
+
+          if (labelRadios && labelRadios.length > 0){
+            const initial = Array.from(labelRadios).find(r=>r.checked) || labelRadios[0];
+            buildMonths(initial.value);
+            labelRadios.forEach(r => r.addEventListener('change', (e) => buildMonths(e.target.value)));
+          }
+        })();
+
+        const buyNowBtn = document.getElementById("buy-now");
+        buyNowBtn.addEventListener("click", async () => {
+          const container = buyNowBtn.parentElement.parentElement.parentElement;
+          const productId = container.getAttribute("data-id");
+          let needCF = false;
+          try {
+            const resp = await fetch(`/api/product/${productId}`);
+            if (resp.ok) {
+              const pd = await resp.json();
+              needCF = !!pd?.requireCustomerField;
+              console.debug('[BuyNow] API requireCustomerField:', needCF, 'product', productId);
+            } else {
+              console.debug('[BuyNow] API request failed status', resp.status);
+            }
+          } catch(err) { console.debug('[BuyNow] API error', err); }
+          // Fallback to DOM attribute if API didn't tell us
+          if (!needCF) {
+            const domFlag = container.getAttribute("data-require-customer-field") === '1';
+            if (domFlag) {
+              needCF = true;
+              console.debug('[BuyNow] Fallback to DOM flag requireCustomerField=true');
+            }
+          }
+          if (needCF) {
+            const cf = sessionStorage.getItem("customerField:" + productId);
+            console.debug('[BuyNow] sessionStorage has CF?', !!cf);
+            if (!cf) {
+              const next = encodeURIComponent('/checkout');
+              return location.assign(`/product/${productId}/customer-field?next=${next}`);
+            }
+          }
+          const product = {
+            productId,
+            title: container.getAttribute("data-title"),
+            price: container.getAttribute("data-price"),
+            img: container.getAttribute("data-img"),
+            description: container.getAttribute("data-description"),
+            quantity: 1,
+            subTotal: Number(container.getAttribute("data-price")),
+          };
+          const cart = JSON.parse(localStorage.getItem("cart")) || [];
+          cart.push(product);
+          localStorage.setItem("cart", JSON.stringify(cart));
+          location.href = "/checkout";
+        });
+
+        // Gift to friend: add item and go to checkout with gift flag
+        const giftBtn = document.getElementById("gift-to-friend");
+        if (giftBtn) {
+          giftBtn.addEventListener("click", async () => {
+            const container = giftBtn.parentElement.parentElement.parentElement;
+            const productId = container.getAttribute("data-id");
+            let needCF = false;
+            try {
+              const resp = await fetch(`/api/product/${productId}`);
+              if (resp.ok) {
+                const pd = await resp.json();
+                needCF = !!pd?.requireCustomerField;
+                console.debug('[Gift] API requireCustomerField:', needCF, 'product', productId);
+              } else { console.debug('[Gift] API request failed status', resp.status); }
+            } catch(err) { console.debug('[Gift] API error', err); }
+            if (!needCF) {
+              const domFlag = container.getAttribute("data-require-customer-field") === '1';
+              if (domFlag) { needCF = true; console.debug('[Gift] Fallback to DOM flag requireCustomerField=true'); }
+            }
+            if (needCF) {
+              const cf = sessionStorage.getItem("customerField:" + productId);
+              console.debug('[Gift] sessionStorage has CF?', !!cf);
+              if (!cf) {
+                const next = encodeURIComponent('/checkout?gift=1');
+                return location.assign(`/product/${productId}/customer-field?next=${next}`);
+              }
+            }
+            const product = {
+              productId,
+              title: container.getAttribute("data-title"),
+              price: container.getAttribute("data-price"),
+              img: container.getAttribute("data-img"),
+              description: container.getAttribute("data-description"),
+              quantity: 1,
+              subTotal: Number(container.getAttribute("data-price")),
+            };
+            const cart = JSON.parse(localStorage.getItem("cart")) || [];
+            cart.push(product);
+            localStorage.setItem("cart", JSON.stringify(cart));
+            location.href = "/checkout?gift=1";
+          });
+        }
+      </script>
+
+      <% if (product.discount) { %>
+      <script>
+        const timerElement = document.getElementById("timer");
+        const endDate = new Date("<%= product.endDate %>").getTime();
+        const productCard = document.getElementById("product");
+
+        function updateTimer() {
+          const now = new Date().getTime();
+          const distance = endDate - now;
+
+          if (distance > 0) {
+            // Discount is still active
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            timerElement.innerHTML = `<i class="fa-solid fa-clock"></i> Discount ends in: ${days}d ${hours}h ${minutes}m ${seconds}s`;
+          } else {
+            // Discount has ended
+            timerElement.innerHTML = "";
+
+            // Remove discount price elements
+            const discountPrices = document.querySelectorAll(".card-dsPrice");
+            if (discountPrices.length > 0) {
+              discountPrices.forEach((price) => {
+                price.remove();
+              });
+            }
+
+            // Update the price to show original price
+            const priceElement = document.querySelector(".price");
+            if (priceElement) {
+              priceElement.textContent =
+                "<%= Number(product.bfDiscount).toFixed(2) %> <%= currency == 'EG' ? 'L.E' : '$' %>";
+            }
+
+            // Update data attributes
+            productCard.dataset.price = "<%= Number(product.bfDiscount).toFixed(2) %>";
+
+            // Remove discount-related data attributes
+            delete productCard.dataset.discountPriceBefore;
+            delete productCard.dataset.discountPriceAfter;
+            delete productCard.dataset.discountEndDate;
+            delete productCard.dataset.discountStartDate;
+
+            // Clear the interval since we don't need to check anymore
+            clearInterval(timerInterval);
+          }
+        }
+
+        // Initial call to set up the timer display
+        updateTimer();
+
+        // Only set interval if discount hasn't ended yet
+        let timerInterval;
+        if (endDate - new Date().getTime() > 0) {
+          timerInterval = setInterval(updateTimer, 1000);
+        } else {
+          // If discount has already ended when page loads, run the update once
+          updateTimer();
+        }
+      </script>
+      <% } %>
+    </main>
+    <%- include("./partials/footer") %>
+    <script src="/js/cart.js"></script>
+  </body>
+</html>

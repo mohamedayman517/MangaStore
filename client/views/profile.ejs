@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include("./partials/meta") %>
+    <title>Manga Store - Profile</title>
+    <link rel="stylesheet" href="/css/framework.css" />
+    <link rel="stylesheet" href="/css/build.min.css" />
+    <link rel="stylesheet" href="/css/profile.css" />
+    <style>
+      input[name="subscribe"]:checked + label .checkmark {
+        display: block !important;
+      }
+    </style>
+  </head>
+  <body class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark">
+    <%- include("./partials/header") %> <%- include("./partials/alerts-popups") %><%- include("./partials/loader") %>
+
+    <main class="min-h-screen flex w-full gap-3 px-3 pt-20 mb-10">
+      <div class="flex-1 flex flex-col gap-6 container mx-auto">
+        <!-- Profile Image (moved to top) -->
+        <div class="flex justify-center">
+          <div class="relative group">
+            <div
+              class="relative h-24 w-24 rounded-full border-2 border-primary-light dark:border-primary-dark overflow-hidden transition-all duration-200 group-hover:border-accent-light dark:group-hover:border-accent-dark">
+              <% if (user.photoURL) { %>
+                <% const isExternal = /^https?:\/\//.test(user.photoURL || ''); %>
+                <% const avatarSrc = isExternal ? ('/avatar?url=' + encodeURIComponent(user.photoURL)) : user.photoURL; %>
+                <img
+                  src="<%= avatarSrc %>"
+                  alt="<%= user.name %>"
+                  id="profile-img"
+                  class="h-full w-full object-cover cursor-pointer transition-transform duration-200 group-hover:scale-110" />
+              <% } else { %>
+                <% const initial = (user.name || '').trim().charAt(0).toUpperCase() || '?' %>
+                <div class="h-full w-full flex items-center justify-center bg-primary-light text-white dark:bg-primary-dark text-2xl font-bold">
+                  <%= initial %>
+                </div>
+              <% } %>
+              <div
+                id="imgContainer"
+                class="absolute inset-0 cursor-pointer bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200">
+                <i class="fa-solid fa-camera text-white text-xl"></i>
+              </div>
+            </div>
+            <button
+              type="button"
+              id="removeImg"
+              class="hidden absolute -top-2 -right-2 bg-accent-light dark:bg-accent-dark text-white dark:text-background-dark w-8 h-8 rounded-full shadow-lg hover:bg-accent-light/90 dark:hover:bg-accent-dark/90 transition-colors duration-200">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+            <input type="file" id="profile-input" class="hidden" accept="image/*" />
+          </div>
+        </div>
+
+        <!-- Account Details -->
+        <div
+          class="glass dark:bg-background-dark p-8 rounded-lg shadow-lg border-2 border-primary-light/20 dark:border-primary-dark/20">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-semibold text-primary-light dark:text-primary-dark">Account Details</h2>
+            <a href="/profile/gifts"
+               class="px-4 py-2 rounded-lg bg-primary-light text-white dark:bg-primary-dark dark:text-background-dark hover:opacity-90 text-sm">
+              Gifts
+            </a>
+          </div>
+
+        <!-- Level Progress -->
+        <div class="glass dark:bg-background-dark p-8 rounded-lg shadow-lg border-2 border-primary-light/20 dark:border-primary-dark/20">
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="text-2xl font-semibold text-primary-light dark:text-primary-dark">Level</h2>
+            <span class="text-lg font-semibold text-primary-light dark:text-primary-dark">
+              Lv.<%= levelInfo.level %>
+            </span>
+          </div>
+          <!-- Badges -->
+          <div class="flex flex-wrap items-center gap-2 mb-4">
+            <% if (badges && badges.membershipBadge) { %>
+              <span class="px-2 py-1 rounded-full text-xs bg-secondary-light/10 dark:bg-secondary-dark/10 border border-secondary-light/30 dark:border-secondary-dark/30">
+                <%= badges.membershipBadge.emoji %> <%= badges.membershipBadge.name %>
+              </span>
+            <% } %>
+            <% if (badges && badges.coderBadge) { %>
+              <span class="px-2 py-1 rounded-full text-xs bg-primary-light/10 dark:bg-primary-dark/10 border border-primary-light/30 dark:border-primary-dark/30">
+                <%= badges.coderBadge.emoji %> <%= badges.coderBadge.name %>
+              </span>
+            <% } %>
+            <% if (badges && typeof badges.purchaseCount === 'number') { %>
+              <span class="ml-auto text-xs text-text-light/70 dark:text-text-dark/70">
+                عدد عمليات الشراء: <span class="font-semibold text-primary-light dark:text-primary-dark"><%= badges.purchaseCount %></span>
+              </span>
+            <% } %>
+          </div>
+          <p class="text-sm text-text-light/70 dark:text-text-dark/70 mb-3">
+            إجمالي مشترياتك: <span class="font-semibold"><%= levelInfo.totalSpendEgp.toLocaleString() %> EGP</span>
+          </p>
+          <div class="w-full bg-secondary-light/20 dark:bg-secondary-dark/20 h-3 rounded-full overflow-hidden">
+            <div class="h-3 bg-primary-light dark:bg-primary-dark level-progress" data-progress="<%= levelInfo.progressPct %>"></div>
+          </div>
+          <div class="flex justify-between text-xs mt-2 text-text-light/70 dark:text-text-dark/70">
+            <span>Lv.<%= Math.max(0, levelInfo.level) %> • <%= levelInfo.prevThresholdEgp.toLocaleString() %> EGP</span>
+            <span>Lv.<%= Math.min(100, levelInfo.level + 1) %> • <%= levelInfo.nextThresholdEgp.toLocaleString() %> EGP</span>
+          </div>
+          <% if (levelInfo.level < 100) { %>
+            <p class="mt-3 text-sm">
+              المتبقي للوصول للمستوى التالي: 
+              <span class="font-semibold text-primary-light dark:text-primary-dark">
+                <%= levelInfo.remainingEgp.toLocaleString() %> EGP
+              </span>
+            </p>
+          <% } %>
+          <% if (levelInfo.level >= 100) { %>
+            <p class="mt-3 text-sm text-primary-light dark:text-primary-dark">لقد وصلت إلى أقصى مستوى! 🎉</p>
+          <% } %>
+        </div>
+          <!-- Cashback Points (Mango icon and number beside label) -->
+          <div class="mb-6 flex items-center justify-start">
+            <span class="text-lg font-medium inline-flex items-center gap-2">
+              Cashback Points
+              <img src="/pics/logo.png" alt="mango" class="w-5 h-5 object-contain" />
+              <span class="font-semibold text-base text-primary-light dark:text-primary-dark">(<%= cashbackPoints %>)</span>
+            </span>
+          </div>
+
+          <!-- Total Spending -->
+          <div class="mb-6 flex items-center justify-start">
+            <span class="text-lg font-medium inline-flex items-center gap-2">
+              Total Spending
+              <strong class="text-primary-light dark:text-primary-dark">
+                <%= levelInfo.totalSpendEgp.toLocaleString() %> EGP
+              </strong>
+            </span>
+          </div>
+
+          
+
+          <!-- Profile Form -->
+          <form class="space-y-6">
+            <div class="grid grid-cols-2 gap-6">
+              <!-- Name Input -->
+              <div class="input__container col-span-2">
+                <input
+                  type="text"
+                  class="input w-full px-4 py-3 rounded-lg bg-transparent dark:bg-background-dark border-2 border-secondary-light/20 dark:border-secondary-dark/20 focus:border-primary-light dark:focus:border-primary-dark text-text-light dark:text-text-dark transition-all duration-200"
+                  id="name"
+                  value="<%= user.name %>"
+                  placeholder=" "
+                  autocomplete="name" />
+                <label for="name" class="absolute left-4 px-2 text-text-light/70 dark:text-text-dark/70"> Name </label>
+              </div>
+
+              <!-- Email Input -->
+              <div class="input__container col-span-2">
+                <input
+                  type="email"
+                  class="input w-full px-4 py-3 rounded-lg bg-transparent dark:bg-background-dark border-2 border-secondary-light/20 dark:border-secondary-dark/20 focus:border-primary-light dark:focus:border-primary-dark text-text-light dark:text-text-dark transition-all duration-200"
+                  id="email"
+                  value="<%= user.email %>"
+                  placeholder=" "
+                  autocomplete="email" />
+                <label for="email" class="absolute left-4 px-2 text-text-light/70 dark:text-text-dark/70">
+                  Email
+                </label>
+              </div>
+
+              <!-- Phone Number Input -->
+              <div class="col-span-2 flex gap-3">
+                <div class="w-1/3">
+                  <select
+                    id="countryCode"
+                    class="w-full cursor-pointer px-4 py-3 rounded-lg bg-transparent dark:bg-background-dark border-2 border-secondary-light/20 dark:border-secondary-dark/20 focus:border-primary-light dark:focus:border-primary-dark text-text-light dark:text-text-dark transition-all duration-200"></select>
+                </div>
+                <div class="input__container w-2/3">
+                  <input
+                    type="tel"
+                    class="input w-full px-4 py-3 rounded-lg bg-transparent dark:bg-background-dark border-2 border-secondary-light/20 dark:border-secondary-dark/20 focus:border-primary-light dark:focus:border-primary-dark text-text-light dark:text-text-dark transition-all duration-200"
+                    id="phoneNumber"
+                    value="<%= user.phoneNumber %>"
+                    placeholder=" "
+                    autocomplete="tel" />
+                  <label for="phoneNumber" class="absolute left-4 px-2 text-text-light/70 dark:text-text-dark/70">
+                    Phone number
+                  </label>
+                </div>
+                <script>
+                  const countryCodeSelect = document.getElementById("countryCode");
+
+                  fetch("/api/phonePrefixes", {
+                    method: "GET",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                  })
+                    .then((res) => res.json())
+                    .then((data) => {
+                      data.forEach(async ({ iso2, phonecode }) => {
+                        const option = document.createElement("option");
+                        option.value = phonecode;
+                        option.classList.add(
+                          "text-black",
+                          "cursor-pointer",
+                          "dark:bg-background-dark",
+                          "bg-background-light",
+                          "dark:text-text-dark",
+                          "text-text-light"
+                        );
+                        option.innerHTML = `${iso2} (${phonecode}) `;
+
+                        if ("<%= user.countryCode %>" === phonecode.toUpperCase()) {
+                          option.selected = true;
+                        }
+                        countryCodeSelect.appendChild(option);
+                      });
+                    });
+                </script>
+              </div>
+            </div>
+
+            <!-- Save Changes Button -->
+            <button
+              type="submit"
+              id="save-changes"
+              class="w-full sm:w-auto px-6 py-3 rounded-lg font-medium text-white dark:text-background-dark bg-primary-light hover:bg-primary-light/90 dark:bg-primary-dark dark:hover:bg-primary-dark/90 transition-all duration-200">
+              Save Changes
+            </button>
+          </form>
+          <div class="flex items-center gap-2 mt-3">
+            <!-- Hidden native checkbox -->
+            <input type="checkbox" name="subscribe" id="subscribe" class="peer hidden" <%= user.subscribed ? 'checked' :
+            '' %> />
+            <!-- Custom styled checkbox -->
+            <label
+              for="subscribe"
+              id="subscribe-label"
+              class="w-5 h-5 border-2 border-secondary-light/20 dark:border-secondary-dark/20 rounded cursor-pointer flex items-center justify-center transition-all duration-200 peer-checked:bg-primary-light dark:peer-checked:bg-primary-dark">
+              <!-- Checkmark SVG (visible only when checked) -->
+              <i class="fa-solid fa-check hidden text-secondary-light dark:text-secondary-dark checkmark"></i>
+            </label>
+            <!-- Label for the checkbox -->
+            <label for="subscribe" id="subscribe-text" class="text-text-light/70 dark:text-text-dark/70 cursor-pointer">
+              Subscribe to newsletter
+            </label>
+          </div>
+          <script>
+            document.addEventListener("DOMContentLoaded", function () {
+              const subscribeCheckbox = document.getElementById("subscribe");
+              const subscribeLabel = document.getElementById("subscribe-label");
+              const subscribeText = document.getElementById("subscribe-text");
+
+              subscribeCheckbox.addEventListener("change", function () {
+                // If checkbox is unchecked, call API to unsubscribe
+                if (!this.checked) {
+                  // Disable the checkbox during API call
+                  this.disabled = true;
+                  subscribeLabel.classList.add("opacity-50");
+                  subscribeText.classList.add("opacity-50");
+
+                  fetch("/api/newsletter/unsubscribe", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                  })
+                    .then((response) => {
+                      if (!response.ok) {
+                        throw new Error("Failed to unsubscribe");
+                        errorAlert("Failed to unsubscribe");
+                      }
+                      return response.json();
+                    })
+                    .then((data) => {
+                      // Show success message
+                      successAlert("Unsubscribed successfully");
+                    })
+                    .catch((error) => {
+                      console.error("Error:", error);
+                      // Reset checkbox state on failure
+                      this.checked = true;
+                      errorAlert("Failed to unsubscribe. Please try again.");
+                    })
+                    .finally(() => {
+                      // Re-enable checkbox after at least 1 second
+                      setTimeout(() => {
+                        this.disabled = false;
+                        subscribeLabel.classList.remove("opacity-50");
+                        subscribeText.classList.remove("opacity-50");
+                      }, 1000);
+                    });
+                }
+              });
+            });
+          </script>
+        </div>
+
+        <!-- My Coupons Preview -->
+        <div
+          class="glass dark:bg-background-dark p-8 rounded-lg shadow-lg border-2 border-primary-light/20 dark:border-primary-dark/20">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-semibold text-primary-light dark:text-primary-dark">My Coupons</h2>
+            <a href="/profile/coupons" class="text-sm text-primary-light dark:text-primary-dark hover:underline">View all</a>
+          </div>
+
+          <% if (!userCoupons || userCoupons.length === 0) { %>
+          <div
+            class="text-center py-6 rounded-lg bg-secondary-light/5 dark:bg-secondary-dark/5 border-2 border-dashed border-secondary-light/20 dark:border-secondary-dark/20">
+            <p class="text-text-light/70 dark:text-text-dark/70">No available coupons right now.</p>
+          </div>
+          <% } else { %>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <% userCoupons.forEach(function(c) { %>
+            <div class="glass p-4 rounded-xl border-2 border-secondary-light/20 dark:border-secondary-dark/20 flex flex-col gap-2">
+              <div class="flex items-center justify-between">
+                <span class="text-lg font-bold text-secondary-light dark:text-secondary-dark"><%= c.name %></span>
+                <button class="copy-code px-3 py-1 rounded-lg bg-primary-light dark:bg-primary-dark text-white text-sm" data-code="<%= c.name %>">Copy</button>
+              </div>
+              <div class="text-sm text-text-light/80 dark:text-text-dark/80">
+                <p>Type: <span class="font-medium"><%= c.type %></span></p>
+                <p>Value: <span class="font-medium"><%= c.type === 'percentage' ? c.amount + '%' : c.amount + ' L.E' %></span></p>
+                <p>Expires: <span class="font-medium"><%= new Date(c.expiredAt.toMillis()).toLocaleDateString() %></span></p>
+                <% if (c.productId) { %>
+                  <p class="text-xs">Product-specific</p>
+                <% } else if (c.categoryName) { %>
+                  <p class="text-xs">Category: <%= c.categoryName %></p>
+                <% } else if (c.userId) { %>
+                  <p class="text-xs">For your account</p>
+                <% } else { %>
+                  <p class="text-xs">General coupon</p>
+                <% } %>
+              </div>
+            </div>
+            <% }) %>
+          </div>
+          <% } %>
+        </div>
+
+        <!-- Change Password -->
+        <div
+          class="glass dark:bg-background-dark p-8 rounded-lg shadow-lg border-2 border-primary-light/20 dark:border-primary-dark/20">
+          <h2 class="text-2xl font-semibold mb-6 text-primary-light dark:text-primary-dark">Change Password</h2>
+
+          <form class="space-y-6">
+            <!-- Current Password -->
+            <div class="input__container">
+              <input
+                type="password"
+                class="input w-full px-4 py-3 rounded-lg bg-transparent dark:bg-background-dark border-2 border-secondary-light/20 dark:border-secondary-dark/20 focus:border-primary-light dark:focus:border-primary-dark text-text-light dark:text-text-dark transition-all duration-200"
+                id="current-password"
+                placeholder=" "
+                autocomplete="current-password" />
+              <button
+                type="button"
+                class="absolute right-4 top-1/2 -translate-y-1/2 text-text-light/70 dark:text-text-dark/70 hover:text-primary-light dark:hover:text-primary-dark transition-colors duration-200">
+                <i class="fa-solid fa-eye eye_icon" id="showPassword"></i>
+              </button>
+              <label for="current-password" class="absolute left-4 px-2 text-text-light/70 dark:text-text-dark/70">
+                Current password
+              </label>
+            </div>
+
+            <!-- New Password -->
+            <div class="input__container">
+              <input
+                type="password"
+                class="input w-full px-4 py-3 rounded-lg bg-transparent dark:bg-background-dark border-2 border-secondary-light/20 dark:border-secondary-dark/20 focus:border-primary-light dark:focus:border-primary-dark text-text-light dark:text-text-dark transition-all duration-200"
+                id="newPassword"
+                placeholder=" "
+                autocomplete="new-password" />
+              <button
+                type="button"
+                class="absolute right-4 top-1/2 -translate-y-1/2 text-text-light/70 dark:text-text-dark/70 hover:text-primary-light dark:hover:text-primary-dark transition-colors duration-200">
+                <i class="fa-solid fa-eye eye_icon" id="showPassword"></i>
+              </button>
+              <label for="newPassword" class="absolute left-4 px-2 text-text-light/70 dark:text-text-dark/70">
+                New password
+              </label>
+            </div>
+
+            <!-- Password Strength Indicator -->
+            <div
+              id="passInfo"
+              class="space-y-2 p-4 rounded-lg bg-primary-light/5 dark:bg-primary-dark/5 border border-primary-light/20 dark:border-primary-dark/20 transition-all duration-300 max-h-0 opacity-0 overflow-hidden">
+              <ul class="space-y-2">
+                <li id="minLength" class="flex items-center gap-2 text-sm">
+                  <i class="fa-solid fa-circle text-accent-light dark:text-accent-dark text-xs"></i>
+                  <span>More than 8 characters</span>
+                </li>
+                <li id="specialChar" class="flex items-center gap-2 text-sm">
+                  <i class="fa-solid fa-circle text-accent-light dark:text-accent-dark text-xs"></i>
+                  <span>Have special character (@, #, $, %, &, *, !)</span>
+                </li>
+                <li id="capitalChar" class="flex items-center gap-2 text-sm">
+                  <i class="fa-solid fa-circle text-accent-light dark:text-accent-dark text-xs"></i>
+                  <span>Have a capital character</span>
+                </li>
+                <li id="haveNum" class="flex items-center gap-2 text-sm">
+                  <i class="fa-solid fa-circle text-accent-light dark:text-accent-dark text-xs"></i>
+                  <span>Have 1 number or more</span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Confirm New Password -->
+            <div class="input__container">
+              <input
+                type="password"
+                class="input w-full px-4 py-3 rounded-lg bg-transparent dark:bg-background-dark border-2 border-secondary-light/20 dark:border-secondary-dark/20 focus:border-primary-light dark:focus:border-primary-dark text-text-light dark:text-text-dark transition-all duration-200"
+                id="conf-new-pass"
+                placeholder=" "
+                autocomplete="new-password" />
+              <button
+                type="button"
+                class="absolute right-4 top-1/2 -translate-y-1/2 text-text-light/70 dark:text-text-dark/70 hover:text-primary-light dark:hover:text-primary-dark transition-colors duration-200">
+                <i class="fa-solid fa-eye eye_icon" id="showPassword"></i>
+              </button>
+              <label for="conf-new-pass" class="absolute left-4 px-2 text-text-light/70 dark:text-text-dark/70">
+                Confirm new password
+              </label>
+            </div>
+
+            <!-- Password Match Indicator -->
+            <div
+              id="passConfirmInfo"
+              class="p-4 rounded-lg bg-accent-light/5 dark:bg-accent-dark/5 border border-accent-light/20 dark:border-accent-dark/20 transition-all duration-300 max-h-0 opacity-0 overflow-hidden">
+              <p class="flex items-center gap-2 text-sm text-accent-light dark:text-accent-dark">
+                <i class="fa-solid fa-circle text-xs"></i>
+                Passwords don't match
+              </p>
+            </div>
+
+            <!-- Save Password Button -->
+            <button
+              type="submit"
+              id="update-password-btn"
+              disabled
+              class="w-full sm:w-auto px-6 py-3 rounded-lg font-medium text-white dark:text-background-dark bg-accent-light hover:bg-accent-light/90 dark:bg-primary-dark dark:hover:bg-primary-dark/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+              Update Password
+            </button>
+          </form>
+        </div>
+
+        <!-- Recent Orders -->
+        <div
+          class="glass dark:bg-background-dark p-8 rounded-lg shadow-lg border-2 border-primary-light/20 dark:border-primary-dark/20">
+          <h2 class="text-2xl font-semibold mb-6 text-primary-light dark:text-primary-dark">Recent Orders</h2>
+
+          <% if (lastFourOrders.length == 0) { %>
+          <div
+            class="text-center py-12 rounded-lg bg-secondary-light/5 dark:bg-secondary-dark/5 border-2 border-dashed border-secondary-light/20 dark:border-secondary-dark/20">
+            <p class="text-text-light/70 dark:text-text-dark/70 text-lg">No Orders Yet</p>
+          </div>
+          <% } else{ %>
+
+          <div class="space-y-4">
+            <% lastFourOrders.forEach(function(product) { %>
+            <a href="/view-order/<%= product.transactionId %>" class="block">
+              <div
+                class="sm:p-6 glass p-2.5 rounded-lg bg-white dark:bg-background-dark border-2 border-secondary-light/20 dark:border-secondary-dark/20 hover:border-primary-light dark:hover:border-primary-dark transition-colors duration-200">
+                <div class="flex flex-col gap-4">
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <p class="font-medium text-primary-light dark:text-primary-dark">#<%= product.productId %></p>
+                      <p class="text-text-light/60 dark:text-text-dark/60 text-sm">
+                        <%= new Date(product.transactionDate.seconds * 1000).toLocaleString("en-GB", { day: '2-digit',
+                        month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) %>
+                      </p>
+                    </div>
+                    <span
+                      class="px-1.5 py-1 rounded-full text-xs font-medium <% if (product.status[product.status.length - 1].state === 'ToPay') { %> bg-yellow-500 text-white <% } %> <% if (product.status[product.status.length - 1].state === 'unconfirmed') { %> bg-red-500 text-white <% } %> <% if (product.status[product.status.length - 1].state === 'viewed') { %> bg-blue-500 text-white <% } %> <% if (product.status[product.status.length - 1].state === 'delivering') { %> bg-orange-500 text-white <% } %> <% if (product.status[product.status.length - 1].state === 'delivered') { %> bg-green-500 text-white <% } %>">
+                      <%= product.status[product.status.length - 1].state %>
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-4">
+                    <div
+                      class="h-12 w-12 md:h-16 md:w-16 rounded-lg overflow-hidden border border-secondary-light/20 dark:border-secondary-dark/20">
+                      <img src="<%= product.img %>" alt="<%= product.name %>" class="h-full w-full object-cover" />
+                    </div>
+                    <div class="w-2/3 md:w-full">
+                      <p class="font-medium line-clamp-2 text-sm md:text-lg"><%= product.name %></p>
+                      <p class="text-text-light/70 dark:text-text-dark/70 text-xs sm:text-sm md:text-base">
+                        <%= Number(product.price).toFixed(2) %> <%= currency == 'EG' ? 'L.E' : '$' %> - Qty: <%=
+                        product.quantity %> (<%= Number(product.price * product.quantity).toFixed(2) %> <%= currency ==
+                        'EG' ? 'L.E' : '$' %>)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </a>
+            <% }); %>
+          </div>
+
+          <% } %>
+        </div>
+      </div>
+    </main>
+
+    <%- include("./partials/footer") %>
+    <script src="/js/profile.js" type="module"></script>
+    <script src="/js/cart.js"></script>
+    <script>
+      // Set progress width from data attribute to avoid inline CSS lint issues
+      document.addEventListener('DOMContentLoaded', function () {
+        var el = document.querySelector('.level-progress');
+        if (el) {
+          var p = parseInt(el.getAttribute('data-progress') || '0', 10);
+          p = isNaN(p) ? 0 : Math.max(0, Math.min(100, p));
+          el.style.width = p + '%';
+        }
+      });
+    </script>
+    <script>
+      document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.copy-code');
+        if (!btn) return;
+        const code = btn.dataset.code;
+        navigator.clipboard.writeText(code).then(() => successAlert('Coupon code copied'));
+      });
+    </script>
+  </body>
+</html>

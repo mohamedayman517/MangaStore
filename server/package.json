@@ -1,0 +1,44 @@
+{
+  "name": "manga-store-server",
+  "version": "1.0.0",
+  "private": true,
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "dependencies": {
+    "autoprefixer": "^10.4.20",
+    "axios": "^1.11.0",
+    "body-parser": "^1.20.3",
+    "cloudinary": "^2.5.1",
+    "compression": "^1.8.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "crypto-js": "^4.2.0",
+    "csurf": "^1.10.0",
+    "datatables.net": "^2.1.8",
+    "datatables.net-bs4": "^2.1.8",
+    "dotenv": "^16.3.1",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "firebase": "^11.3.1",
+    "firebase-admin": "^13.0.2",
+    "googleapis": "^131.0.0",
+    "helmet": "^8.1.0",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "node-cache": "^5.1.2",
+    "node-fetch": "^2.7.0",
+    "nodemailer": "^6.10.0",
+    "openai": "^5.16.0",
+    "postcss": "^8.4.49",
+    "sweetalert2": "^11.15.10",
+    "tailwindcss": "^3.4.17"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9",
+    "webpack": "^5.101.3",
+    "webpack-cli": "^6.0.1"
+  }
+}

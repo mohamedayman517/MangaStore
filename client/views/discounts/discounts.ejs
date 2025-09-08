@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Discount Management</title>
+    <!-- Include DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="/css/build.min.css" />
+    <style>
+      input[type="number"]::-webkit-outer-spin-button,
+      input[type="number"]::-webkit-inner-spin-button {
+        display: none;
+      }
+      .fancy i {
+        transition: all 0.3s ease-in-out;
+      }
+
+      .fancy:hover i {
+        color: white;
+        background: black;
+      }
+      .fancy:hover span {
+        color: white;
+        padding-left: 1.5em;
+      }
+      /* From Uiverse.io by adamgiebl */
+      .dots-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        width: 100%;
+      }
+
+      .dot {
+        height: 20px;
+        width: 20px;
+        margin-right: 10px;
+        border-radius: 10px;
+        background-color: #b3d4fc;
+        animation: pulse 1.5s infinite ease-in-out;
+      }
+
+      .dot:last-child {
+        margin-right: 0;
+      }
+
+      .dot:nth-child(1) {
+        animation-delay: -0.3s;
+      }
+
+      .dot:nth-child(2) {
+        animation-delay: -0.1s;
+      }
+
+      .dot:nth-child(3) {
+        animation-delay: 0.1s;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(0.8);
+          background-color: #b3d4fc;
+          box-shadow: 0 0 0 0 rgba(178, 212, 252, 0.7);
+        }
+
+        50% {
+          transform: scale(1.2);
+          background-color: #6793fb;
+          box-shadow: 0 0 0 10px rgba(178, 212, 252, 0);
+        }
+
+        100% {
+          transform: scale(0.8);
+          background-color: #b3d4fc;
+          box-shadow: 0 0 0 0 rgba(178, 212, 252, 0.7);
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 relative">
+    <div
+      class="flex -top-0 flex-col items-center justify-center bg-gradient-to-br from-zinc-500 to-zinc-700 bg-opacity-80 fixed w-screen h-screen backdrop-blur-md"
+      style="z-index: 100"
+      id="loadingContainer">
+      <section class="dots-container">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </section>
+    </div>
+    <%- include("../partials/navbar") %>
+    <%- include("../partials/admin-back") %>
+    <%- include("./modals/add-new-popup") %>
+    <%- include("./modals/edit-coupon-popup") %>
+    <%- include("./modals/alerts-popups") %>
+    <%- include("./modals/popup-details") %>
+    <%- include("./modals/confirm-delete") %>
+    <div class="max-w-7xl my-20 mx-auto bg-white p-6 rounded-lg shadow-md">
+      <div class="flex items-center justify-around">
+        <h1 class="text-2xl font-semibold text-gray-800">Discount Management</h1>
+        <button
+          id="addNewDiscount"
+          class="flex fancy my-5 flex-row-reverse items-center justify-center bg-transparent border-2 border-black text-white font-bold tracking-wide text-xs p-3 transition-all ease-in-out duration-300 hover:bg-black hover:text-white">
+          <span class="text-black text-sm pl-6 uppercase transition-all ease-in-out duration-300 hover:pl-4">
+            Add New Discount
+          </span>
+          <i class="fas fa-plus-circle text-black transition-all ease-in-out duration-300 hover:text-white"></i>
+        </button>
+      </div>
+      <div class="overflow-x-auto">
+        <table id="productTable" class="min-w-full bg-white border border-gray-200 rounded-lg">
+          <thead>
+            <tr class="bg-gray-100 text-gray-600 text-left text-sm uppercase">
+              <th class="px-6 py-3">Discount ID</th>
+              <th class="px-6 py-3">product name</th>
+              <th class="px-6 py-3">valid</th>
+              <th class="px-6 py-3">Amount</th>
+              <th class="px-6 py-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% discounts.forEach((discount) => { %>
+            <tr>
+              <td class="px-6 py-4"><%= discount.id %></td>
+              <td class="px-6 py-4"><%= discount.productId %></td>
+              <td class="px-6 py-4">
+                <% if ( discount.isActive === true) {%>
+                <i class="fa-regular fa-circle-check text-green-600"></i>
+                <% } %> <% if(discount.isActive === false) { %>
+                <i class="fa-solid fa-circle-xmark text-red-600"></i>
+                <% } %>
+              </td>
+              <td class="px-6 py-4">
+                <%= discount.discountValue %> <%= discount.discountType == "percentage" ? "%" : "L.E"%>
+              </td>
+              <td class="px-6 py-4">
+                <button
+                  class="edit-btn bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600"
+                  data-id="<%=discount.id %>">
+                  Edit
+                </button>
+                <button
+                  class="delete-btn bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600"
+                  data-id="<%=discount.id %>">
+                  Delete
+                </button>
+                <button
+                  class="view-btn bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-600"
+                  data-id="<%=discount.id %>">
+                  View
+                </button>
+              </td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script>
+      $(document).ready(function () {
+        $("#loadingContainer").html("");
+        $("#loadingContainer").addClass("!hidden");
+        function successAlert(msg) {
+          const alert = $("#success-alert");
+          alert.find(".popup-text").text(msg);
+          alert.addClass("active");
+          alert.removeClass("!hidden");
+          setTimeout(() => {
+            alert.removeClass("active");
+            alert.addClass("!hidden");
+          }, 3000);
+        }
+        function errorAlert(err) {
+          const alert = $("#err-alert");
+          alert.find(".popup-text").text(`Error while adding category ${err}`);
+          alert.addClass("active");
+          alert.removeClass("!hidden");
+          setTimeout(() => {
+            alert.addClass("!hidden");
+            alert.removeClass("active");
+          }, 3000);
+        }
+        function warnAlert(warn) {
+          const alert = $("#warn-alert");
+          alert.find(".popup-text").text(`Warning: ${warn}`);
+          alert.addClass("active");
+          alert.removeClass("!hidden");
+          setTimeout(() => {
+            alert.addClass("!hidden");
+            alert.removeClass("active");
+          }, 3000);
+        }
+        function infoAlert(msg) {
+          const alert = $("#info-alert");
+          alert.find(".popup-text").text(msg);
+          alert.addClass("active");
+          alert.removeClass("!hidden");
+          setTimeout(() => {
+            alert.addClass("!hidden");
+            alert.removeClass("active");
+          }, 3000);
+        }
+
+        $("#productTable").DataTable();
+
+        $("#addNewDiscount").click(function () {
+          $("#add-popup").removeClass("!hidden");
+        });
+        //  Add new discount
+        $("#submitBtn").on("click", function (e) {
+          e.preventDefault();
+          $("#submitBtn").attr("disabled", true);
+
+          const discountValue = parseFloat($("#discountValue").val());
+          const discountType = $("#discountType").val();
+          const productId = $("#productId").val();
+          const isActive = $("#isActive").val() === "true";
+          const startDate = $("#startDate").val();
+          const endDate = $("#endDate").val();
+          const startTime = $("#startTime").val();
+          const endTime = $("#endTime").val();
+
+          // Combine date and time for complete timestamp
+          const startTimestamp = new Date(`${startDate}T${startTime}`).getTime();
+          const endTimestamp = new Date(`${endDate}T${endTime}`).getTime();
+
+          if (
+            !discountValue ||
+            isNaN(discountValue) ||
+            discountType === "Select option" ||
+            !productId ||
+            !startDate ||
+            !endDate ||
+            !startTime ||
+            !endTime
+          ) {
+            $("#submitBtn").removeAttr("disabled");
+            warnAlert("Please fill in all fields correctly.");
+            return;
+          }
+
+          if (startTimestamp >= endTimestamp) {
+            $("#submitBtn").removeAttr("disabled");
+            warnAlert("End date and time must be after the start date and time.");
+            return;
+          }
+
+          const productData = {
+            productId,
+            discountValue,
+            discountType,
+            isActive,
+            startDate: startTimestamp,
+            endDate: endTimestamp,
+          };
+
+          $.ajax({
+            url: "/admin/add/discount",
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(productData),
+            success: function (response) {
+              successAlert(response.message);
+              $("#add-popup").addClass("!hidden");
+              setTimeout(() => location.reload(), 500);
+            },
+            error: function (error) {
+              $("#submitBtn").removeAttr("disabled");
+              console.error("Error:", error);
+              errorAlert(`Failed to add product. Please try again.\n${error.responseJSON?.message}`);
+            },
+          });
+        });
+
+        $(".close-popup").on("click", function () {
+          $("#productId").val("");
+          $("#startDate").val("");
+          $("#startTime").val("");
+          $("#endDate").val("");
+          $("#endTime").val("");
+          $("#discountType").val("");
+          $("#discountValue").val("");
+          $("#isActive").val("");
+          $("#editId").val("");
+          $("#submitBtn").removeAttr("disabled");
+        });
+
+        $(".edit-btn").on("click", function () {
+          const id = $(this).data("id");
+          $("#submitEditDiscountBtn").attr("data-id", id);
+          $.ajax({
+            url: `/admin/view/discounts/${id}`,
+            method: "GET",
+            success: function (response) {
+              const popup = $("#edit-discount-popup");
+              popup.removeClass("!hidden");
+
+              // Convert Firestore timestamp to Date
+              const startDateTime = new Date(response.discount.startDate._seconds * 1000);
+              const endDateTime = new Date(response.discount.endDate._seconds * 1000);
+
+              // Adjust for local timezone offset
+              const startDateUTC = new Date(startDateTime.getTime() - startDateTime.getTimezoneOffset() * 60000);
+              const endDateUTC = new Date(endDateTime.getTime() - endDateTime.getTimezoneOffset() * 60000);
+
+              // Set date and time fields
+              popup.find("#productId").val(response.discount.productId);
+              popup.find("#startDate").val(startDateUTC.toISOString().split("T")[0]); // Date part
+              popup.find("#startTime").val(startDateUTC.toISOString().split("T")[1].slice(0, 5)); // Time part
+              popup.find("#endDate").val(endDateUTC.toISOString().split("T")[0]); // Date part
+              popup.find("#endTime").val(endDateUTC.toISOString().split("T")[1].slice(0, 5)); // Time part
+              popup.find("#discountType").val(response.discount.discountType.toLowerCase()).trigger("change");
+              popup.find("#discountValue").val(Number(response.discount.discountValue));
+              popup.find("#isActive").val(response.discount.isActive.toString()).trigger("change");
+              popup.find("#editId").val(id);
+            },
+            error: function (error) {
+              console.error("Error:", error);
+              errorAlert(`Failed to load discount data. Please try again.\n${error}`);
+            },
+          });
+        });
+        $("#submitEditDiscountBtn").on("click", function (e) {
+          e.preventDefault();
+          const popup = $("#edit-discount-popup");
+          const id = popup.find("#submitEditDiscountBtn").data("id");
+          const productId = popup.find("#productId").val().trim();
+          const startDate = popup.find("#startDate").val();
+          const startTime = popup.find("#startTime").val();
+          const endDate = popup.find("#endDate").val();
+          const endTime = popup.find("#endTime").val();
+          const discountType = popup.find("#discountType").val().toLowerCase();
+          const discountValue = popup.find("#discountValue").val();
+          const isActive = popup.find("#isActive").val();
+
+          let errors = [];
+          if (!productId) {
+            errors.push("Product ID is required");
+          }
+          if (isNaN(discountValue) || discountValue <= 0) {
+            errors.push("Discount value must be a positive number");
+          }
+          if (!["percentage", "fixed"].includes(discountType)) {
+            errors.push("Please select a valid discount type");
+          }
+          if (!["true", "false"].includes(isActive)) {
+            errors.push("Please select the active status");
+          }
+          if (!startDate || isNaN(new Date(`${startDate}T${startTime}`).getTime())) {
+            errors.push("Start date and time must be valid");
+          }
+          if (
+            !endDate ||
+            isNaN(new Date(`${endDate}T${endTime}`).getTime()) ||
+            new Date(`${endDate}T${endTime}`) < new Date()
+          ) {
+            errors.push("End date and time must be valid and in the future");
+          }
+          if (errors.length > 0) {
+            warnAlert(errors.join("\n"));
+            return;
+          }
+
+          const startDateTime = new Date(`${startDate}T${startTime}`);
+          const endDateTime = new Date(`${endDate}T${endTime}`);
+
+          const discountData = {
+            productId,
+            startDate: startDateTime.toISOString(),
+            endDate: endDateTime.toISOString(),
+            discountType,
+            discountValue: Number(discountValue).toFixed(2),
+            isActive: isActive === "true",
+          };
+
+          $.ajax({
+            url: `/admin/edit/discounts/${id}`,
+            method: "PUT",
+            data: discountData,
+            success: function (response) {
+              successAlert("Discount updated successfully");
+              setTimeout(() => {
+                location.reload();
+              }, 700);
+            },
+            error: function (error) {
+              console.error("Error updating discount:", error);
+              errorAlert("Failed to update discount. Please try again.");
+            },
+          });
+        });
+
+        $(document)
+          .off("click")
+          .on("click", ".view-btn", function () {
+            const id = $(this).data("id");
+
+            $.ajax({
+              url: `/admin/view/discounts/${id}`,
+              method: "GET",
+              success: function (response) {
+                const popup = $("#popup-details");
+
+                // Ensure the popup is visible
+                popup.removeClass("!hidden"); // Make sure it's visible
+                popup
+                  .find("#view-popup-close-btn")
+                  .off("click")
+                  .on("click", function () {
+                    popup.addClass("!hidden"); // Hide the popup again on close
+                    popup.find("#popupBody").html(""); // Clear content
+                  });
+
+                const discount = response.discount;
+                const product = response.product; // Assuming the product details are included in the response
+
+                // Calculate the discounted price
+                let discountedPrice;
+                if (discount.discountType === "percentage") {
+                  discountedPrice = product.price * (1 - discount.discountValue / 100);
+                } else if (discount.discountType === "fixed") {
+                  discountedPrice = product.price - discount.discountValue;
+                }
+
+                const isValidClass = discount.isActive ? "text-green-600" : "text-red-600";
+                const isValidText = discount.isActive ? "Active" : "Inactive";
+                const expiryDate = new Date(discount.endDate._seconds * 1000).toLocaleString();
+                const startDate = new Date(discount.startDate._seconds * 1000).toLocaleString();
+
+                const popupContent = `
+      <div class="p-6 space-y-6 bg-white rounded-lg shadow-lg max-w-lg w-full">
+          <h3 class="text-2xl font-semibold text-gray-900">Discount Details</h3>
+          <div class="grid gap-5">
+              <!-- Product Name -->
+              <div>
+                  <strong class="block text-sm font-medium text-gray-700">Product Name:</strong>
+                  <span class="text-lg font-semibold text-gray-900">${product.name}</span>
+              </div>
+
+              <!-- Original Price -->
+              <div>
+                  <strong class="block text-sm font-medium text-gray-700">Original Price:</strong>
+                  <span class="text-lg font-semibold text-gray-900">${Number(product.price).toFixed(2)} L.E</span>
+              </div>
+
+              <!-- Discounted Price -->
+              <div>
+                  <strong class="block text-sm font-medium text-gray-700">After discount:</strong>
+                  <span class="text-lg font-semibold text-green-600">${Number(discountedPrice).toFixed(2)} L.E</span>
+              </div>
+
+              <!-- Discount Type -->
+              <div>
+                  <strong class="block text-sm font-medium text-gray-700">Discount Type:</strong>
+                  <span class="text-lg font-semibold text-gray-900">${
+                    discount.discountType.charAt(0).toUpperCase() + discount.discountType.slice(1)
+                  }</span>
+              </div>
+
+              <!-- Discount Value -->
+              <div>
+                  <strong class="block text-sm font-medium text-gray-700">Discount Value:</strong>
+                  <span class="text-lg font-semibold text-gray-900">${discount.discountValue} ${
+                  discount.discountType === "percentage" ? "%" : "L.E"
+                }</span>
+              </div>
+
+              <!-- Start Date -->
+              <div>
+                  <strong class="block text-sm font-medium text-gray-700">Start Date:</strong>
+                  <span class="text-lg font-semibold text-gray-900">${startDate}</span>
+              </div>
+
+              <!-- Expiry Date -->
+              <div>
+                  <strong class="block text-sm font-medium text-gray-700">Expiry Date:</strong>
+                  <span class="text-lg font-semibold text-gray-900">${expiryDate}</span>
+              </div>
+
+              <!-- Validity -->
+              <div>
+                  <strong class="block text-sm font-medium text-gray-700">Status:</strong>
+                  <span class="text-lg font-semibold ${isValidClass}">${isValidText}</span>
+              </div>
+          </div>
+      </div>
+      `;
+
+                popup.find("#popupBody").html(popupContent); // Insert styled content into the popup
+              },
+              error: function (error) {
+                console.error("Error:", error);
+                errorAlert(`Failed to view discount. Please try again.\n${error}`);
+              },
+            });
+          });
+
+        $(document).on("click", "#conf-delte-btn-popup", function (e) {
+          e.preventDefault();
+          const id = $(this).data("id");
+          $.ajax({
+            url: `/admin/delete/discount/${id}`,
+            method: "DELETE",
+            success: function (response) {
+              successAlert(response.message);
+              setTimeout(() => {
+                location.reload();
+              }, 500);
+            },
+            error: function (error) {
+              console.error("Error deleting discount:", error);
+              errorAlert("Failed to delete discount. Please try again.");
+            },
+          });
+        });
+        $(document).on("click", "#cancel-btn-popup", function (event) {
+          event.preventDefault();
+          $("#delte-popup").addClass("!hidden");
+        });
+        $(".delete-btn").on("click", function (event) {
+          const id = $(this).data("id");
+          $("#delte-popup").removeClass("!hidden");
+          $("#conf-delte-btn-popup").data("id", id);
+        });
+        $("#close-view-popup").on("click", function () {
+          $("#popup-details").addClass("!hidden");
+        });
+        $(".close-popup").on("click", function () {
+          $(".popup").addClass("!hidden");
+        });
+      });
+    </script>
+  </body>
+</html>

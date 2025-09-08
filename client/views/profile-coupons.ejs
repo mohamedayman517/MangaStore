@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include("./partials/meta") %>
+    <title>Manga Store - My Coupons</title>
+    <link rel="stylesheet" href="/css/framework.css" />
+    <link rel="stylesheet" href="/css/build.min.css" />
+  </head>
+  <body class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark">
+    <%- include("./partials/header") %> <%- include("./partials/alerts-popups") %>
+
+    <main class="min-h-screen pt-24 container mx-auto px-4 mb-12">
+      <h1 class="text-2xl font-semibold mb-6 text-primary-light dark:text-primary-dark">My Coupons</h1>
+
+      <% if (!coupons || coupons.length === 0) { %>
+        <div class="glass p-6 rounded-xl border-2 border-secondary-light/20 dark:border-secondary-dark/20 text-center">
+          <p class="text-text-light/70 dark:text-text-dark/70">No available coupons right now.</p>
+        </div>
+      <% } else { %>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <% coupons.forEach(function(c) { %>
+            <div class="glass p-4 rounded-xl border-2 border-secondary-light/20 dark:border-secondary-dark/20 flex flex-col gap-2">
+              <div class="flex items-center justify-between">
+                <span class="text-lg font-bold text-secondary-light dark:text-secondary-dark"><%= c.name %></span>
+                <button class="copy-code px-3 py-1 rounded-lg bg-primary-light dark:bg-primary-dark text-white text-sm" data-code="<%= c.name %>">Copy</button>
+              </div>
+              <div class="text-sm text-text-light/80 dark:text-text-dark/80">
+                <p>Type: <span class="font-medium"><%= c.type %></span></p>
+                <p>Value: <span class="font-medium"><%= c.type === 'percentage' ? c.amount + '%' : c.amount + ' L.E' %></span></p>
+                <p>Expires: <span class="font-medium"><%= new Date(c.expiredAt.toMillis()).toLocaleDateString() %></span></p>
+                <% if (c.productId) { %>
+                  <p class="text-xs">Product-specific</p>
+                <% } else if (c.categoryName) { %>
+                  <p class="text-xs">Category: <%= c.categoryName %></p>
+                <% } else { %>
+                  <p class="text-xs">General coupon</p>
+                <% } %>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </main>
+
+    <%- include("./partials/footer") %>
+    <script>
+      document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.copy-code');
+        if (!btn) return;
+        const code = btn.dataset.code;
+        navigator.clipboard.writeText(code).then(() => successAlert('Coupon code copied'));
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Exports</title>
+    <link rel="stylesheet" href="/css/build.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer" />
+  </head>
+  <body class="min-h-screen bg-slate-900 text-white">
+    <%- include("../partials/navbar") %>
+    <%- include("../partials/alerts-popups") %>
+
+    <main class="container mx-auto pt-24 px-6">
+      <h1 class="text-3xl font-semibold mb-6">Export to Google Sheets</h1>
+      <p class="mb-6 text-slate-300">Spreadsheet ID: <code class="text-yellow-300"><%= spreadsheetId %></code></p>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <button id="export-stocks" class="py-4 px-6 bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow flex items-center justify-center gap-3">
+          <i class="fa-solid fa-box"></i>
+          <span>Export Stocks</span>
+        </button>
+        <button id="export-points" class="py-4 px-6 bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow flex items-center justify-center gap-3">
+          <i class="fa-solid fa-coins"></i>
+          <span>Export Points</span>
+        </button>
+        <button id="export-transactions" class="py-4 px-6 bg-amber-600 hover:bg-amber-700 rounded-lg shadow flex items-center justify-center gap-3">
+          <i class="fa-solid fa-receipt"></i>
+          <span>Export Transactions</span>
+        </button>
+      </div>
+
+      <p class="mt-8 text-slate-400">Ensure your Google Sheet is shared with the service account email in your environment variables.</p>
+    </main>
+
+    <script>
+      async function callExport(url) {
+        try {
+          const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+          const data = await res.json();
+          if (!res.ok || !data.success) throw new Error(data.error || 'Export failed');
+          if (typeof successAlert === 'function') {
+            successAlert(`${data.sheet} exported: ${data.count} rows`);
+          } else {
+            console.log(`${data.sheet} exported: ${data.count} rows`);
+          }
+        } catch (e) {
+          if (typeof errorAlert === 'function') {
+            errorAlert(`Error: ${e.message}`);
+          } else {
+            console.error(`Error: ${e.message}`);
+          }
+        }
+      }
+      document.getElementById('export-stocks').addEventListener('click', () => callExport('/admin/export/stocks'));
+      document.getElementById('export-points').addEventListener('click', () => callExport('/admin/export/points'));
+      document.getElementById('export-transactions').addEventListener('click', () => callExport('/admin/export/transactions'));
+    </script>
+  </body>
+</html>

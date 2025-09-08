@@ -1,0 +1,103 @@
+<!-- Search Popup -->
+<div
+  id="searchPopup"
+  class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center"
+  style="z-index: 103">
+  <div
+    class="bg-background-light dark:bg-background-dark p-6 pt-2 rounded-lg shadow-lg w-10/12 md:w-8/12 lg:w-1/2 min-h-60 flex flex-col items-center justify-start">
+    <div class="flex justify-between items-center mb-4 w-full font-bold text-2xl">
+      <h2 class="text-xl font-bold pt-2 text-text-light dark:text-text-dark">Search</h2>
+      <button id="closeButton" class="text-text-light dark:text-text-dark">&times;</button>
+    </div>
+    <input
+      type="text"
+      class="w-full p-2 border border-primary-light dark:border-primary-dark focus:border-accent-light focus:dark:border-primary-dark focus:dark:border-accent-dark rounded bg-background-light dark:bg-background-dark"
+      id="searchInput"
+      placeholder="Search..." />
+    <div
+      id="productsContainer"
+      class="mt-4 w-full max-h-60 overflow-y-auto flex flex-col items-center justify-start rounded-lg">
+      <p class="text-text-light dark:text-text-dark">No results found</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const searchButton = document.getElementById("searchIcon");
+  const searchPopup = document.getElementById("searchPopup");
+  const closeButton = document.getElementById("closeButton");
+  const productsContainer = document.getElementById("productsContainer");
+  const searchInput = document.getElementById("searchInput");
+
+  function closePopup() {
+    searchPopup.classList.add("hidden");
+    searchInput.value = "";
+    productsContainer.innerHTML = "<p>No results found</p>";
+  }
+
+  closeButton.addEventListener("click", closePopup);
+
+  searchButton.addEventListener("click", () => {
+    searchPopup.classList.toggle("hidden");
+    searchInput.value = "";
+    productsContainer.innerHTML = "<p>No results found</p>";
+  });
+
+  window.addEventListener("click", (e) => {
+    if (e.target === searchPopup) {
+      closePopup();
+    }
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@latest"></script>
+
+<script>
+  let allProducts = [];
+
+  // Fetch all products once
+  async function fetchProducts() {
+    const response = await fetch("/all-products");
+    const data = await response.json();
+    if (data.success) {
+      allProducts = data.products;
+    }
+  }
+
+  // Search function (called on input change)
+  function searchProducts(query) {
+    const filtered = allProducts.filter((product) => product.name.toLowerCase().includes(query.toLowerCase()));
+
+    displayProducts(filtered); // A function to update the UI
+  }
+
+  // Event listener for search input
+  document.getElementById("searchInput").addEventListener("input", (e) => {
+    searchProducts(e.target.value);
+  });
+
+  // Fetch products on page load
+  fetchProducts();
+
+  function displayProducts(results) {
+    let container = document.getElementById("productsContainer");
+    container.innerHTML = "";
+
+    if (results.length === 0) {
+      container.innerHTML = "<p class='text-text-light dark:text-text-dark'>No results found</p>";
+      return;
+    }
+
+    results.forEach((product) => {
+      let productHTML = `
+          <div class="w-full p-4 border border-gray-300 rounded flex flex-col items-center justify-center mb-3">
+              <a href="/view/product/${product.id}" class="text-xs font-bold px-2 py-1">
+                <h3 class="line-clamp-2 font-bold text-sm mb-2">${product.name}</h3>
+                <p class="line-clamp-3 font-medium ">${product.description}</p>
+              </a>
+          </div>
+      `;
+      container.innerHTML += productHTML;
+    });
+  }
+</script>

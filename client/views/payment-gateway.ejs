@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include("./partials/meta") %>
+    <title>Manga Store - Payment Gateway</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <link rel="stylesheet" href="/css/build.min.css" />
+  </head>
+  <body
+    class="min-h-screen w-full bg-gradient-to-br bg-background-light dark:bg-background-dark transition-colors duration-300">
+    <%- include("./partials/header") %> <%- include("./partials/alerts-popups") %> <%- include("./partials/popup") %>
+    <%- include("./partials/error-popup") %> <%- include("./partials/loader") %>
+
+    <div class="container min-h-screen pt-24 mx-auto p-4 flex items-center justify-center">
+      <div
+        class="flex flex-col items-center justify-center w-full max-w-md mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg h-full p-6">
+        <h1 class="text-center text-3xl font-bold mb-6 text-gray-800 dark:text-white">Payment Gateway</h1>
+
+        <!-- Timer Section -->
+        <div class="timer-section mb-4 border-2 border-gray-300 dark:border-gray-600 rounded-xl p-4 w-full">
+          <p class="text-center text-gray-700 dark:text-gray-300">
+            Time remaining:
+            <span id="timeRemaining" class="font-mono text-blue-600 dark:text-blue-400"></span>
+          </p>
+        </div>
+
+        <!-- Payment Details -->
+        <div class="payment-details mb-4 w-full font-semibold text-lg">
+          <h2 class="text-xl font-semibold mb-2 text-left text-gray-800 dark:text-white">Payment Details</h2>
+          <div
+            class="flex items-center justify-between w-full border-2 border-gray-300 dark:border-gray-600 rounded-xl p-4">
+            <p id="paymentMethod" class="mb-2 text-gray-700 dark:text-gray-300">
+              <%= payment.paymentDetails.payMethod === "VodafoneCash"? "VF-Cash" : payment.paymentDetails.payMethod %>:
+            </p>
+            <p
+              id="copyButton"
+              data-info="<%= payment.paymentDetails.info %>"
+              class="mb-2 underline cursor-pointer text-blue-600 dark:text-blue-400">
+              <%= payment.paymentDetails.info %> <i class="fa-regular fa-copy"></i>
+            </p>
+          </div>
+          <div
+            class="mb-2 p-4 border-2 border-gray-300 dark:border-gray-600 w-full flex justify-between items-center rounded-xl mt-2">
+            <p class="text-gray-700 dark:text-gray-300">Amount:</p>
+            <p class="text-green-600 dark:text-green-400">
+              <%= payment.amountToPay %> <%= payment.currency == "EG" ? 'L.E' : '$' %>
+            </p>
+          </div>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="upload-section mb-4 w-full cursor-pointer">
+          <div class="max-w-md mx-auto rounded-lg overflow-hidden md:max-w-xl">
+            <div class="md:flex">
+              <div class="w-full p-3">
+                <div
+                  class="relative h-48 rounded-lg border-2 border-blue-500 bg-gray-50 dark:bg-gray-700 flex justify-center items-center shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out">
+                  <div id="uploadText" class="absolute flex flex-col items-center w-full">
+                    <img alt="File Icon" class="mb-3" src="https://img.icons8.com/dusk/64/000000/file.png" />
+                    <span class="block text-gray-400 font-normal mt-1">Click to upload photo</span>
+                  </div>
+                  <input
+                    name="screenUpload"
+                    class="h-full w-full hidden cursor-pointer"
+                    id="screenUpload"
+                    type="file"
+                    accept="image/*" />
+                  <div id="uploadedImage" class="hidden relative h-full w-full flex items-center justify-center">
+                    <img
+                      id="imagePreview"
+                      class="h-full w-auto object-cover rounded-lg hidden"
+                      src=""
+                      alt="Uploaded Image" />
+                    <button
+                      id="removeImageButton"
+                      class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-700 w-10 h-10">
+                      <i class="fa fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+                <small class="block mt-2 text-gray-600 dark:text-gray-400">Maximum 1 screenshot allowed</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="w-full flex justify-center items-center gap-2">
+          <button
+            type="button"
+            id="confirmPaymentButton"
+            class="bg-gray-700 text-white border-2 border-gray-700 rounded-xl outline-none py-2 w-full text-lg font-medium m-2 hover:bg-gray-600 disabled:bg-gray-400 duration-200 transition-all active:scale-95 disabled:cursor-wait">
+            Confirm payment
+          </button>
+          <button
+            type="button"
+            id="cancelPaymentButton"
+            class="bg-red-700 text-white border-2 border-red-700 rounded-xl outline-none py-2 w-full text-lg font-medium m-2 hover:bg-red-600 disabled:bg-red-400 duration-200 transition-all active:scale-95 disabled:cursor-wait">
+            Cancel payment
+          </button>
+        </div>
+      </div>
+    </div>
+    <script>
+      document.getElementById("uploadText").addEventListener("click", () => {
+        document.getElementById("screenUpload").click();
+      });
+      document.getElementById("screenUpload").addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = function () {
+          document.getElementById("uploadText").classList.add("hidden");
+          document.getElementById("uploadedImage").classList.remove("hidden");
+          document.getElementById("imagePreview").src = reader.result;
+          document.getElementById("imagePreview").classList.remove("hidden");
+        };
+        reader.readAsDataURL(file);
+      });
+      // Copy payment details to clipboard
+      document.getElementById("copyButton").addEventListener("click", function () {
+        const paymentData = document.getElementById("copyButton").dataset.info;
+        navigator.clipboard.writeText(paymentData).then(() => {
+          successAlert(`${paymentData} copied to clipboard`);
+        });
+      });
+
+      // Update endDate and timeRemaining every second
+      setInterval(() => {
+        const endDate = new Date("<%= payment.endDate %>");
+        const now = new Date();
+        const timeDiff = endDate - now;
+
+        const hours = String(Math.floor(timeDiff / (1000 * 60 * 60))).padStart(2, "0");
+        const minutes = String(Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, "0");
+        const seconds = String(Math.floor((timeDiff % (1000 * 60)) / 1000)).padStart(2, "0");
+
+        document.getElementById("timeRemaining").innerText = `${minutes}:${seconds}`;
+
+        if (timeDiff < 0) {
+          document.getElementById("timeRemaining").innerText = "00:00";
+          const errorPopup = document.querySelector(".error-popup");
+          errorPopup.classList.remove("hidden");
+          document.getElementById("error-text").innerText = "Payment time has expired";
+          document.getElementById("error-btn").innerText = "Return to home";
+          document.getElementById("error-btn").addEventListener("click", function () {
+            window.location.href = "/";
+          });
+        }
+      }, 1000);
+
+      const confirmButton = document.getElementById("confirmPaymentButton");
+
+      const popup = document.querySelector(".popup");
+      const acceptButton = document.querySelector(".accept");
+      const rejectButton = document.querySelector(".reject");
+      const cancelPaymentButton = document.querySelector("#cancelPaymentButton");
+      const exitButton = document.querySelector(".exit-button");
+
+      exitButton.addEventListener("click", function () {
+        popup.classList.add("hidden");
+      });
+
+      rejectButton.addEventListener("click", function () {
+        popup.classList.add("hidden");
+      });
+      confirmButton.addEventListener("click", function () {
+        if (!document.getElementById("screenUpload").files[0]) {
+          errorAlert("Please upload a screenshot of the payment");
+          return;
+        }
+        const now = new Date();
+        if (now > new Date("<%= payment.endDate %>")) {
+          const errorPopup = document.querySelector(".error-popup");
+          errorPopup.classList.remove("hidden");
+          document.getElementById("error-text").innerText = "Payment time has expired";
+          document.getElementById("error-btn").innerText = "Return to home";
+          document.getElementById("error-btn").addEventListener("click", function () {
+            window.location.href = "/";
+          });
+          return;
+        }
+        popup.classList.remove("hidden");
+        acceptButton.innerText = "Confirm";
+        acceptButton.classList.add(
+          "bg-green-700",
+          "text-white",
+          "hover:bg-green-800",
+          "hover:text-white",
+          "active:bg-green-900",
+          "active:text-white",
+          "duration-200",
+          "transition-all",
+          "rounded-md",
+          "py-2",
+          "w-1/2",
+          "cursor-pointer",
+          "text-center",
+          "font-medium",
+          "acceptPayment"
+        );
+        acceptButton.classList.remove("bg-red-700", "hover:bg-red-800", "active:bg-red-900");
+        rejectButton.innerText = "Cancel";
+        popup.querySelector(".title").innerText = "Confirm Payment";
+        popup.querySelector(
+          ".body"
+        ).innerText = `Your transaction will be reviewed by our team. After that, we will deliver your product. Please make sure that you have made a real transaction to avoid a ban.
+            Thank you`;
+        acceptButton.id = "approvePayment";
+      });
+
+      document.getElementById("cancelPaymentButton").addEventListener("click", function () {
+        const now = new Date();
+        if (now > new Date("<%= payment.endDate %>")) {
+          const errorPopup = document.querySelector(".error-popup");
+          errorPopup.classList.remove("hidden");
+          document.getElementById("error-text").innerText = "Payment time has expired";
+          document.getElementById("error-btn").innerText = "Return to home";
+          document.getElementById("error-btn").addEventListener("click", function () {
+            window.location.href = "/";
+          });
+          return;
+        }
+        popup.classList.remove("hidden");
+        popup.querySelector(".title").innerText = "Cancel Payment";
+        popup.querySelector(".body").innerText = "Are you sure you want to cancel the payment?";
+        popup.querySelector(".accept").innerText = "Yes";
+        popup.querySelector(".accept").id = "rejectPayment";
+        popup.querySelector(".reject").innerText = "No";
+        acceptButton.classList.add(
+          "bg-red-700",
+          "text-white",
+          "hover:bg-red-800",
+          "hover:text-white",
+          "active:bg-red-900",
+          "active:text-white",
+          "duration-200",
+          "transition-all",
+          "rounded-md",
+          "py-2",
+          "w-1/2",
+          "cursor-pointer",
+          "text-center",
+          "font-medium",
+          "cancelPayment"
+        );
+        popup.querySelector(".accept").classList.remove("bg-green-700", "hover:bg-green-800", "active:bg-green-900");
+        acceptButton.classList.add(
+          "bg-gray-700",
+          "text-white",
+          "hover:bg-gray-800",
+          "hover:text-white",
+          "active:bg-gray-900",
+          "active:text-white",
+          "duration-200",
+          "transition-all",
+          "rounded-md",
+          "py-2",
+          "w-1/2",
+          "cursor-pointer",
+          "text-center",
+          "font-medium"
+        );
+      });
+
+      acceptButton.addEventListener("click", () => {
+        // Approve button clicked to confirm payment
+        if (acceptButton.id === "approvePayment") {
+          popup.classList.add("hidden");
+          confirmButton.disabled = true;
+          confirmButton.innerText = "Processing payment...";
+          cancelPaymentButton.disabled = true;
+
+          const formData = new FormData();
+          formData.append("screenshot", document.getElementById("screenUpload").files[0]);
+          formData.append("transactionId", "<%= payment.paymentDetails.id %>");
+          formData.append("userId", "<%= payment.paymentDetails.uid %>");
+
+          fetch("/payment/upload-screenshot", {
+            method: "POST",
+            body: formData,
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                successAlert("Payment confirmed successfully");
+                setTimeout(() => {
+                  window.location.href = `/payment/success/${formData.get("userId")}/${formData.get("transactionId")}`;
+                }, 2000);
+              } else {
+                errorAlert("Failed to confirm payment, please try again");
+                confirmButton.disabled = false;
+                confirmButton.innerText = "Confirm payment";
+                cancelPaymentButton.disabled = false;
+              }
+            })
+            .catch((error) => {
+              errorAlert("An error occurred while processing the payment");
+              confirmButton.disabled = false;
+              confirmButton.innerText = "Confirm payment";
+              cancelPaymentButton.disabled = false;
+            });
+
+          // Reject button clicked to cancel payment
+        } else if (acceptButton.id === "rejectPayment") {
+          popup.classList.add("hidden");
+          confirmButton.disabled = true;
+          cancelPaymentButton.innerText = "Cancelling payment...";
+          cancelPaymentButton.disabled = true;
+
+          fetch("/cancel-payment", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              transactionId: "<%= payment.paymentDetails.id %>",
+              userId: "<%= payment.paymentDetails.uid %>",
+            }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                successAlert("Payment cancelled successfully");
+                setTimeout(() => {
+                  window.location.href =
+                    "/payment/failed/<%= payment.paymentDetails.uid %>/<%= payment.paymentDetails.id %>";
+                }, 2000);
+              } else {
+                errorAlert("Failed to cancel payment");
+                confirmButton.disabled = false;
+                confirmButton.innerText = "Confirm payment";
+                cancelPaymentButton.disabled = false;
+              }
+            })
+            .catch((error) => {
+              errorAlert("An error occurred while cancelling the payment");
+              confirmButton.disabled = false;
+              confirmButton.innerText = "Confirm payment";
+              cancelPaymentButton.disabled = false;
+            });
+        }
+      });
+    </script>
+    <script>
+      let isPaymentConfirmed = false;
+
+      window.addEventListener("beforeunload", function (e) {
+        if (!isPaymentConfirmed) {
+          const confirmationMessage = "You have unsaved changes. Are you sure you want to leave?";
+          e.returnValue = confirmationMessage; // Gecko, Trident, Chrome 34+
+          return confirmationMessage; // Gecko, WebKit, Chrome <34
+        }
+      });
+
+      document.getElementById("confirmPaymentButton").addEventListener("click", function () {
+        isPaymentConfirmed = true;
+      });
+    </script>
+    <%- include("./partials/footer") %>
+  </body>
+</html>

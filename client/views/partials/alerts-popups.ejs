@@ -1,0 +1,66 @@
+<div
+  role="alert"
+  id="info-alert"
+  style="z-index: 60"
+  class="alert max-w-72 !hidden left-3 top-24 fixed bg-blue-100 dark:bg-blue-900 border-l-4 border-blue-500 dark:border-blue-700 text-blue-900 dark:text-blue-100 p-2 rounded-lg flex items-center transition duration-300 ease-in-out hover:bg-blue-200 dark:hover:bg-blue-800 transform">
+  <i class="fas fa-info-circle text-blue-400 h-5 w-5 flex-shrink-0 mr-2"></i>
+  <p class="popup-text text-xs font-semibold">Info - This is some information for you.</p>
+</div>
+<div
+  role="alert"
+  id="err-alert"
+  style="z-index: 60"
+  class="alert max-w-72 !hidden fixed left-3 top-24 bg-red-100 dark:bg-red-900 border-l-4 border-red-500 dark:border-red-700 text-red-900 dark:text-red-100 p-2 rounded-lg flex items-center transition duration-300 ease-in-out hover:bg-red-200 dark:hover:bg-red-800 transform">
+  <i class="fas fa-times-circle text-red-400 h-5 w-5 flex-shrink-0 mr-2"></i>
+  <p class="popup-text text-xs font-semibold">Error - Something went wrong.</p>
+</div>
+<div
+  role="alert"
+  id="success-alert"
+  style="z-index: 60"
+  class="alert max-w-72 !hidden fixed left-3 top-24 bg-green-100 dark:bg-green-900 border-l-4 border-green-500 dark:border-green-700 text-green-900 dark:text-green-100 p-2 rounded-lg flex items-center transition duration-300 ease-in-out hover:bg-green-200 dark:hover:bg-green-800 transform">
+  <i class="fas fa-check-circle text-green-400 h-5 w-5 flex-shrink-0 mr-2"></i>
+  <p class="popup-text text-xs font-semibold">Success - Everything went smoothly!</p>
+</div>
+<div
+  role="alert"
+  id="warn-alert"
+  style="z-index: 60"
+  class="alert max-w-72 !hidden fixed left-3 top-24 bg-yellow-100 dark:bg-yellow-900 border-l-4 border-yellow-500 dark:border-yellow-700 text-yellow-900 dark:text-yellow-100 p-2 rounded-lg flex items-center transition duration-300 ease-in-out hover:bg-yellow-200 dark:hover:bg-yellow-800 transform">
+  <i class="fas fa-exclamation-triangle text-yellow-400 h-5 w-5 flex-shrink-0 mr-2"></i>
+  <p class="popup-text text-xs font-semibold">Warning - Be careful with this next step.</p>
+</div>
+<script>
+  function showAlert(selector, message, duration = 3000) {
+    const alert = document.querySelector(selector);
+    const popupText = alert.querySelector(".popup-text");
+
+    popupText.textContent = message;
+    alert.classList.add("active");
+    alert.classList.remove("!hidden");
+
+    setTimeout(() => {
+      alert.classList.remove("active");
+      alert.classList.add("!hidden");
+    }, duration);
+  }
+
+  const successAlert = (msg) => showAlert("#success-alert", msg);
+  const errorAlert = (err) => showAlert("#err-alert", `Error: ${err}`);
+  const warnAlert = (warn) => showAlert("#warn-alert", `Warning: ${warn}`);
+  const infoAlert = (msg) => showAlert("#info-alert", msg);
+
+  // Route any native alert() calls to our styled info alert
+  (function(){
+    try {
+      const nativeAlert = window.alert.bind(window);
+      window.alert = function(message){
+        if (typeof infoAlert === 'function') {
+          infoAlert(String(message));
+        } else {
+          nativeAlert(message);
+        }
+      };
+    } catch (_) { /* no-op */ }
+  })();
+</script>

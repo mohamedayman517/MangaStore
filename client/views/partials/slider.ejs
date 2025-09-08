@@ -1,0 +1,40 @@
+<% const slides = Array.isArray(slider) ? slider : []; %>
+<% if (slides.length) { %>
+<section class="text-center w-full flex items-center justify-center max-h-max  mt-[4.3rem]">
+  <div class="swiper relative min-h-max max-h-[800px] w-full z-0" data-loop="<%= slides.length > 1 ? 'true' : 'false' %>">
+    <div class="swiper-wrapper">
+      <% slides.forEach(slide => { %>
+      <div class="swiper-slide">
+        <a href="<%= slide.link? slide.link: "#" %>" class="h-full w-full flex items-center justify-center">
+          <img class="object-cover h-full" src="<%= slide.url %>" alt="img" loading="lazy">
+        </a>
+      </div>
+      <% }); %>
+    </div>
+    <div class="swiper-pagination"></div>
+  </div>
+</section>
+<script>
+  const container = document.querySelector('.swiper');
+  const shouldLoop = container && container.dataset.loop === 'true';
+  const swiper = new Swiper(".swiper", {
+    // Enable looping only when there are at least 2 slides
+    loop: shouldLoop,
+    // Add pagination
+    pagination: {
+      el: ".swiper-pagination",
+      clickable: true,
+    },
+    // Optional: Autoplay
+    autoplay: {
+      delay: 5000,
+      disableOnInteraction: false,
+    },
+    // Optional: Effect (e.g., fade, cube, etc.)
+    effect: "fade",
+    fadeEffect: {
+      crossFade: true,
+    },
+  });
+</script>
+<% } %>

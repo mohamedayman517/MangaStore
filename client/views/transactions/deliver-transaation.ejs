@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin - Order Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+  </head>
+  <body class="bg-gray-100">
+    <%- include("../partials/navbar") %> <%- include("../partials/admin-back") %> <%- include("../partials/alerts-popups") %>
+    <div class="container mx-auto px-4 py-8 mt-20">
+      <h1 class="text-3xl font-bold mb-8">Order Management</h1>
+
+      <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <div class="p-6">
+          <h2 class="text-2xl font-semibold mb-4">Order Details</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <p class="my-2"><span class="font-semibold">Order ID:</span> <%= order.orderId %></p>
+              <p class="my-2">
+                <span class="font-semibold">Order Date:</span> <%= (order.orderDate.toDate()).toLocaleString() %>
+              </p>
+            </div>
+            <div>
+              <p class="my-1">
+                <span class="font-semibold">Total Price:</span> <%= order.totalPrice %> <%= order.currency === "EG"?
+                'L.E' : '$' %>
+              </p>
+              <p class="my-1">
+                <span class="font-semibold">Status:</span>
+                <span
+                  id="orderStatus"
+                  class="px-2 py-1 rounded-full text-sm <%= order.status[order.status.length - 1].state === 'ToPay' ? 'text-red-500 bg-red-100' : order.status[order.status.length - 1].state === 'Preparing' ? 'text-yellow-500 bg-yellow-100' : order.status[order.status.length - 1].state === 'Delivering' ? 'text-blue-500 bg-blue-100' : order.status[order.status.length - 1].state === 'Delivered' ? 'text-green-500 bg-green-100' : order.status[order.status.length - 1].state === 'Viewed' ? 'text-purple-500 bg-purple-100' : order.status[order.status.length - 1].state === 'Rejected' ? 'text-red-500 bg-red-100' : '' %>">
+                  <%= order.status[order.status.length - 1].state %>
+                </span>
+              </p>
+              <p class="my-1">
+                <span class="font-semibold">Payment Method:</span>
+                <span id="orderStatus" class="px-2 py-1 rounded-full text-sm"> <%= order.paymentMethod %> </span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t border-gray-200 p-6">
+          <h2 class="text-2xl font-semibold mb-4">Update Order Status</h2>
+          <button onclick="openStatusModal()" class="bg-blue-500 text-white px-4 py-2 rounded-md">Update Status</button>
+        </div>
+
+        <div class="border-t border-gray-200 p-6">
+          <h2 class="text-2xl font-semibold mb-4">Products</h2>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="bg-gray-100">
+                  <th class="p-2">Product</th>
+                  <th class="p-2">Quantity</th>
+                  <th class="p-2">Price</th>
+                  <th class="p-2">Total</th>
+                  <th class="p-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% order.products.forEach(product => { %>
+                <tr class="border-b border-gray-200">
+                  <td class="p-2">
+                    <div class="flex items-center">
+                      <img
+                        src="<%= product.img %>"
+                        alt="<%= product.title %>"
+                        class="w-16 h-16 object-cover rounded mr-4" />
+                      <span><%= product.title %></span>
+                    </div>
+                  </td>
+                  <td class="p-2"><%= product.quantity %></td>
+                  <td class="p-2"><%= product.price %> <%= order.currency === "EG"? 'L.E' : '$' %></td>
+                  <td class="p-2">
+                    <%= (product.quantity * parseFloat(product.price)).toFixed(2) %> <%= order.currency === "EG"? 'L.E'
+                    : '$' %>
+                  </td>
+                  <td class="p-2">
+                    <button
+                      onclick="openProofModal('<%= product.id %>')"
+                      class="bg-green-500 text-white px-2 py-1 rounded-md">
+                      Add Proof
+                    </button>
+                  </td>
+                </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Embedded data for scripts -->
+    <script id="orderProducts" type="application/json"><%- JSON.stringify(order.products) %></script>
+
+    <!-- Proof Modal -->
+    <div id="proofModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 max-w-md w-full">
+        <h3 class="text-xl font-semibold mb-4">Manage Proof</h3>
+        <form id="proofForm">
+          <input type="hidden" id="productId" name="productId" />
+          <div id="proofInputs" class="mb-4">
+            <!-- Existing proof items will be populated here -->
+          </div>
+          <div class="flex justify-between mb-4">
+            <button type="button" onclick="addProofInput()" class="bg-green-500 text-white px-4 py-2 rounded-md">
+              Add Field
+            </button>
+          </div>
+          <div class="flex justify-end">
+            <button type="button" onclick="closeProofModal()" class="bg-gray-300 text-black px-4 py-2 rounded-md mr-2">
+              Cancel
+            </button>
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md">Save Proof</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      function openProofModal(productId) {
+        document.getElementById("productId").value = productId;
+        const products = JSON.parse(document.getElementById('orderProducts').textContent);
+        const product = products.find((p) => p.id === productId);
+        const proofInputs = document.getElementById("proofInputs");
+        proofInputs.innerHTML = "";
+
+          if (product.proof) {
+            product.proof.forEach((p) => {
+              addProofInput(p.key, p.value, p.createdAt);
+            });
+          }
+
+        document.getElementById("proofModal").classList.remove("hidden");
+        document.getElementById("proofModal").classList.add("flex");
+      }
+
+      function addProofInput(key = "", value = "", createdAt = "") {
+        const inputsContainer = document.getElementById("proofInputs");
+        const newInput = document.createElement("div");
+        newInput.className = "mb-4 flex space-x-2 items-center";
+        newInput.innerHTML = `
+              <input type="text" placeholder="Key" class="w-1/3 border rounded-md p-2" required value="${key}">
+              <input type="text" placeholder="Value" class="w-1/3 border rounded-md p-2" required value="${value}">
+              <span class="text-xs text-gray-500 w-1/4">${ new Date(createdAt._seconds * 1000).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+              <button type="button" onclick="removeProofInput(this)" class="bg-red-500 text-white px-2 py-1 rounded-md">Remove</button>
+          `;
+        inputsContainer.appendChild(newInput);
+      }
+
+      function removeProofInput(button) {
+        button.closest("div").remove();
+      }
+
+      function closeProofModal() {
+          document.getElementById("proofModal").classList.add("hidden");
+          document.getElementById("proofModal").classList.remove("flex");
+        }
+
+      document.getElementById("proofForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const productId = document.getElementById("productId").value;
+        const inputs = document.querySelectorAll("#proofInputs > div");
+        const proof = { data: [], id: null };
+
+        inputs.forEach((input) => {
+          const [keyInput, valueInput] = input.querySelectorAll("input");
+          proof.data.push({ key: keyInput.value, value: valueInput.value });
+          proof.id = productId;
+        });
+
+        try {
+          showLoading();
+          const response = await fetch("/admin/transaction/update-transaction", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              transactionId: "<%= order.orderId %>",
+              productId: productId,
+              proof: proof,
+            }),
+          });
+
+          if (response.ok) {
+            removeLoading();
+            successAlert("Proof added successfully");
+            closeProofModal();
+          } else {
+            removeLoading();
+            errorAlert("Failed to add proof");
+          }
+        } catch (error) {
+          removeLoading();
+          console.error("Error:", error);
+          errorAlert("An error occurred while adding the proof");
+        }
+      });
+    </script>
+
+    <!-- Status Update Modal -->
+    <div id="statusModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 max-w-md w-full">
+        <h3 class="text-xl font-semibold mb-4">Update Order Status</h3>
+        <form id="updateStatusForm">
+          <div class="mb-4">
+            <label for="newStatus" class="block mb-2">New Status:</label>
+            <select id="newStatus" name="newStatus" class="w-full border rounded-md p-2" required>
+              <option value="ToPay">To Pay</option>
+              <option value="Preparing">Preparing</option>
+              <option value="Delivering">Delivering</option>
+              <option value="Delivered">Delivered</option>
+              <option value="Viewed">Viewed</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+          <div class="mb-4">
+            <label for="statusMessage" class="block mb-2">Status Message:</label>
+            <textarea
+              id="statusMessage"
+              name="statusMessage"
+              class="w-full border rounded-md p-2"
+              rows="3"
+              required></textarea>
+          </div>
+          <div class="flex justify-end">
+            <button type="button" onclick="closeStatusModal()" class="bg-gray-300 text-black px-4 py-2 rounded-md mr-2">
+              Cancel
+            </button>
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md">Update Status</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="flex items-center justify-center mt-8 text-lg font-medium mb-6">
+      <a href="/admin/view/transaction/<%= order.orderId %>" class="text-blue-500 underline">View order</a>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+      function showLoading() {
+        Swal.showLoading();
+      }
+      function removeLoading() {
+        Swal.close();
+      }
+      function updateOrderStatus(status) {
+        const statusElement = document.getElementById("orderStatus");
+        statusElement.textContent = status;
+        statusElement.className = "px-2 py-1 rounded-full text-sm";
+
+        switch (status) {
+          case "ToPay":
+            statusElement.classList.add("text-red-500", "bg-red-100");
+            break;
+          case "Preparing":
+            statusElement.classList.add("text-yellow-500", "bg-yellow-100");
+            break;
+          case "Delivering":
+            statusElement.classList.add("text-blue-500", "bg-blue-100");
+            break;
+          case "Delivered":
+            statusElement.classList.add("text-green-500", "bg-green-100");
+            break;
+          case "Viewed":
+            statusElement.classList.add("text-purple-500", "bg-purple-100");
+            break;
+          case "Rejected":
+            statusElement.classList.add("text-red-500", "bg-red-100");
+            break;
+        }
+      }
+
+      function openStatusModal() {
+        document.getElementById("statusModal").classList.remove("hidden");
+        document.getElementById("statusModal").classList.add("flex");
+      }
+
+      function closeStatusModal() {
+        document.getElementById("statusModal").classList.add("hidden");
+        document.getElementById("statusModal").classList.remove("flex");
+      }
+
+      document.getElementById("updateStatusForm").addEventListener("submit", async (e) => {
+        showLoading();
+        e.preventDefault();
+        const newStatus = document.getElementById("newStatus").value;
+        const statusMessage = document.getElementById("statusMessage").value;
+
+        try {
+          const response = await fetch("/admin/transaction/update-transaction", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              transactionId: "<%= order.orderId %>",
+              status: {
+                state: newStatus,
+                message: statusMessage,
+              },
+            }),
+          });
+
+          if (response.ok) {
+            removeLoading();
+            updateOrderStatus(newStatus);
+            successAlert("Order status updated successfully");
+            closeStatusModal();
+            location.reload();
+          } else {
+            removeLoading();
+            errorAlert("Failed to update order status");
+          }
+        } catch (error) {
+          removeLoading();
+          console.error("Error:", error);
+          errorAlert("An error occurred while updating the order status");
+        }
+      });
+    </script>
+  </body>
+</html>

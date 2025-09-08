@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Transaction Details</title>
+    <link rel="stylesheet" href="/css/build.min.css" />
+  </head>
+  <body class="bg-gray-100">
+    <%- include("../partials/navbar") %>
+    <%- include("../partials/admin-back") %> <%- include("../partials/alerts-popups") %>
+    <div class="container mx-auto px-4 py-8 pt-16">
+      <h1 class="text-3xl font-bold mb-8 text-center pt-6">Transaction Details</h1>
+
+      <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <div class="p-6">
+          <h2 class="text-2xl font-semibold mb-4">Customer Information</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <p><span class="font-semibold">Name:</span> <%= transaction.name %></p>
+              <p><span class="font-semibold">Phone:</span> <%= transaction.phoneNumber %></p>
+              <p><span class="font-semibold">Transaction id:</span> <%= transactionId %></p>
+            </div>
+            <div>
+              <p><span class="font-semibold">Country:</span> <%= transaction.country %></p>
+              <p><span class="font-semibold">City:</span> <%= transaction.city %></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t border-gray-200 p-6">
+          <h2 class="text-2xl font-semibold mb-4">Payment Details</h2>
+          <p><span class="font-semibold">Payment Method:</span> <%= transaction.paymentMethod %></p>
+          <p>
+            <span class="font-semibold">Status:</span>
+            <span class="px-2 py-1 rounded-full text-sm">
+              <% if (transaction.status[transaction.status.length - 1].state == "ToPay") { %>
+              <span class="text-red-500 bg-red-100 rounded-full py-1 px-2 font-bold">ToPay</span>
+              <% } else if (transaction.status[transaction.status.length - 1].state == "Preparing") { %>
+              <span class="text-yellow-500 bg-yellow-100 rounded-full py-1 px-2 font-bold">Preparing</span>
+              <% } else if (transaction.status[transaction.status.length - 1].state == "Delivering") { %>
+              <span class="text-blue-500 bg-blue-100 rounded-full py-1 px-2 font-bold">Delivering</span>
+              <% } else if (transaction.status[transaction.status.length - 1].state == "Deilevered") { %>
+              <span class="text-green-500 bg-green-100 rounded-full py-1 px-2 font-bold">Delievered</span>
+              <% } else if (transaction.status[transaction.status.length - 1].state == "Viewed") { %>
+              <span class="text-purple-500 bg-purple-100 rounded-full py-1 px-2 font-bold">Viewed</span>
+              <% } else if (transaction.status[transaction.status.length - 1].state == "unconfirmed") { %>
+              <span class="text-red-500 bg-red-100 rounded-full py-1 px-2 font-bold">unconfirmed</span>
+              <% } else if (transaction.status[transaction.status.length - 1].state == "Rejected") { %>
+              <span class="text-red-500 bg-red-100 rounded-full py-1 px-2 font-bold">Rejected</span>
+              <% } %></span
+            >
+          </p>
+          <% if (transaction.screenshot) { %>
+          <div class="mt-4">
+            <p class="font-semibold mb-2">Payment Screenshot:</p>
+            <a href="<%= transaction.screenshot %>" target="_blank">
+              <img
+                src="<%= transaction.screenshot %>"
+                alt="Payment Screenshot"
+                class="max-w-28 h-auto rounded-lg shadow-sm" />
+            </a>
+          </div>
+          <% } %>
+        </div>
+
+        <div class="border-t border-gray-200 p-6">
+          <h2 class="text-2xl font-semibold mb-4">Order Summary</h2>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left overflow-x-auto">
+              <thead>
+                <tr class="bg-gray-100">
+                  <th class="p-2">Product</th>
+                  <th class="p-2">Quantity</th>
+                  <th class="p-2">Price</th>
+                  <th class="p-2">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% transaction.products.forEach(product => { %>
+                <tr class="border-b border-gray-200">
+                  <td class="p-2">
+                    <div class="flex items-center">
+                      <img
+                        src="<%= product.img %>"
+                        alt="<%= product.name %>"
+                        class="w-16 h-16 object-cover rounded mr-4" />
+                      <span><%= product.name %></span>
+                    </div>
+                  </td>
+                  <td class="p-2 max-w-10"><%= product.quantity %></td>
+                  <td class="p-2"><%= product.price %> L.E</td>
+                  <td class="p-2"><%= (product.quantity * parseFloat(product.price)).toFixed(2) %> L.E</td>
+                </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="mt-6 text-right">
+            <p><span class="font-semibold">Subtotal: </span> <%= transaction.totalPrice.toFixed(2) %> L.E</p>
+            <p><span class="font-semibold">Tax: </span> <%= transaction.tax.toFixed(2) %> L.E</p>
+            <% if (transaction.appliedCoupon) { %>
+            <p>
+              <span class="font-semibold">Discount: </span> <%= transaction.appliedCoupon.amount.toFixed(2) %> (<%=
+              transaction.appliedCoupon.name %> coupon) L.E
+            </p>
+            <% } %>
+            <p class="text-xl font-bold mt-2">
+              Total: <%= (transaction.totalPrice + transaction.tax - (transaction.appliedCoupon ?
+              transaction.appliedCoupon.amount : 0)).toFixed(2) %> L.E
+            </p>
+          </div>
+        </div>
+
+        <div class="border-t border-gray-200 p-6">
+          <h2 class="text-2xl font-semibold mb-4">Transaction Timeline</h2>
+          <div class="flex justify-between items-center">
+            <div>
+              <p class="font-semibold">Created At:</p>
+              <p><%= new Date(transaction.createdAt._seconds * 1000).toLocaleString() %></p>
+            </div>
+            <div class="text-right">
+              <p class="font-semibold">End Date:</p>
+              <p><%= new Date(transaction.endDate._seconds * 1000).toLocaleString() %></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="my-10 flex justify-center items-center w-full text-2xl underline font-semibold text-blue-700 hover:text-blue-900 transition-all duration-300">
+      <a href="/admin/deliver-order/<%= transactionId %>">Deliever</a>
+    </div>
+  </body>
+</html>

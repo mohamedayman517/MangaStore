@@ -1,0 +1,16 @@
+{
+  "name": "manga-store-client",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build:css": "npx tailwindcss build -i ./public/css/index.css -o ./public/css/build.min.css --watch",
+    "build:css:prod": "npx tailwindcss build -o ./public/css/build.min.css --minify",
+    "build:js": "webpack --config webpack.config.js",
+    "build": "npm run build:css:prod && npm run build:js"
+  },
+  "devDependencies": {
+    "postcss": "^8.4.49",
+    "autoprefixer": "^10.4.20",
+    "tailwindcss": "^3.4.17"
+  }
+}

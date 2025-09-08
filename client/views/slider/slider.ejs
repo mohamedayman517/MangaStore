@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Slider Management</title>
+    <!-- Include DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="/css/build.min.css" />
+    <style>
+      input[type="number"]::-webkit-outer-spin-button,
+      input[type="number"]::-webkit-inner-spin-button {
+        display: none;
+      }
+      .fancy i {
+        transition: all 0.3s ease-in-out;
+      }
+
+      .fancy:hover i {
+        color: white;
+        background: black;
+      }
+      .fancy:hover span {
+        color: white;
+        padding-left: 1.5em;
+      }
+      /* From Uiverse.io by adamgiebl */
+      .dots-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        width: 100%;
+      }
+
+      .dot {
+        height: 20px;
+        width: 20px;
+        margin-right: 10px;
+        border-radius: 10px;
+        background-color: #b3d4fc;
+        animation: pulse 1.5s infinite ease-in-out;
+      }
+
+      .dot:last-child {
+        margin-right: 0;
+      }
+
+      .dot:nth-child(1) {
+        animation-delay: -0.3s;
+      }
+
+      .dot:nth-child(2) {
+        animation-delay: -0.1s;
+      }
+
+      .dot:nth-child(3) {
+        animation-delay: 0.1s;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(0.8);
+          background-color: #b3d4fc;
+          box-shadow: 0 0 0 0 rgba(178, 212, 252, 0.7);
+        }
+
+        50% {
+          transform: scale(1.2);
+          background-color: #6793fb;
+          box-shadow: 0 0 0 10px rgba(178, 212, 252, 0);
+        }
+
+        100% {
+          transform: scale(0.8);
+          background-color: #b3d4fc;
+          box-shadow: 0 0 0 0 rgba(178, 212, 252, 0.7);
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 relative">
+    <div
+      class="flex -top-0 flex-col items-center justify-center bg-gradient-to-br from-zinc-500 to-zinc-700 bg-opacity-80 fixed w-screen h-screen backdrop-blur-md"
+      style="z-index: 100"
+      id="loadingContainer">
+      <section class="dots-container">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </section>
+    </div>
+    <%- include("../partials/navbar") %>
+    <%- include("../partials/admin-back") %>
+    <%- include("../partials/alerts-popups") %> <%-
+    include("./modals/add-new-popup") %><%- include("./modals/confirm-delete") %>
+    <div class="max-w-7xl my-20 mx-auto bg-white p-6 rounded-lg shadow-md">
+      <div class="flex items-center justify-around">
+        <h1 class="text-2xl font-semibold text-gray-800">Slider Manager</h1>
+        <button
+          id="addNewSlider"
+          class="flex fancy my-5 flex-row-reverse items-center justify-center bg-transparent border-2 border-black text-white font-bold tracking-wide text-xs p-3 transition-all ease-in-out duration-300 hover:bg-black hover:text-white">
+          <span class="text-black text-sm pl-6 uppercase transition-all ease-in-out duration-300 hover:pl-4">
+            Add New Slide
+          </span>
+          <i class="fas fa-plus-circle text-black transition-all ease-in-out duration-300 hover:text-white"></i>
+        </button>
+      </div>
+      <div class="overflow-x-auto">
+        <table id="productTable" class="min-w-full bg-white border border-gray-200 rounded-lg">
+          <thead>
+            <tr class="bg-gray-100 text-gray-600 text-left text-sm uppercase">
+              <th class="px-6 py-3">Slide ID</th>
+              <th class="px-6 py-3">Link</th>
+              <th class="px-6 py-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% slides.forEach((slide) => { %>
+            <tr>
+              <td class="px-6 py-4"><%= slide.id %></td>
+              <td class="px-6 py-4"><%= slide.link %></td>
+              <td class="px-6 py-4">
+                <button
+                  class="delete-btn bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600"
+                  data-id="<%=slide.id %>">
+                  Delete
+                </button>
+                <button
+                  class="view-btn bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-600"
+                  data-url="<%=slide.url %>">
+                  View
+                </button>
+              </td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script>
+      $(document).ready(function () {
+        // Hide loading container
+        $("#loadingContainer").html("").addClass("!hidden");
+
+        // Alert functions
+        function showAlert(selector, message, duration = 3000) {
+          const alert = $(selector);
+          alert.find(".popup-text").text(message);
+          alert.addClass("active").removeClass("!hidden");
+          setTimeout(() => {
+            alert.removeClass("active").addClass("!hidden");
+          }, duration);
+        }
+
+        const successAlert = (msg) => showAlert("#success-alert", msg);
+        const errorAlert = (err) => showAlert("#err-alert", `Error: ${err}`);
+        const warnAlert = (warn) => showAlert("#warn-alert", `Warning: ${warn}`);
+        const infoAlert = (msg) => showAlert("#info-alert", msg);
+
+        // DOM elements
+        const $fileInput = $("#imgFile");
+        const $dropzone = $("#dropzone");
+        const $fileName = $("#file-name");
+        const $deleteBtn = $("#delete-btn");
+        const $imgText = $("#upload-text");
+        const $uploadIcon = $("#upload-icon");
+        const file = $("#file");
+        // Trigger file input click
+        $("#file").on("click", function (e) {
+          e.stopPropagation();
+          e.preventDefault();
+          $fileInput[0].click();
+        });
+
+        $fileInput.on("click", function (e) {
+          e.stopPropagation(); // Prevent event propagation
+        });
+        // Initialize DataTable
+        $("#productTable").DataTable();
+
+        // Show popup
+        $("#addNewSlider").click(() => $("#popup").removeClass("!hidden"));
+
+        // Drag and drop handlers
+        $dropzone
+          .on("dragover", (e) => {
+            e.preventDefault();
+            $dropzone.addClass("bg-blue-100");
+          })
+          .on("dragleave", (e) => {
+            e.preventDefault();
+            $dropzone.removeClass("bg-blue-100");
+          })
+          .on("drop", (e) => {
+            e.preventDefault();
+            $dropzone.removeClass("bg-blue-100");
+            const file = e.originalEvent.dataTransfer.files[0];
+            if (file) handleFileSelection(file);
+          });
+
+        // File input change handler
+        $fileInput.on("change", (e) => {
+          const file = e.target.files[0];
+          if (file) handleFileSelection(file);
+        });
+
+        // Handle file selection
+        function handleFileSelection(file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            $dropzone.html(
+              `<img src="${e.target.result}" class="w-full max-h-44 cursor-pointer object-fit-cover flex items-center justify-center">`
+            );
+          };
+          reader.onerror = (error) => console.error("Error reading file:", error);
+          reader.readAsDataURL(file);
+          $fileName.text(file.name);
+          $deleteBtn.removeClass("hidden");
+          $imgText.addClass("hidden");
+          $uploadIcon.addClass("hidden");
+        }
+
+        // Delete file handler
+        $deleteBtn.on("click", (e) => {
+          e.stopPropagation();
+          $fileInput.val("");
+          $dropzone.html(`
+           <img id="image-preview" src="" alt="Preview" class="hidden w-24 h-24 object-cover rounded-lg" />
+           <i id="upload-icon" class="fas fa-cloud-upload-alt text-6xl text-black"></i>
+           <p id="upload-text" class="text-center text-black">
+             Drag & Drop an image or <span class="text-blue-600 cursor-pointer underline">browse</span> to upload!
+           </p>
+         `);
+          $fileName.text("No file selected");
+          $deleteBtn.addClass("hidden");
+          $imgText.removeClass("hidden");
+          $uploadIcon.removeClass("hidden");
+        });
+
+        // Submit form handler
+        $("#submitBtn").on("click", (e) => {
+          e.preventDefault();
+
+          if (!$fileInput[0].files || !$fileInput[0].files[0]) {
+            warnAlert("Please upload an image file.");
+            return;
+          }
+
+          const slideImg = $fileInput[0].files[0];
+          const link = $("#url").val();
+          link == null ? (link = "#") : link;
+          const formData = new FormData();
+          formData.append("image", slideImg); // Add the file
+          formData.append("link", link); // Add any additional data
+
+          $("#submitBtn").attr("disabled", "disabled");
+
+          $.ajax({
+            url: "/admin/add/slide",
+            method: "POST",
+            processData: false, // Important: Do not process data
+            contentType: false, // Important: Let the browser set the content type
+            data: formData,
+            success: (response) => {
+              successAlert(response.message);
+              $("#add-popup").addClass("!hidden");
+              setTimeout(() => location.reload(), 500);
+            },
+            error: (error) => {
+              $("#submitBtn").removeAttr("disabled");
+              errorAlert(`Failed to add product. Please try again.\n${error.responseText}`);
+            },
+          });
+        });
+
+        $("#close-popup").on("click", function () {
+          $("#url").val("");
+          $fileInput.val("");
+          $dropzone.html(`
+           <img id="image-preview" src="" alt="Preview" class="hidden w-24 h-24 object-cover rounded-lg" />
+           <i id="upload-icon" class="fas fa-cloud-upload-alt text-6xl text-black"></i>
+           <p id="upload-text" class="text-center text-black">
+             Drag & Drop an image or <span class="text-blue-600 cursor-pointer underline">browse</span> to upload!
+           </p>
+         `);
+          $fileName.text("No file selected");
+          $("#popup").addClass("!hidden");
+          $("#delete-btn").addClass("hidden");
+        });
+
+        $(document)
+          .off("click")
+          .on("click", ".view-btn", function () {
+            const url = $(this).data("url");
+            location.href = url;
+          });
+
+        $(document).on("click", "#conf-delte-btn-popup", function (e) {
+          e.preventDefault();
+          const id = $(this).data("id");
+          $.ajax({
+            url: `/admin/delete/sliders/${id}`,
+            method: "DELETE",
+            success: function (response) {
+              successAlert(response.message);
+              setTimeout(() => {
+                location.reload();
+              }, 500);
+            },
+            error: function (error) {
+              console.error("Error deleting slide:", error);
+              errorAlert("Failed to delete slide. Please try again.");
+            },
+          });
+        });
+        $(document).on("click", "#cancel-btn-popup", function (event) {
+          event.preventDefault();
+          $("#conf-delete-popup").addClass("!hidden");
+        });
+        $(".delete-btn").on("click", function (event) {
+          const id = $(this).data("id");
+          $("#conf-delete-popup").removeClass("!hidden");
+          $("#conf-delte-btn-popup").data("id", id);
+        });
+        $("#close-view-popup").on("click", function () {
+          $("#popup-details").addClass("!hidden");
+        });
+      });
+    </script>
+  </body>
+</html>

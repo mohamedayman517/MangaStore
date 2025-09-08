@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include("./partials/meta") %>
+    <title>Manga Store - Login</title>
+    <!-- Use the same CSS stack as register page to avoid broken layout -->
+    <link rel="stylesheet" href="/css/build.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+      integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer" />
+
+    <style>
+      .loaderBtn.active {
+        width: 30px;
+        max-height: 30px;
+        aspect-ratio: 1;
+        --c: no-repeat linear-gradient(#000 0 0);
+        background: var(--c) 0% 50%, var(--c) 50% 50%, var(--c) 100% 50%;
+        background-size: 20% 100%;
+        animation: l1 1s infinite linear;
+      }
+      @keyframes l1 {
+        0% {
+          background-size: 20% 100%, 20% 100%, 20% 100%;
+        }
+        33% {
+          background-size: 20% 10%, 20% 100%, 20% 100%;
+        }
+        50% {
+          background-size: 20% 100%, 20% 10%, 20% 100%;
+        }
+        66% {
+          background-size: 20% 100%, 20% 100%, 20% 10%;
+        }
+        100% {
+          background-size: 20% 100%, 20% 100%, 20% 100%;
+        }
+      }
+      /* no aside on login */
+    </style>
+  </head>
+  <body class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark min-h-screen">
+    <%- include("./partials/header") %><%- include("./partials/alerts-popups") %><%- include("./partials/loader") %>
+
+    <div class="min-h-screen flex flex-col">
+      <main class="flex-grow flex items-center justify-center px-4 mt-20 mb-6">
+        <div class="w-full max-w-md">
+          <div class="bg-[#ffec9f] dark:bg-secondary-dark/80 backdrop-blur-lg rounded-2xl shadow-xl p-8">
+            <!-- Logo/header -->
+            <div class="p-6 flex w-full items-center justify-center">
+              <img src="/pics/logo.png" alt="Logo" class="h-16" />
+            </div>
+
+            <% if (message) { %>
+            <div class="mb-4 font-medium text-sm md:text-base rounded-lg bg-red-500/90 text-white p-3">
+              <p class="text-center"><%= message %></p>
+            </div>
+            <% } %>
+
+            <div class="text-center mb-8">
+              <h1 class="text-2xl font-bold">Manga Store</h1>
+              <p class="mt-2 text-gray-600 dark:text-gray-400">Welcome again to Manga Store</p>
+            </div>
+
+            <form id="loginForm" class="space-y-6">
+              <!-- Email -->
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-envelope text-gray-400"></i>
+                </div>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  placeholder="Email"
+                  autocomplete="email"
+                  required
+                  class="input w-full pl-10 pr-3 py-2 border border-secondary-light dark:border-secondary-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light dark:focus:ring-primary-dark bg-white dark:bg-background-dark text-text-light dark:text-text-dark" />
+              </div>
+
+              <!-- Password -->
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-lock text-gray-400"></i>
+                </div>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  placeholder="Password"
+                  autocomplete="current-password"
+                  required
+                  class="input w-full pl-10 pr-10 py-2 border border-secondary-light dark:border-secondary-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light dark:focus:ring-primary-dark bg-white dark:bg-background-dark text-text-light dark:text-text-dark" />
+                <button
+                  type="button"
+                  class="togglePassword absolute right-3 top-1/2 -translate-y-1/2 text-text-light/70 dark:text-text-dark/70 hover:text-primary-light dark:hover:text-primary-dark transition-colors duration-200">
+                  <i class="fa-solid fa-eye eye_icon"></i>
+                </button>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <label class="inline-flex items-center cursor-pointer select-none">
+                  <input type="checkbox" name="rememberMe" id="rememberMe" class="form-checkbox" />
+                  <span class="ml-2">Remember me</span>
+                </label>
+                <a href="/reset-password" class="text-sm text-gray-600 dark:text-gray-400 hover:underline">Forgot password?</a>
+              </div>
+
+              <button
+                type="submit"
+                id="submitButton"
+                class="w-full flex items-center justify-center bg-primary-light dark:bg-primary-dark text-white py-2.5 rounded-lg hover:bg-opacity-90 transition-colors duration-200 font-medium">
+                <span class="btnWord">Sign in</span>
+                <span class="loaderBtn ml-2"></span>
+              </button>
+
+              <p class="text-sm text-center text-gray-600 dark:text-gray-400">
+                Don't have account ?
+                <a href="/register" class="text-primary-light dark:text-primary-dark hover:underline"> Register </a>
+              </p>
+
+              <!-- Divider -->
+              <div class="relative my-6">
+                <div class="absolute inset-0 flex items-center">
+                  <div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                  <span class="px-2 bg-[#ffec9f] dark:bg-secondary-dark text-gray-500">Or sign in with</span>
+                </div>
+              </div>
+
+              <!-- Google login -->
+              <button
+                id="googleLoginBtn"
+                type="button"
+                class="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-green-700/40 bg-green-100/40 dark:border-secondary-dark rounded-lg hover:bg-green-100/60 dark:hover:bg-gray-800 transition-colors duration-200">
+                <img src="/pics/google logo.svg" alt="Google logo" class="h-5 w-5" />
+                <span class="text-text-light dark:text-text-dark">Continue with Google</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      </main>
+    </div>
+    <%- include("./partials/footer") %>
+    <script>
+      // simple password toggler (same as register)
+      document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll(".togglePassword").forEach((btn) => {
+          btn.addEventListener("click", function () {
+            const input = document.getElementById("password");
+            if (!input) return;
+            input.type = input.type === "password" ? "text" : "password";
+            const icon = this.querySelector("i");
+            if (icon) {
+              icon.classList.toggle("fa-eye");
+              icon.classList.toggle("fa-eye-slash");
+            }
+          });
+        });
+      });
+    </script>
+    <script src="/js/inputs-functions.js" type="module"></script>
+    <script src="/js/login.js" type="module"></script>
+    <script src="/js/dist/googleLogin.bundle.js"></script>
+  </body>
+</html>

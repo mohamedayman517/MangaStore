@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add New Product</title>
+
+    <link rel="stylesheet" href="/css/build.min.css" />
+    <link rel="icon" type="image/png" href="/icons/mango_32x32.png" />
+  </head>
+  <body class="bg-gray-100">
+    <%- include("../partials/navbar") %>
+    <%- include("../partials/admin-back") %> <%- include("../partials/alerts-popups") %>
+    <main class="container mx-auto px-4 py-8 max-w-4xl">
+      <div class="bg-white rounded-lg shadow-lg p-6 mt-16">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Add New Product</h1>
+
+        <form id="productForm" class="space-y-6">
+          <!-- Image Upload -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Product Image</label>
+            <div class="flex items-center gap-4">
+              <img
+                src="/icons/mango_144x144.png"
+                alt="Product Preview"
+                class="w-32 h-32 object-contain border rounded-lg"
+                id="imagePreview" />
+              <input type="file" id="imageInput" name="image" class="hidden" accept="image/*" />
+              <button
+                type="button"
+                onclick="document.getElementById('imageInput').click()"
+                class="bg-blue-100 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-200">
+                Upload Image
+              </button>
+            </div>
+          </div>
+
+          <!-- Basic Info Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Product Name</label>
+              <input type="text" name="name" class="w-full p-2 border rounded-lg" required />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Stock</label>
+              <input type="number" name="stock" class="w-full p-2 border rounded-lg" required />
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+              <select name="categoryId" id="categorySelect" class="w-full p-2 border rounded-lg" required>
+                <option value="">Select a category</option>
+                <% categories.forEach(function(category) { %>
+                <option value="<%= category.id %>"><%= category.name %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Subcategory</label>
+              <select name="subcategoryId" id="subcategorySelect" class="w-full p-2 border rounded-lg" disabled>
+                <option value="">Select a subcategory</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Label</label>
+              <input type="text" name="labelProduct" id="labelProduct" class="w-full p-2 border rounded-lg" />
+            </div>
+          </div>
+
+          <!-- Optional: Assign to Home Sections -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Homepage Sections (optional)</label>
+            <select name="homeSectionIds[]" multiple size="5" class="w-full p-2 border rounded-lg">
+              <% if (typeof sections !== 'undefined' && sections && sections.length) { %>
+                <% sections.forEach(function(sec) { %>
+                  <option value="<%= sec.id %>"><%= sec.title %></option>
+                <% }); %>
+              <% } else { %>
+                <!-- no sections -->
+              <% } %>
+            </select>
+            <p class="text-xs text-gray-500 mt-1">Hold Ctrl (Windows) or Cmd (Mac) to select multiple. Leave empty to not assign.</p>
+          </div>
+
+          <!-- Description -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label class="block text-sm font-medium text-gray-700">Description</label>
+              <div class="flex items-center gap-2">
+                <select id="genLang" class="text-sm p-1 border rounded">
+                  <option value="ar" selected>AR</option>
+                  <option value="en">EN</option>
+                </select>
+                <button type="button" id="genDescBtn" class="text-sm bg-indigo-100 text-indigo-700 px-3 py-1 rounded hover:bg-indigo-200">
+                  Generate
+                </button>
+              </div>
+            </div>
+            <textarea name="description" id="descriptionField" class="w-full p-2 border rounded-lg h-32" required></textarea>
+            <p id="genDescHint" class="text-xs text-gray-500 mt-1 hidden">Generating description...</p>
+          </div>
+
+          <!-- SEO Meta -->
+          <div class="border rounded-lg p-4">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-lg font-medium text-gray-700">SEO Metadata</h3>
+              <div class="flex items-center gap-2">
+                <select id="seoLang" class="text-sm p-1 border rounded">
+                  <option value="ar" selected>AR</option>
+                  <option value="en">EN</option>
+                </select>
+                <button type="button" id="genSeoBtn" class="text-sm bg-amber-100 text-amber-700 px-3 py-1 rounded hover:bg-amber-200">Generate SEO</button>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">SEO Title</label>
+                <input type="text" name="seoTitle" id="seoTitle" class="w-full p-2 border rounded-lg" maxlength="70" placeholder="Up to ~60-70 chars" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">SEO Description</label>
+                <textarea name="seoDescription" id="seoDescription" class="w-full p-2 border rounded-lg h-24" maxlength="180" placeholder="Up to ~160-180 chars"></textarea>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">SEO Keywords (comma separated)</label>
+                <input type="text" name="seoKeywords" id="seoKeywords" class="w-full p-2 border rounded-lg" placeholder="e.g., manga, action, buy online" />
+              </div>
+              <p id="genSeoHint" class="text-xs text-gray-500 hidden">Generating SEO...</p>
+            </div>
+          </div>
+
+          <!-- Product Details -->
+          <div>
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-medium text-gray-700">Product Details</h3>
+              <button
+                type="button"
+                onclick="addDetailField()"
+                class="bg-green-100 text-green-600 px-3 py-1 rounded-lg hover:bg-green-200">
+                + Add Detail
+              </button>
+            </div>
+            <div id="detailsContainer" class="space-y-3">
+              <!-- Detail fields will be added here dynamically -->
+            </div>
+          </div>
+
+          <!-- Account Type Options -->
+          <div>
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-medium text-gray-700">Account Type Options</h3>
+              <button
+                type="button"
+                onclick="addAccountTypeRow()"
+                class="bg-blue-100 text-blue-600 px-3 py-1 rounded-lg hover:bg-blue-200">
+                + Add Option
+              </button>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">Add multiple options like "Full", "Primary", etc. Each option can have its own price. Only checked options will be saved.</p>
+            <div id="accountTypesContainer" class="space-y-3">
+              <!-- Account type rows will be added here dynamically -->
+            </div>
+          </div>
+
+          <!-- Require Product Key -->
+          <div class="border rounded-lg p-4">
+            <div class="flex items-center gap-3 mb-3">
+              <input type="checkbox" id="requireKey" name="requireKey" class="h-4 w-4 text-indigo-600 border-gray-300 rounded" />
+              <label for="requireKey" class="text-sm font-medium text-gray-700">Require Product Key before purchase</label>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Secret Product Key</label>
+              <input type="password" id="productKey" name="productKey" class="w-full p-2 border rounded-lg" placeholder="Enter secret key" disabled />
+              <p class="text-xs text-gray-500 mt-1">If enabled, users must input this key to proceed to checkout. Keep it secure.</p>
+            </div>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="flex gap-3 justify-end">
+            <button
+              type="button"
+              onclick="window.history.back()"
+              class="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg hover:bg-gray-200">
+              Cancel
+            </button>
+            <button type="submit" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 shadow-md ring-2 ring-indigo-300 focus:outline-none focus:ring-4 focus:ring-indigo-400 font-semibold">
+              Add Product
+            </button>
+          </div>
+        </form>
+      </div>
+    </main>
+
+    <!-- Embed server data as JSON to avoid EJS inside JS lint issues -->
+    <script id="categories-json" type="application/json"><%- JSON.stringify(categories) %></script>
+
+    <script>
+      // Image upload preview
+      document.getElementById("imageInput").addEventListener("change", function (e) {
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          document.getElementById("imagePreview").src = event.target.result;
+        };
+        reader.readAsDataURL(e.target.files[0]);
+      });
+
+      // Add new detail field
+      function addDetailField() {
+        const container = document.getElementById("detailsContainer");
+        const div = document.createElement("div");
+        div.className = "flex gap-3 items-center";
+        div.innerHTML = `
+          <input type="text" name="detailKey[]"
+                 placeholder="Key" class="p-2 border rounded-lg flex-1">
+          <input type="text" name="detailValue[]"
+                 placeholder="Value" class="p-2 border rounded-lg flex-1">
+          <button type="button" onclick="this.parentElement.remove()"
+                  class="text-red-500 hover:text-red-700">
+              ✕
+          </button>
+        `;
+        container.appendChild(div);
+      }
+
+      // Account Types dynamic rows
+      function addAccountTypeRow() {
+        const container = document.getElementById('accountTypesContainer');
+        const row = document.createElement('div');
+        row.className = 'flex items-center gap-3';
+        const uid = Math.random().toString(36).slice(2, 9);
+        row.innerHTML = `
+          <label class="inline-flex items-center gap-2">
+            <input type="checkbox" class="accountTypeEnabled h-4 w-4 text-indigo-600 border-gray-300 rounded" />
+            <span class="text-sm text-gray-700">Enable</span>
+          </label>
+          <input type="text" placeholder="Option label (e.g., Full)" class="accountTypeLabel p-2 border rounded-lg flex-1" disabled>
+          <input type="number" placeholder="Months" min="1" class="accountTypeMonths p-2 border rounded-lg w-28" disabled>
+          <input type="number" placeholder="Price" step="0.01" class="accountTypePrice p-2 border rounded-lg w-40" disabled>
+          <button type="button" class="text-red-500 hover:text-red-700" onclick="this.parentElement.remove()">✕</button>
+        `;
+        container.appendChild(row);
+
+        const enable = row.querySelector('.accountTypeEnabled');
+        const label = row.querySelector('.accountTypeLabel');
+        const price = row.querySelector('.accountTypePrice');
+        const months = row.querySelector('.accountTypeMonths');
+        enable.addEventListener('change', () => {
+          const on = enable.checked;
+          label.disabled = !on;
+          price.disabled = !on;
+          months.disabled = !on;
+          if (!on) {
+            label.value = '';
+            price.value = '';
+            months.value = '';
+          }
+        });
+      }
+
+      // Category and Subcategory handling
+      const categorySelect = document.getElementById('categorySelect');
+      const subcategorySelect = document.getElementById('subcategorySelect');
+      const categories = JSON.parse(document.getElementById('categories-json').textContent || '[]');
+
+      // Generate description via AI
+      (function(){
+        const btn = document.getElementById('genDescBtn');
+        const hint = document.getElementById('genDescHint');
+        const descField = document.getElementById('descriptionField');
+        const langSel = document.getElementById('genLang');
+        const nameInput = document.querySelector('input[name="name"]');
+        const categorySelectEl = document.getElementById('categorySelect');
+        if (!btn) return;
+        btn.addEventListener('click', async () => {
+          const title = (nameInput?.value || '').trim();
+          if (!title) {
+            errorAlert('Please enter the product name first.');
+            return;
+          }
+          const language = langSel?.value || 'ar';
+          const categoryId = categorySelectEl?.value || '';
+          let genre = '';
+          if (categoryId) {
+            const cat = categories.find(c => c.id === categoryId);
+            if (cat) genre = cat.name;
+          }
+          btn.disabled = true;
+          if (hint) hint.classList.remove('hidden');
+          try {
+            const resp = await fetch('/admin/ai/generate-description', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'same-origin',
+              body: JSON.stringify({ title, genre, language })
+            });
+            const data = await resp.json().catch(() => ({ success: false }));
+            if (!resp.ok || !data?.success) {
+              throw new Error(data?.error || `Request failed (${resp.status})`);
+            }
+            const text = data?.data?.description || '';
+            if (text) {
+              descField.value = text;
+            }
+          } catch (e) {
+            console.error('Generate description failed', e);
+            errorAlert(e?.message || 'Failed to generate description');
+          } finally {
+            btn.disabled = false;
+            if (hint) hint.classList.add('hidden');
+          }
+        });
+      })();
+
+      // Generate SEO via AI
+      (function(){
+        const btn = document.getElementById('genSeoBtn');
+        const hint = document.getElementById('genSeoHint');
+        const nameInput = document.querySelector('input[name="name"]');
+        const descField = document.getElementById('descriptionField');
+        const langSel = document.getElementById('seoLang');
+        const categorySelectEl = document.getElementById('categorySelect');
+        const sTitle = document.getElementById('seoTitle');
+        const sDesc = document.getElementById('seoDescription');
+        const sKeys = document.getElementById('seoKeywords');
+        if (!btn) return;
+        btn.addEventListener('click', async () => {
+          const title = (nameInput?.value || '').trim();
+          if (!title) { errorAlert('Please enter the product name first.'); return; }
+          const language = langSel?.value || 'ar';
+          const categoryId = categorySelectEl?.value || '';
+          let genre = '';
+          if (categoryId) {
+            const cat = categories.find(c => c.id === categoryId);
+            if (cat) genre = cat.name;
+          }
+          btn.disabled = true;
+          if (hint) hint.classList.remove('hidden');
+          try {
+            const resp = await fetch('/admin/ai/generate-seo', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'same-origin',
+              body: JSON.stringify({ title, description: descField.value, genre, language })
+            });
+            const data = await resp.json().catch(() => ({ success: false }));
+            if (!resp.ok || !data?.success) throw new Error(data?.error || `Request failed (${resp.status})`);
+            const out = data.data || {};
+            if (out.seoTitle) sTitle.value = out.seoTitle;
+            if (out.seoDescription) sDesc.value = out.seoDescription;
+            if (out.seoKeywords && Array.isArray(out.seoKeywords)) sKeys.value = out.seoKeywords.join(', ');
+          } catch (e) {
+            console.error('Generate SEO failed', e);
+            errorAlert(e?.message || 'Failed to generate SEO');
+          } finally {
+            btn.disabled = false;
+            if (hint) hint.classList.add('hidden');
+          }
+        });
+      })();
+
+      categorySelect.addEventListener('change', function() {
+        const selectedCategoryId = this.value;
+        subcategorySelect.innerHTML = '<option value="">Select a subcategory</option>';
+
+        if (selectedCategoryId) {
+          const selectedCategory = categories.find(cat => cat.id === selectedCategoryId);
+          if (selectedCategory && selectedCategory.subcategories) {
+            selectedCategory.subcategories.forEach(subcat => {
+              const option = document.createElement('option');
+              option.value = subcat.id;
+              option.textContent = subcat.name;
+              subcategorySelect.appendChild(option);
+            });
+            subcategorySelect.disabled = false;
+          } else {
+            subcategorySelect.disabled = true;
+          }
+        } else {
+          subcategorySelect.disabled = true;
+        }
+      });
+
+      // Form submission
+      document.getElementById("productForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+
+        try {
+          const formData = new FormData(e.target);
+          const details = [];
+
+          // Collect details
+          const detailKeys = formData.getAll("detailKey[]");
+          const detailValues = formData.getAll("detailValue[]");
+          for (let i = 0; i < detailKeys.length; i++) {
+            if (detailKeys[i] && detailValues[i]) {
+              details.push({ [detailKeys[i]]: detailValues[i] });
+            }
+          }
+
+          formData.delete("detailKey[]");
+          formData.delete("detailValue[]");
+          formData.append("details", JSON.stringify(details));
+
+          // Collect Account Type options
+          const accRows = Array.from(document.querySelectorAll('#accountTypesContainer > div'));
+          const accountTypes = [];
+          accRows.forEach((row) => {
+            const enabled = row.querySelector('.accountTypeEnabled')?.checked;
+            const label = row.querySelector('.accountTypeLabel')?.value?.trim();
+            const price = row.querySelector('.accountTypePrice')?.value;
+            const months = row.querySelector('.accountTypeMonths')?.value;
+            if (enabled && label) {
+              const p = Number.parseFloat(price || '0');
+              const m = Number.parseInt(months || '0', 10);
+              accountTypes.push({ label, months: Number.isFinite(m) && m > 0 ? m : 0, price: isNaN(p) ? 0 : Number(p.toFixed(2)) });
+            }
+          });
+          if (accountTypes.length) {
+            formData.append('accountTypes', JSON.stringify(accountTypes));
+          }
+
+          // Add category name to formData
+          const categoryId = formData.get('categoryId');
+          const selectedCategory = categories.find(cat => cat.id === categoryId);
+          if (selectedCategory) {
+            formData.append('categoryName', selectedCategory.name);
+          }
+
+          const labelProduct = document.getElementById('labelProduct').value;
+          formData.append('label', labelProduct);
+
+          // Add subcategory name to formData if selected
+          const subcategoryId = formData.get('subcategoryId');
+          if (subcategoryId) {
+            const selectedCategory = categories.find(cat => cat.id === categoryId);
+            const selectedSubcategory = selectedCategory.subcategories.find(subcat => subcat.id === subcategoryId);
+            if (selectedSubcategory) {
+              formData.append('subcategoryName', selectedSubcategory.name);
+            }
+          }
+
+          // Append SEO fields
+          try {
+            const st = document.getElementById('seoTitle')?.value?.trim();
+            const sd = document.getElementById('seoDescription')?.value?.trim();
+            const sk = document.getElementById('seoKeywords')?.value?.trim();
+            if (st) formData.append('seoTitle', st);
+            if (sd) formData.append('seoDescription', sd);
+            if (sk) formData.append('seoKeywords', sk);
+          } catch {}
+
+          // Append selected home sections (optional)
+          const hsSelect = document.querySelector('select[name="homeSectionIds[]"]');
+          if (hsSelect) {
+            const selected = Array.from(hsSelect.selectedOptions).map(o => o.value);
+            selected.forEach((id) => formData.append('homeSectionIds[]', id));
+          }
+
+          // Normalize requireKey + productKey before sending
+          try {
+            const requireKeyEl = document.getElementById('requireKey');
+            const productKeyEl = document.getElementById('productKey');
+            const rk = !!requireKeyEl?.checked;
+            formData.set('requireKey', rk ? 'true' : 'false');
+            if (rk && productKeyEl?.value?.trim()) {
+              formData.set('productKey', productKeyEl.value.trim());
+            } else {
+              formData.delete('productKey');
+            }
+          } catch {}
+
+          const response = await fetch("/admin/product/add", {
+            method: "POST",
+            body: formData,
+            credentials: "same-origin",
+          });
+
+          let data;
+          try {
+            data = await response.json();
+          } catch (e) {
+            data = { success: false, message: `Unexpected server response (status ${response.status}).` };
+          }
+
+          if (!response.ok || !data.success) {
+            const msg = data?.message || `Request failed with status ${response.status}`;
+            errorAlert(msg);
+            return;
+          }
+          if (data.success) {
+            successAlert("Product added successfully!");
+            // Backend already triggers refresh; just redirect
+            window.location.href = `/admin/view-product/${data.productId}`;
+          } else {
+            errorAlert(data.message || "An error occurred while adding the product.");
+          }
+        } catch (error) {
+          console.error("Error adding product:", error);
+          errorAlert("An error occurred while adding the product. Please try again.");
+        } finally {
+          submitBtn.disabled = false;
+        }
+      });
+    </script>
+    <script>
+      // Toggle enable/disable of productKey input
+      (function(){
+        const chk = document.getElementById('requireKey');
+        const keyInput = document.getElementById('productKey');
+        if (chk && keyInput) {
+          chk.addEventListener('change', () => {
+            keyInput.disabled = !chk.checked;
+            if (!chk.checked) keyInput.value = '';
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>

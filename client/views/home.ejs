@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Manga Store - Home</title>
+    <%- include("./partials/meta") %>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Swiper/8.4.7/swiper-bundle.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Swiper/8.4.7/swiper-bundle.min.js"></script>
+    <script src="/js/toggle-dark-mode.js"></script>
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer" />
+
+    <link rel="stylesheet" href="/css/framework.css" />
+    <link rel="stylesheet" href="/css/build.min.css?v=0.1" />
+    <link rel="stylesheet" href="/css/profile.css" />
+  </head>
+  <body class="bg-[#fdf4cb] dark:bg-background-dark border- border-black">
+    <%- include("./partials/loader") %> <%- include('./partials/header'); %> <%- include('./partials/slider'); %> <%-
+    include('./partials/alerts-popups'); %>
+    <main class="container mx-auto px-4 mb-6">
+      <%- include('./partials/banner'); %>
+      <%- include('./partials/category-cards'); %>
+      <%- include('./partials/home-sections'); %>
+    </main>
+    <%- include('./partials/footer'); %>
+    <script src="/js/cart.js"></script>
+  </body>
+</html>

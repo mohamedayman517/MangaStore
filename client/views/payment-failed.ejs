@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include("./partials/meta") %>
+    <title>Manga Store - Failed Payment</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <link rel="stylesheet" href="/css/build.min.css" />
+  </head>
+  <body
+    class="min-h-screen w-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 transition-colors duration-300">
+    <%- include("./partials/header") %>
+    <div class="w-full mx-auto min-h-screen flex flex-col mt-20 items-center justify-start md:px-96 mb-10">
+      <div
+        class="bg-gradient-to-r from-red-500 to-red-600 p-6 shadow-lg rounded-lg flex pt-20 items-center flex-col gap-4 w-full">
+        <div class="bg-white rounded-full p-2">
+          <svg
+            class="w-24 h-24 text-red-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </div>
+        <div class="w-full text-3xl text-white font-bold text-center">Failed</div>
+        <span class="text-white font-semibold text-lg text-center" id="error-text">
+          Your transaction failed. Please try again later or contact
+          <a href="/support/tickets" class="underline text-blue-200 hover:text-blue-100">support</a>
+        </span>
+        <div class="flex items-center justify-between px-10 w-full text-white text-lg font-medium">
+          <span>Order no:</span><span class="bg-white/20 px-3 py-1 rounded"><%= transnId %></span>
+        </div>
+        <div class="flex items-center justify-between px-10 w-full text-white text-lg font-medium">
+          <span>Placed on:</span
+          ><span class="bg-white/20 px-3 py-1 rounded"
+            ><%= new Date(data.createdAt.toDate()).toLocaleString('en-US') %></span
+          >
+        </div>
+      </div>
+      <div
+        class="flex w-full justify-between items-center p-6 bg-white dark:bg-gray-800 shadow-lg rounded-lg font-medium text-xl px-6 flex-col mt-3">
+        <div
+          class="w-full flex justify-between items-center p-6 bg-white dark:bg-gray-800 shadow-lg font-medium text-xl rounded-t-lg">
+          <span class="text-gray-700 dark:text-gray-300">You attempted to pay:</span>
+          <span class="text-red-600 dark:text-red-400">
+            <%= Number(data.totalPrice).toFixed(2) %>
+            <span class="text-sm text-gray-500 dark:text-gray-400">L.E</span>
+          </span>
+        </div>
+        <hr class="w-full border-gray-200 dark:border-gray-700" />
+        <div
+          class="flex w-full justify-between items-center p-6 bg-white dark:bg-gray-800 font-medium text-lg text-gray-600 dark:text-gray-400">
+          <span class="line-clamp-1">Reason:</span>
+          <span class="min-w-32 text-right text-red-600 dark:text-red-400"
+            ><%= data.status[data.status.length - 1].message %></span
+          >
+        </div>
+        <div class="w-full flex gap-10 p-10 items-center justify-between">
+          <button
+            id="continue-shopping-btn"
+            type="button"
+            class="py-2 px-4 text-lg font-semibold w-full bg-gradient-to-r from-primary-light to-primary-dark text-white rounded-lg mt-4 mb-2 hover:from-secondary-light hover:to-secondary-dark active:scale-95 duration-200 transition-all">
+            Continue shopping
+          </button>
+          <button
+            id="contact-support-btn"
+            class="py-2 px-4 text-lg font-semibold w-full border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg mt-4 mb-2 hover:bg-gray-100 dark:hover:bg-gray-600 active:scale-95 duration-200 transition-all"
+            type="button">
+            Contact support
+          </button>
+        </div>
+      </div>
+    </div>
+    <script src="/js/cart.js"></script>
+    <%- include("./partials/footer") %>
+    <script>
+      const contactSupportButton = document.getElementById("contact-support-btn");
+      const continueShoppingBtn = document.getElementById("continue-shopping-btn");
+      contactSupportButton.addEventListener("click", () => {
+        window.location.href = "/support/tickets";
+      });
+      continueShoppingBtn.addEventListener("click", () => {
+        window.location.href = "/products";
+      });
+    </script>
+  </body>
+</html>

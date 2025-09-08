@@ -1,0 +1,25 @@
+<%if (String(banner.isEnabled).toLowerCase() === "true") {%>
+<section class="w-full px-2 md:px-32 my-10 banner relative z-10">
+  <div
+    class="rounded-xl p-4 md:p-7 flex flex-row-reverse w-full items-center justify-between bg-[#ffec9f] border-primary-light dark:border-primary-dark border">
+    <div class="right md:max-w-96 w-60 h-full">
+      <div class="imgContainer w-full max-w-96 flex justify-start items-center">
+        <img src="<%= banner.image %>" class="object-cover rounded-xl" alt="<%= banner.actionText %>" />
+      </div>
+    </div>
+    <div class="left max-w-96 h-full flex flex-col gap-3">
+      <div
+        class="special inline-flex items-center w-fit rounded-full bg-secondary-light text-white font-semibold uppercase text-[12px] md:text-[14px] px-2 py-0.5 leading-none tracking-tight whitespace-nowrap">
+        <%= banner.mainTitle %>
+      </div>
+      <h2 class="title xs:text-xl text-base font-medium text-text-light"><%= banner.subtitle %></h2>
+      <h5 class="body xs:text-sm text-xs font-light text-text-light"><%=banner.body%></h5>
+      <a
+        href="/<%= banner.actionLink %>"
+        class="cta px-2 py-1 xs:px-4 text-center text-sm xs:py-2 bg-secondary-light text-white font-medium w-32 rounded-xl">
+        <%= banner.actionText %>
+      </a>
+    </div>
+  </div>
+</section>
+<%}%>

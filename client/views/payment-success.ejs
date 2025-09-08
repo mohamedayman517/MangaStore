@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include("./partials/meta") %>
+    <title>Manga Store - Success Payment</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <link rel="stylesheet" href="/css/build.min.css" />
+  </head>
+  <body
+    class="min-h-screen w-full bg-gradient-to-br bg-background-light dark:bg-background-dark transition-colors duration-300">
+    <%- include("./partials/header") %> <%- include("./partials/loader") %>
+    <div class="w-full mx-auto min-h-screen flex flex-col mt-20 items-center justify-start md:px-96 mb-10">
+      <div
+        class="bg-gradient-to-r from-green-500 to-green-600 p-6 shadow-lg rounded-lg flex pt-20 items-center flex-col gap-4 w-full">
+        <div class="bg-white rounded-full p-2">
+          <svg
+            class="w-24 h-24 text-green-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+        </div>
+        <div class="w-full text-3xl text-white font-bold text-center">Success!</div>
+        <span class="text-white font-semibold text-lg text-center" id="error-text">
+          Your transaction will be reviewed by our team. After that, we will deliver your product. Have a nice day!
+        </span>
+        <div class="flex items-center justify-between px-10 w-full text-white text-lg font-medium">
+          <span>Order no:</span><span class="bg-white/20 px-3 py-1 rounded"><%= transnId %></span>
+        </div>
+        <div class="flex items-center justify-between px-10 w-full text-white text-lg font-medium">
+          <span>Placed on:</span
+          ><span class="bg-white/20 px-3 py-1 rounded"
+            ><%= new Date(createdAt.toDate()).toLocaleString('en-US') %></span
+          >
+        </div>
+      </div>
+      <div
+        class="flex w-full justify-between items-center p-6 bg-white dark:bg-gray-800 shadow-lg rounded-lg font-medium text-xl px-6 flex-col mt-3">
+        <div
+          class="w-full flex justify-between items-center p-6 bg-white dark:bg-gray-800 shadow-lg font-medium text-xl rounded-t-lg">
+          <span class="text-gray-700 dark:text-gray-300">You pay:</span>
+          <span class="text-green-600 dark:text-green-400">
+            <%= Number(totalPrice).toFixed(2) %>
+            <span class="text-sm text-gray-500 dark:text-gray-400"><%= currency == "EG" ? 'L.E' : '$' %></span>
+          </span>
+        </div>
+        <hr class="w-full border-gray-200 dark:border-gray-700" />
+        <% products.forEach((product) => { %>
+        <div
+          class="flex w-full justify-between items-center p-6 bg-white dark:bg-gray-800 font-medium text-lg text-gray-600 dark:text-gray-400">
+          <span class="line-clamp-1"><%= product.name %>:</span>
+          <span class="min-w-32 text-right">
+            <%= Number(product.quantity * product.price).toFixed(2) %>
+            <span class="text-sm"><%= currency == "EG" ? 'L.E' : '$' %></span>
+          </span>
+        </div>
+        <% }) %>
+        <div class="w-full flex gap-10 p-10 items-center justify-between">
+          <button
+            id="continue-shopping-btn"
+            type="button"
+            class="py-2 px-4 text-lg font-semibold w-full bg-gradient-to-r from-primary-light to-primary-dark text-white rounded-lg mt-4 mb-2 hover:from-secondary-light hover:to-secondary-dark active:scale-95 duration-200 transition-all">
+            Continue shopping
+          </button>
+          <button
+            id="view-order-btn"
+            class="py-2 px-4 text-lg font-semibold w-full border-2 from-secondary-light to-secondary-dark border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg mt-4 mb-2 hover:bg-gray-100 dark:hover:bg-gray-600 active:scale-95 duration-200 transition-all"
+            type="button">
+            View order
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Review Modal -->
+    <div id="review-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-11/12 max-w-md p-6">
+        <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Rate your order</h3>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">How was your overall experience with this purchase?</p>
+        <div id="stars" class="flex items-center gap-2 mb-4" aria-label="Rating stars">
+          <button type="button" data-value="1" class="star text-3xl text-gray-300 hover:text-yellow-400">★</button>
+          <button type="button" data-value="2" class="star text-3xl text-gray-300 hover:text-yellow-400">★</button>
+          <button type="button" data-value="3" class="star text-3xl text-gray-300 hover:text-yellow-400">★</button>
+          <button type="button" data-value="4" class="star text-3xl text-gray-300 hover:text-yellow-400">★</button>
+          <button type="button" data-value="5" class="star text-3xl text-gray-300 hover:text-yellow-400">★</button>
+        </div>
+        <textarea id="review-comment" rows="3" placeholder="Optional comment" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-dark mb-4"></textarea>
+        <div class="flex gap-3 justify-end">
+          <button id="skip-review" class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Maybe later</button>
+          <button id="submit-review" class="px-4 py-2 rounded-lg bg-gradient-to-r from-primary-light to-primary-dark text-white font-semibold disabled:opacity-60">Submit</button>
+        </div>
+      </div>
+    </div>
+
+    <%- include("./partials/footer") %>
+    <script src="/js/cart.js"></script>
+    <script>
+      const viewOrderBtn = document.getElementById("view-order-btn");
+      const continueShoppingBtn = document.getElementById("continue-shopping-btn");
+      viewOrderBtn.addEventListener("click", () => {
+        window.location.href = "/view-order/<%= transnId %>";
+      });
+      continueShoppingBtn.addEventListener("click", () => {
+        window.location.href = "/products";
+      });
+
+      // Review Modal Logic
+      const modal = document.getElementById("review-modal");
+      const starEls = Array.from(document.querySelectorAll("#stars .star"));
+      const submitBtn = document.getElementById("submit-review");
+      const skipBtn = document.getElementById("skip-review");
+      const commentEl = document.getElementById("review-comment");
+      const orderId = "<%= transnId %>";
+      let rating = 0;
+
+      function renderStars(val) {
+        starEls.forEach((el, idx) => {
+          const active = idx < val;
+          el.classList.toggle("text-yellow-400", active);
+          el.classList.toggle("text-gray-300", !active);
+        });
+      }
+
+      starEls.forEach((el) => {
+        el.addEventListener("click", () => {
+          rating = Number(el.getAttribute("data-value"));
+          renderStars(rating);
+        });
+      });
+
+      skipBtn.addEventListener("click", () => {
+        modal.classList.add("hidden");
+      });
+
+      submitBtn.addEventListener("click", async () => {
+        if (!rating) {
+          alert("Please select a star rating");
+          return;
+        }
+        submitBtn.disabled = true;
+        try {
+          const res = await fetch("/api/reviews", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderId, rating, comment: commentEl.value || undefined }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || !data.success) {
+            throw new Error(data.error || "Failed to submit review");
+          }
+          modal.classList.add("hidden");
+          alert("Thanks for your feedback!");
+        } catch (e) {
+          console.error(e);
+          alert(e.message || "Something went wrong");
+        } finally {
+          submitBtn.disabled = false;
+        }
+      });
+
+      // Auto-open modal after success page loads
+      window.addEventListener("load", () => {
+        // Open after a short delay to ensure layout settles
+        setTimeout(() => modal.classList.remove("hidden"), 500);
+      });
+    </script>
+  </body>
+</html>

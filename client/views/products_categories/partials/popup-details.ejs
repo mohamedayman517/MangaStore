@@ -1,0 +1,20 @@
+<div
+  id="popup-details"
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden"
+  id="view-popup">
+  <div class="max-w-[600px] bg-white rounded-lg shadow-lg p-6 relative flex flex-col items-center gap-4">
+    <span class="text-xl font-bold text-gray-800" id="title"></span>
+    <span
+      class="absolute cursor-pointer top-3 right-3 w-7 h-7 rounded-full bg-white shadow-md text-gray-800 text-lg flex items-center justify-center hover:bg-gray-100 transition"
+      id="close-view-popup">
+      &times;
+    </span>
+    <div class="w-full flex flex-col gap-3 overflow-y-scroll max-h-64" id="popupBody"></div>
+
+    <button
+      class="w-full bg-gray-800 text-white text-sm font-semibold py-2 rounded hover:bg-gray-700 transition"
+      id="view-popup-close-btn">
+      Close
+    </button>
+  </div>
+</div>

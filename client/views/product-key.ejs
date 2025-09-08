@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include("./partials/meta") %>
+    <title>Enter Product Key</title>
+    <link rel="stylesheet" href="/css/framework.css" />
+    <link rel="stylesheet" href="/css/build.min.css" />
+  </head>
+  <body class="bg-[#fdf4cb] dark:bg-background-dark text-text-light dark:text-text-dark">
+    <%- include("./partials/header") %>
+    <main class="min-h-screen container mx-auto pt-24 px-4">
+      <div class="max-w-md mx-auto glass border border-secondary-light/20 dark:border-secondary-dark/20 rounded-xl p-6">
+        <h1 class="text-xl font-semibold text-primary-light mb-2">Product Key Required</h1>
+        <p class="text-sm text-text-light/80 dark:text-text-dark/80 mb-4">
+          <span class="font-medium"><%= product.name %></span> requires a key before purchase. Enter the key below to continue.
+        </p>
+
+        <form id="keyForm" class="space-y-4">
+          <div>
+            <label for="productKey" class="block text-sm font-medium mb-1">Secret Product Key</label>
+            <input id="productKey" type="password" class="w-full border rounded-md p-2" placeholder="Enter product key" required />
+          </div>
+          <button type="submit" class="w-full px-4 py-2 rounded-lg bg-primary-light hover:bg-primary-light/90 dark:bg-primary-dark dark:hover:bg-primary-dark/90 text-background-light dark:text-background-dark font-semibold">
+            Validate Key
+          </button>
+        </form>
+
+        <p id="errorMsg" class="hidden mt-3 text-sm text-red-600"></p>
+
+        <div class="mt-4 text-sm">
+          <a href="/view/product/<%= product.id %>" class="text-primary-light hover:underline">Back to product</a>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      (function(){
+        const form = document.getElementById('keyForm');
+        const input = document.getElementById('productKey');
+        const errorMsg = document.getElementById('errorMsg');
+        const productId = '<%= product.id %>';
+        const next = new URLSearchParams(window.location.search).get('next') || `/view/product/${productId}`;
+
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          errorMsg.classList.add('hidden');
+          const key = input.value.trim();
+          if (!key) { return; }
+          try {
+            const resp = await fetch(`/api/product/${productId}/validate-key`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ key })
+            });
+            const data = await resp.json();
+            if (resp.ok && data && data.success && data.valid) {
+              try { localStorage.setItem('productKeyValidated:' + productId, '1'); } catch(_) {}
+              // Optionally store key temporarily if needed later in checkout
+              try { sessionStorage.setItem('productKeyValue:' + productId, key); } catch(_) {}
+              window.location.assign(next);
+            } else {
+              errorMsg.textContent = (data && data.error) || 'Invalid key. Please try again.';
+              errorMsg.classList.remove('hidden');
+            }
+          } catch (err) {
+            errorMsg.textContent = 'Failed to validate key. Please try again.';
+            errorMsg.classList.remove('hidden');
+          }
+        });
+      })();
+    </script>
+
+    <%- include("./partials/footer") %>
+  </body>
+</html>

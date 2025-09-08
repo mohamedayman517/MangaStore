@@ -1,0 +1,749 @@
+<!DOCTYPE
+html >
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+    <style>
+      .product-image {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 4px;
+      }
+      .discount-badge {
+        font-size: 0.8rem;
+      }
+      .table-responsive {
+        overflow-x: auto;
+      }
+      .action-buttons {
+        position: sticky;
+        bottom: 0;
+        background: #f8f9fa;
+        padding: 15px;
+        border-top: 1px solid #dee2e6;
+        z-index: 100;
+      }
+      .filter-section {
+        background: #f8f9fa;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 5px;
+      }
+      /* Loading spinner styles */
+      .spinner-border {
+        width: 1rem;
+        height: 1rem;
+        margin-right: 0.5rem;
+      }
+      .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+        visibility: hidden;
+        opacity: 0;
+        transition: opacity 0.3s, visibility 0.3s;
+      }
+      .loading-overlay.show {
+        visibility: visible;
+        opacity: 1;
+      }
+      .loading-spinner-container {
+        background-color: white;
+        padding: 2rem;
+        border-radius: 0.5rem;
+        text-align: center;
+      }
+      .loading-spinner-container .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        margin-bottom: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <%- include("../partials/admin-back") %>
+    <div class="container-fluid py-4">
+      <h1 class="mb-4">Batch Product Operations</h1>
+
+      <!-- Filter Section -->
+      <div class="filter-section mb-4">
+        <div class="row">
+          <div class="col-md-3">
+            <label for="categoryFilter" class="form-label">Filter by Category</label>
+            <select id="categoryFilter" class="form-select">
+              <option value="">All Categories</option>
+              <% categories.forEach(category => { %>
+              <option value="<%= category.name %>"><%= category.name %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label for="nameFilter" class="form-label">Search by Name</label>
+            <input type="text" id="nameFilter" class="form-control" placeholder="Product name..." />
+          </div>
+          <div class="col-md-3">
+            <label for="stockFilter" class="form-label">Filter by Stock</label>
+            <select id="stockFilter" class="form-select">
+              <option value="">All</option>
+              <option value="instock">In Stock</option>
+              <option value="lowstock">Low Stock (< 10)</option>
+              <option value="outofstock">Out of Stock</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label for="discountFilter" class="form-label">Filter by Discount</label>
+            <select id="discountFilter" class="form-select">
+              <option value="">All</option>
+              <option value="hasDiscount">Has Discount</option>
+              <option value="noDiscount">No Discount</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Products Table -->
+      <div class="table-responsive">
+        <table class="table table-striped table-hover">
+          <thead>
+            <tr>
+              <th>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="selectAll" />
+                  <label class="form-check-label" for="selectAll">All</label>
+                </div>
+              </th>
+              <th>Image</th>
+              <th>Name</th>
+              <th>Price</th>
+              <th>Stock</th>
+              <th>Category</th>
+              <th>Discount</th>
+            </tr>
+          </thead>
+          <tbody id="productsTableBody">
+            <% products.forEach(product => { %>
+            <tr
+              class="product-row"
+              data-category="<%= product.categoryId %>"
+              data-name="<%= product.name.toLowerCase() %>"
+              data-stock="<%= product.stock %>"
+              data-has-discount="<%= discountMap[product.id] ? 'yes' : 'no' %>">
+              <td>
+                <div class="form-check">
+                  <input
+                    class="form-check-input product-checkbox"
+                    type="checkbox"
+                    value="<%= product.id %>"
+                    id="product<%= product.id %>" />
+                  <label class="form-check-label" for="product<%= product.id %>"></label>
+                </div>
+              </td>
+              <td>
+                <img
+                  src="<%= product.images || '/placeholder.jpg' %>"
+                  alt="<%= product.name %>"
+                  class="product-image" />
+              </td>
+              <td><%= product.name %></td>
+              <td><%= parseFloat(product.price).toFixed(2) %> L.E</td>
+              <td><%= product.stock %></td>
+              <td><%= product.categoryId %><%= product.subcategoryName ? ` / ${product.subcategoryName}` : '' %></td>
+              <td>
+                <% if (discountMap[product.id]) { const discount = discountMap[product.id]; const discountText =
+                discount.discountType === 'percentage' ? `${discount.discountValue}%` : `${discount.discountValue} L.E`;
+                %>
+                <span class="badge bg-success discount-badge"> <%= discountText %> off </span>
+                <% } else { %>
+                <span class="badge bg-secondary discount-badge">None</span>
+                <% } %>
+              </td>
+            </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Selected Count -->
+      <div class="mt-3 mb-3">
+        <span id="selectedCount" class="badge bg-primary">0 products selected</span>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <div class="row">
+          <div class="col-md-4">
+            <button type="button" class="btn btn-danger" id="batchDeleteBtn" disabled>
+              <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+              Delete Selected Products
+            </button>
+          </div>
+          <div class="col-md-4 text-center">
+            <button type="button" class="btn btn-warning" id="batchRemoveDiscountBtn" disabled>
+              <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+              Remove Discounts
+            </button>
+          </div>
+          <div class="col-md-4 text-end">
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="batchDiscountBtn"
+              disabled
+              data-bs-toggle="modal"
+              data-bs-target="#discountModal">
+              Add Discount to Selected
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Discount Modal -->
+    <div class="modal fade" id="discountModal" tabindex="-1" aria-labelledby="discountModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="discountModalLabel">Add Discount to Selected Products</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="discountForm">
+              <div class="mb-3">
+                <label for="discountType" class="form-label">Discount Type</label>
+                <select class="form-select" id="discountType" name="discountType" required>
+                  <option value="percentage">Percentage (%)</option>
+                  <option value="fixed">Fixed Amount (L.E)</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="discountValue" class="form-label">Discount Value</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="discountValue"
+                  name="discountValue"
+                  min="0"
+                  step="0.01"
+                  required />
+                <div class="form-text" id="discountValueHelp">For percentage, enter a value between 1-100</div>
+              </div>
+              <div class="mb-3">
+                <label for="startDate" class="form-label">Start Date</label>
+                <input type="text" class="form-control datepicker" id="startDate" name="startDate" required />
+              </div>
+              <div class="mb-3">
+                <label for="endDate" class="form-label">End Date</label>
+                <input type="text" class="form-control datepicker" id="endDate" name="endDate" required />
+              </div>
+              <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="isActive" name="isActive" checked />
+                <label class="form-check-label" for="isActive">Active</label>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="saveDiscountBtn">
+              <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+              Apply Discount
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div
+      class="modal fade"
+      id="deleteConfirmModal"
+      tabindex="-1"
+      aria-labelledby="deleteConfirmModalLabel"
+      aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="deleteConfirmModalLabel">Confirm Deletion</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p>Are you sure you want to delete <span id="deleteCount"></span> products?</p>
+            <p class="text-danger">This action cannot be undone!</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+              <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Remove Discount Confirmation Modal -->
+    <div
+      class="modal fade"
+      id="removeDiscountConfirmModal"
+      tabindex="-1"
+      aria-labelledby="removeDiscountConfirmModalLabel"
+      aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="removeDiscountConfirmModalLabel">Confirm Discount Removal</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p>
+              Are you sure you want to remove all discounts from <span id="removeDiscountCount"></span> selected
+              products?
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-warning" id="confirmRemoveDiscountBtn">
+              <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+              Remove Discounts
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+      <div id="successToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-success text-white">
+          <strong class="me-auto">Success</strong>
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="successToastMessage"></div>
+      </div>
+    </div>
+
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+      <div id="errorToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-danger text-white">
+          <strong class="me-auto">Error</strong>
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="errorToastMessage"></div>
+      </div>
+    </div>
+
+    <!-- Global Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="loading-spinner-container">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p id="loadingMessage">Processing your request...</p>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // Initialize date pickers
+        flatpickr(".datepicker", {
+          enableTime: true,
+          dateFormat: "Y-m-d H:i",
+          minDate: "today",
+        });
+
+        // Elements
+        const selectAllCheckbox = document.getElementById("selectAll");
+        const productCheckboxes = document.querySelectorAll(".product-checkbox");
+        const selectedCountElement = document.getElementById("selectedCount");
+        const batchDeleteBtn = document.getElementById("batchDeleteBtn");
+        const batchDiscountBtn = document.getElementById("batchDiscountBtn");
+        const batchRemoveDiscountBtn = document.getElementById("batchRemoveDiscountBtn");
+        const categoryFilter = document.getElementById("categoryFilter");
+        const nameFilter = document.getElementById("nameFilter");
+        const stockFilter = document.getElementById("stockFilter");
+        const discountFilter = document.getElementById("discountFilter");
+        const productsTableBody = document.getElementById("productsTableBody");
+        const loadingOverlay = document.getElementById("loadingOverlay");
+        const loadingMessage = document.getElementById("loadingMessage");
+
+        // Toasts
+        const successToast = new bootstrap.Toast(document.getElementById("successToast"));
+        const errorToast = new bootstrap.Toast(document.getElementById("errorToast"));
+
+        // Modals
+        const deleteConfirmModal = new bootstrap.Modal(document.getElementById("deleteConfirmModal"));
+        const discountModal = new bootstrap.Modal(document.getElementById("discountModal"));
+        const removeDiscountConfirmModal = new bootstrap.Modal(document.getElementById("removeDiscountConfirmModal"));
+
+        // Loading state functions
+        function showButtonLoading(button) {
+          const spinner = button.querySelector('.spinner-border');
+          if (spinner) {
+            spinner.classList.remove('d-none');
+          }
+          button.disabled = true;
+        }
+
+        function hideButtonLoading(button) {
+          const spinner = button.querySelector('.spinner-border');
+          if (spinner) {
+            spinner.classList.add('d-none');
+          }
+          button.disabled = false;
+        }
+
+        function showGlobalLoading(message = "Processing your request...") {
+          loadingMessage.textContent = message;
+          loadingOverlay.classList.add("show");
+        }
+
+        function hideGlobalLoading() {
+          loadingOverlay.classList.remove("show");
+        }
+
+        // Update selected count and button states
+        function updateSelectedCount() {
+          const selectedCount = document.querySelectorAll(".product-checkbox:checked").length;
+          selectedCountElement.textContent = `${selectedCount} products selected`;
+
+          // Enable/disable action buttons based on selection
+          batchDeleteBtn.disabled = selectedCount === 0;
+          batchDiscountBtn.disabled = selectedCount === 0;
+          batchRemoveDiscountBtn.disabled = selectedCount === 0;
+        }
+
+        // Select/deselect all products
+        selectAllCheckbox.addEventListener("change", function () {
+          const isChecked = this.checked;
+
+          // Only select visible products (respecting filters)
+          document.querySelectorAll("tr.product-row:not(.d-none) .product-checkbox").forEach((checkbox) => {
+            checkbox.checked = isChecked;
+          });
+
+          updateSelectedCount();
+        });
+
+        // Individual checkbox change
+        productCheckboxes.forEach((checkbox) => {
+          checkbox.addEventListener("change", updateSelectedCount);
+        });
+
+        // Apply filters
+        function applyFilters() {
+          const categoryValue = categoryFilter.value;
+          const nameValue = nameFilter.value.toLowerCase();
+          const stockValue = stockFilter.value;
+          const discountValue = discountFilter.value;
+
+          // Reset select all checkbox
+          selectAllCheckbox.checked = false;
+
+          // Get all product rows
+          const productRows = document.querySelectorAll(".product-row");
+
+          productRows.forEach((row) => {
+            let showRow = true;
+
+            // Category filter - using category name instead of ID
+            if (categoryValue && row.dataset.category !== categoryValue) {
+              showRow = false;
+            }
+
+            // Name filter
+            if (nameValue && !row.dataset.name.includes(nameValue)) {
+              showRow = false;
+            }
+
+            // Stock filter
+            if (stockValue) {
+              const stock = parseInt(row.dataset.stock);
+              if (stockValue === "instock" && stock <= 0) {
+                showRow = false;
+              } else if (stockValue === "lowstock" && (stock <= 0 || stock >= 10)) {
+                showRow = false;
+              } else if (stockValue === "outofstock" && stock > 0) {
+                showRow = false;
+              }
+            }
+
+            // Discount filter
+            if (discountValue) {
+              const hasDiscount = row.dataset.hasDiscount;
+              if (discountValue === "hasDiscount" && hasDiscount !== "yes") {
+                showRow = false;
+              } else if (discountValue === "noDiscount" && hasDiscount !== "no") {
+                showRow = false;
+              }
+            }
+
+            // Show/hide row
+            if (showRow) {
+              row.classList.remove("d-none");
+            } else {
+              row.classList.add("d-none");
+              // Uncheck hidden rows
+              const checkbox = row.querySelector(".product-checkbox");
+              if (checkbox) {
+                checkbox.checked = false;
+              }
+            }
+          });
+
+          updateSelectedCount();
+        }
+
+        // Filter change events
+        categoryFilter.addEventListener("change", applyFilters);
+        nameFilter.addEventListener("input", applyFilters);
+        stockFilter.addEventListener("change", applyFilters);
+        discountFilter.addEventListener("change", applyFilters);
+
+        // Batch delete
+        batchDeleteBtn.addEventListener("click", function () {
+          const selectedProducts = getSelectedProductIds();
+          document.getElementById("deleteCount").textContent = selectedProducts.length;
+          deleteConfirmModal.show();
+        });
+
+        // Confirm delete
+        document.getElementById("confirmDeleteBtn").addEventListener("click", function () {
+          const selectedProducts = getSelectedProductIds();
+          const button = this;
+          
+          // Show loading state
+          showButtonLoading(button);
+          showGlobalLoading("Deleting products...");
+
+          fetch("/batch-delete", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ productIds: selectedProducts }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              // Hide loading state
+              hideButtonLoading(button);
+              hideGlobalLoading();
+              deleteConfirmModal.hide();
+
+              if (data.success) {
+                // Show success message
+                document.getElementById("successToastMessage").textContent = data.message;
+                successToast.show();
+
+                // Remove deleted products from the table
+                selectedProducts.forEach((productId) => {
+                  const checkbox = document.getElementById(`product${productId}`);
+                  if (checkbox) {
+                    const row = checkbox.closest("tr");
+                    if (row) {
+                      row.remove();
+                    }
+                  }
+                });
+
+                // Update counts
+                updateSelectedCount();
+              } else {
+                // Show error message
+                document.getElementById("errorToastMessage").textContent = data.message;
+                errorToast.show();
+              }
+            })
+            .catch((error) => {
+              // Hide loading state
+              hideButtonLoading(button);
+              hideGlobalLoading();
+              deleteConfirmModal.hide();
+              
+              console.error("Error deleting products:", error);
+              document.getElementById("errorToastMessage").textContent = "Failed to delete products";
+              errorToast.show();
+            });
+        });
+
+        // Batch remove discount
+        batchRemoveDiscountBtn.addEventListener("click", function () {
+          const selectedProducts = getSelectedProductIds();
+          document.getElementById("removeDiscountCount").textContent = selectedProducts.length;
+          removeDiscountConfirmModal.show();
+        });
+
+        // Confirm remove discount
+        document.getElementById("confirmRemoveDiscountBtn").addEventListener("click", function () {
+          const selectedProducts = getSelectedProductIds();
+          const button = this;
+          
+          // Show loading state
+          showButtonLoading(button);
+          showGlobalLoading("Removing discounts...");
+
+          fetch("/batch-remove-discount", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ productIds: selectedProducts }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              // Hide loading state
+              hideButtonLoading(button);
+              hideGlobalLoading();
+              removeDiscountConfirmModal.hide();
+
+              if (data.success) {
+                // Show success message
+                document.getElementById("successToastMessage").textContent = data.message;
+                successToast.show();
+
+                // Update discount badges in the table
+                selectedProducts.forEach((productId) => {
+                  const checkbox = document.getElementById(`product${productId}`);
+                  if (checkbox) {
+                    const row = checkbox.closest("tr");
+                    if (row) {
+                      const discountCell = row.querySelector("td:last-child");
+                      if (discountCell) {
+                        discountCell.innerHTML = '<span class="badge bg-secondary discount-badge">None</span>';
+                      }
+                      // Update data attribute for filtering
+                      row.dataset.hasDiscount = "no";
+                    }
+                  }
+                });
+              } else {
+                // Show error message
+                document.getElementById("errorToastMessage").textContent = data.message;
+                errorToast.show();
+              }
+            })
+            .catch((error) => {
+              // Hide loading state
+              hideButtonLoading(button);
+              hideGlobalLoading();
+              removeDiscountConfirmModal.hide();
+              
+              console.error("Error removing discounts:", error);
+              document.getElementById("errorToastMessage").textContent = "Failed to remove discounts";
+              errorToast.show();
+            });
+        });
+
+        // Save discount
+        document.getElementById("saveDiscountBtn").addEventListener("click", function () {
+          const form = document.getElementById("discountForm");
+          const formData = new FormData(form);
+          const selectedProducts = getSelectedProductIds();
+          const button = this;
+
+          // Validate form
+          if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+          }
+
+          // Prepare data
+          const discountData = {
+            productIds: selectedProducts,
+            discountType: formData.get("discountType"),
+            discountValue: formData.get("discountValue"),
+            startDate: formData.get("startDate"),
+            endDate: formData.get("endDate"),
+            isActive: formData.has("isActive") ? "true" : "false",
+          };
+
+          // Show loading state
+          showButtonLoading(button);
+          showGlobalLoading("Applying discounts...");
+
+          // Send request
+          fetch("/batch-discount", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(discountData),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              // Hide loading state
+              hideButtonLoading(button);
+              hideGlobalLoading();
+              discountModal.hide();
+
+              if (data.success) {
+                // Show success message
+                document.getElementById("successToastMessage").textContent = data.message;
+                successToast.show();
+
+                // Update discount badges in the table
+                const discountText =
+                  discountData.discountType === "percentage"
+                    ? `${discountData.discountValue}%`
+                    : `${discountData.discountValue} L.E`;
+
+                selectedProducts.forEach((productId) => {
+                  const checkbox = document.getElementById(`product${productId}`);
+                  if (checkbox) {
+                    const row = checkbox.closest("tr");
+                    if (row) {
+                      const discountCell = row.querySelector("td:last-child");
+                      if (discountCell) {
+                        discountCell.innerHTML = `<span class="badge bg-success discount-badge">${discountText} off</span>`;
+                      }
+                      // Update data attribute for filtering
+                      row.dataset.hasDiscount = "yes";
+                    }
+                  }
+                });
+
+                // Reset form
+                form.reset();
+              } else {
+                // Show error message
+                document.getElementById("errorToastMessage").textContent = data.message;
+                errorToast.show();
+              }
+            })
+            .catch((error) => {
+              // Hide loading state
+              hideButtonLoading(button);
+              hideGlobalLoading();
+              discountModal.hide();
+              
+              console.error("Error applying discounts:", error);
+              document.getElementById("errorToastMessage").textContent = "Failed to apply discounts";
+              errorToast.show();
+            });
+        });
+
+        // Helper function to get selected product IDs
+        function getSelectedProductIds() {
+          const selectedCheckboxes = document.querySelectorAll(".product-checkbox:checked");
+          return Array.from(selectedCheckboxes).map((checkbox) => checkbox.value);
+        }
+
+        // Initialize
+        updateSelectedCount();
+      });
+    </script>
+  </body>
+</html>
+
