@@ -83,14 +83,33 @@ router.post("/register", checkLogin, async (req, res) => {
     const expiresIn = 60 * 60 * 24 * 7 * 1000; // 7 days
     const sessionCookie = await admin.auth().createSessionCookie(idToken, { expiresIn });
 
+    // Build a continue URL from env so it works in local/prod without allowlist errors
+    const baseUrl = process.env.PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 3200}`;
     const actionCodeSettings = {
-      url: "https://store.mohammed-zuhair.online/profile",
+      url: `${baseUrl.replace(/\/$/, "")}/profile`,
       handleCodeInApp: true,
     };
 
-    const emailVerifyLink = admin.auth().generateEmailVerificationLink(email, actionCodeSettings);
-    const emailVerify = new emailVerifyTemplate(name, emailVerifyLink);
-    await sendEmail(email, emailVerify);
+    // Try to generate and send verification email, but do not fail registration if it errors
+    try {
+      let emailVerifyLink = await admin.auth().generateEmailVerificationLink(email, actionCodeSettings);
+      const emailVerify = new emailVerifyTemplate(name, emailVerifyLink);
+      await sendEmail(email, emailVerify);
+    } catch (e) {
+      // Fallback: if domain is not allowlisted, retry without continue URL
+      const msg = e?.message || "";
+      if (msg.toLowerCase().includes("unauthorized-continue-uri")) {
+        try {
+          let emailVerifyLink = await admin.auth().generateEmailVerificationLink(email);
+          const emailVerify = new emailVerifyTemplate(name, emailVerifyLink);
+          await sendEmail(email, emailVerify);
+        } catch (e2) {
+          console.warn("Email verification link fallback failed:", e2?.message || e2);
+        }
+      } else {
+        console.warn("Email verification link generation failed:", msg);
+      }
+    }
 
     // Send a welcome email (separate from verification)
     try {

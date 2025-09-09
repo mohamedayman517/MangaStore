@@ -52,7 +52,15 @@ const sensitivePaths = [
 ];
 app.use(sensitivePaths, (req, res, next) => {
   if (req.method !== "POST") return next();
-  return strictRateLimit({ windowMs: 15 * 60 * 1000, max: 100, keyGenerator: (req) => req.uid || req.ip })(req, res, next);
+  // Allow disabling strict rate limit for rapid local testing
+  const disabled = String(process.env.RATE_LIMIT_DISABLE || "false").toLowerCase() === "true";
+  if (disabled) return next();
+  // Use per-path key to avoid exhausting budget across different endpoints
+  return strictRateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    keyGenerator: (req) => `${req.uid || req.ip}:${req.path}`,
+  })(req, res, next);
 });
 
 // Moderate limiter for public APIs (countries, cities, flags, etc.)
@@ -228,6 +236,10 @@ app.use("/", supportRoutes);
 // AI utilities (descriptions, moderation)
 const aiRoutes = require("./routes/ai");
 app.use("/", aiRoutes);
+
+// Email verification routes
+const verifyEmailRoutes = require("./routes/verify-email");
+app.use("/", verifyEmailRoutes);
 
 // Cron and unsubscribe routes
 const cronRoutes = require("./routes/cron");

@@ -32,19 +32,48 @@ router.post(
 
     const email = user.email;
     const userName = user.displayName || email.split("@")[0];
-
+    const baseUrl = process.env.PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 3200}`;
     const actionCodeSettings = {
-      url: "https://store.mohammed-zuhair.online/verify-email/confirm/" + email,
+      url: `${baseUrl.replace(/\/$/, "")}/profile`,
       handleCodeInApp: true,
     };
 
-    const emailVerifyLink = await admin.auth().generateEmailVerificationLink(email, actionCodeSettings);
-    const emailVerify = new emailVerifyTemplate(userName, emailVerifyLink);
-    await sendEmail(email, emailVerify);
-    res.status(200).json({ success: true, message: "Verification email sent!" });
+    try {
+      const emailVerifyLink = await admin.auth().generateEmailVerificationLink(email, actionCodeSettings);
+      const emailVerify = new emailVerifyTemplate(userName, emailVerifyLink);
+      await sendEmail(email, emailVerify);
+      return res.status(200).json({ success: true, message: "Verification email sent!" });
+    } catch (e) {
+      const rawMsg = e?.message || "";
+      const errCode = (e?.errorInfo?.code || e?.code || "").toString().toLowerCase();
+      const msg = rawMsg.toLowerCase();
+      if (msg.includes("too_many_attempts_try_later")) {
+        // Respect Firebase throttle; advise client to wait
+        res.setHeader("Retry-After", "300");
+        return res.status(429).json({ success: false, message: "Too many attempts. Please try again in a few minutes." });
+      }
+      if (
+        msg.includes("unauthorized-continue-uri") ||
+        msg.includes("domain not allowlisted by project") ||
+        errCode.includes("unauthorized-continue-uri")
+      ) {
+        try {
+          const link = await admin.auth().generateEmailVerificationLink(email);
+          const emailVerify = new emailVerifyTemplate(userName, link);
+          await sendEmail(email, emailVerify);
+          return res.status(200).json({ success: true, message: "Verification email sent!" });
+        } catch (e2) {
+          console.error("Resend verification fallback failed:", e2?.message || e2);
+        }
+      } else {
+        console.error("Resend verification failed:", rawMsg || e);
+      }
+      const message = rawMsg || "Failed to generate verification link. Please try again later.";
+      return res.status(400).json({ success: false, message });
+    }
   } catch (error) {
-    console.error("Error:", error);
-    res.status(500).json({ success: false, error: "An error occurred. Please try again later." });
+    console.error("Error:", error?.message || error);
+    res.status(500).json({ success: false, message: "An error occurred. Please try again later." });
   }
 });
 

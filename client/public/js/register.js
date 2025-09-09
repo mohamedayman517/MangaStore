@@ -65,7 +65,18 @@ async function validateForm(data) {
                       },
                       body: JSON.stringify(data),
                     })
-                      .then((res) => res.json())
+                      .then(async (res) => {
+                        if (!res.ok) {
+                          if (res.status === 429) {
+                            const retryAfter = Number(res.headers.get("Retry-After") || 60);
+                            throw new Error(`Too many requests. Try again after ${retryAfter} seconds.`);
+                          }
+                          const ct = res.headers.get("content-type") || "";
+                          const payload = ct.includes("application/json") ? await res.json() : { message: await res.text() };
+                          throw new Error(payload.message || "Registration failed");
+                        }
+                        return res.json();
+                      })
                       .then((data) => {
                         if (!data.success) {
                           animateBtns.loadingBtnDisable();
@@ -78,6 +89,10 @@ async function validateForm(data) {
                             location.href = "/profile";
                           }, 500);
                         }
+                      })
+                      .catch((err) => {
+                        animateBtns.loadingBtnDisable();
+                        errorAlert(err.message || "Registration failed");
                       });
                   } else {
                     errorAlert("Please select gender");
