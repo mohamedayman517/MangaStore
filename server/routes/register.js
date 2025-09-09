@@ -53,6 +53,13 @@ router.post("/register", checkLogin, async (req, res) => {
     if (!cc || !pn) {
       return res.status(400).send({ success: false, message: "Invalid phone number or country code" });
     }
+    // Basic length guard to avoid Firebase TOO_SHORT
+    // Many countries expect at least 10 national digits (after removing leading zero)
+    if (pn.length < 10) {
+      return res
+        .status(400)
+        .send({ success: false, message: "Phone number is too short. Please enter the full number without the leading 0." });
+    }
     const e164Phone = `+${cc}${pn}`;
     // 1. Create user using Firebase Admin SDK
     const user = await admin.auth().createUser({
@@ -135,9 +142,10 @@ router.post("/register", checkLogin, async (req, res) => {
 
     res.status(201).send({ success: true, message: "User registered successfully" });
   } catch (error) {
-    console.error(error);
+    const code = error?.code || error?.errorInfo?.code || null;
     const msg = error?.message || "Registration failed";
-    res.status(400).send({ success: false, message: msg });
+    console.error("Register error:", { code, message: msg });
+    res.status(400).send({ success: false, code, message: msg });
   }
 });
 
