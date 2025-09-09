@@ -10,10 +10,10 @@ CI = "true"
 NODE_ENV = "production"
 
 [phases.install]
-# Install root and client dependencies (omit dev to keep image smaller)
+# Install root deps (prod only) and client deps (include dev for build tools)
 cmds = [
   "npm ci --omit=dev",
-  "npm --prefix client ci --omit=dev"
+  "npm --prefix client ci"
 ]
 
 [phases.build]

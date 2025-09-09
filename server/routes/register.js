@@ -47,12 +47,19 @@ router.post("/register", checkLogin, async (req, res) => {
   }
 
   try {
+    // Normalize phone and country code to E.164 (+<digits>)
+    const cc = String(countryCode || "").replace(/[^0-9]/g, "");
+    const pn = String(phoneNumber || "").replace(/[^0-9]/g, "");
+    if (!cc || !pn) {
+      return res.status(400).send({ success: false, message: "Invalid phone number or country code" });
+    }
+    const e164Phone = `+${cc}${pn}`;
     // 1. Create user using Firebase Admin SDK
     const user = await admin.auth().createUser({
       email,
       password,
       displayName: name,
-      phoneNumber: `+${countryCode}${phoneNumber}`,
+      phoneNumber: e164Phone,
       photoURL: "https://res.cloudinary.com/dadyyal9s/image/upload/v1738241153/uploads/ezknvgb9b561ygrcjac4.png",
     });
 
@@ -110,7 +117,8 @@ router.post("/register", checkLogin, async (req, res) => {
     res.status(201).send({ success: true, message: "User registered successfully" });
   } catch (error) {
     console.error(error);
-    res.status(400).send({ success: false, message: error.message });
+    const msg = error?.message || "Registration failed";
+    res.status(400).send({ success: false, message: msg });
   }
 });
 
