@@ -1,0 +1,27 @@
+# Nixpacks configuration for Railway deployment
+
+[variables]
+# Use a safe, ephemeral cache location to avoid EBUSY on /app/node_modules/.cache
+NPM_CONFIG_CACHE = "/tmp/.npm"
+npm_config_cache = "/tmp/.npm"
+NPM_CONFIG_AUDIT = "false"
+NPM_CONFIG_FUND = "false"
+CI = "true"
+NODE_ENV = "production"
+
+[phases.install]
+# Install root and client dependencies (omit dev to keep image smaller)
+cmds = [
+  "npm ci --omit=dev",
+  "npm --prefix client ci --omit=dev"
+]
+
+[phases.build]
+# Build client assets only
+cmds = [
+  "npm --prefix client run build"
+]
+
+[start]
+# Start the server from the root using the server entrypoint
+cmd = "node server/app.js"
