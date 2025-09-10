@@ -22,10 +22,17 @@ function buildTransport(opts = {}) {
     greetingTimeout: Number(process.env.SMTP_GREETING_TIMEOUT_MS) || 10000,
     socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT_MS) || 20000,
     requireTLS: String(process.env.SMTP_REQUIRE_TLS || "true").toLowerCase() === "true",
+    // Prefer IPv4 to avoid IPv6 routing issues on some providers
+    dnsResolvePrefer: process.env.SMTP_DNS_RESOLVE_PREFER || "ipv4",
+    family: Number(process.env.SMTP_FAMILY) || 0, // 4 forces IPv4, 6 forces IPv6, 0 = auto
+    logger: String(process.env.SMTP_DEBUG || "false").toLowerCase() === "true",
+    debug: String(process.env.SMTP_DEBUG || "false").toLowerCase() === "true",
     tls: {
       // Helps with some providers behind proxies; does not lower security
       servername: process.env.SMTP_HOST || undefined,
       minVersion: "TLSv1.2",
+      // Allow opt-out of strict validation for debugging only
+      rejectUnauthorized: String(process.env.SMTP_TLS_REJECT_UNAUTHORIZED || "true").toLowerCase() === "true",
     },
   };
 
