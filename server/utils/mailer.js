@@ -1,5 +1,6 @@
 require("dotenv").config();
 const nodemailer = require("nodemailer");
+let Resend; // loaded lazily to avoid requiring if not installed
 const path = require("path");
 const fs = require("fs");
 const { isSuppressed, buildUnsubLink } = require("./suppression");
@@ -52,6 +53,36 @@ function buildTransport(opts = {}) {
   return nodemailer.createTransport({ ...base, ...opts });
 }
 
+// Send via Resend HTTP API
+async function sendWithResend({ to, subject, html, text, fromName, fromEmail, headers }) {
+  const apiKey = process.env.RESEND_API_KEY || process.env.RESEND_API;
+  if (!apiKey) throw new Error("Resend API key not configured");
+  if (!Resend) {
+    // eslint-disable-next-line global-require
+    Resend = require("resend").Resend;
+  }
+  const resend = new Resend(apiKey);
+
+  const from = `${fromName || "Manga Store 🥭"} <${fromEmail}>`;
+
+  const res = await resend.emails.send({
+    from,
+    to,
+    subject,
+    html,
+    text,
+    headers,
+  });
+
+  if (res?.error) {
+    const err = new Error(res.error.message || "Resend API error");
+    err.code = res.error.name || "RESEND_ERROR";
+    throw err;
+  }
+
+  return res;
+}
+
 /**
  * Send an email using a template instance
  * @param {string} to - Recipient email address
@@ -102,10 +133,25 @@ const sendEmail = async (to, templateInstance) => {
   };
 
   try {
-    // Primary attempt: whatever is configured in env
+    const preferResend =
+      String(process.env.EMAIL_PROVIDER || "").toLowerCase() === "resend" ||
+      Boolean(process.env.RESEND_API_KEY || process.env.RESEND_API);
+
+    if (preferResend) {
+      return await sendWithResend({
+        to,
+        subject: templateInstance.subject,
+        html,
+        text,
+        fromName,
+        fromEmail,
+        headers: mailOptions.headers,
+      });
+    }
+
+    // Default: try SMTP first
     const primaryTransporter = buildTransport();
     const info = await primaryTransporter.sendMail(mailOptions);
-    // console.log("✅ Email sent:", info.response);
     return info;
   } catch (error) {
     // If platform blocks SMTPS (465), retry with STARTTLS (587)
@@ -120,8 +166,33 @@ const sendEmail = async (to, templateInstance) => {
         return info;
       } catch (fallbackErr) {
         console.error("❌ SMTP fallback (587 STARTTLS) failed:", fallbackErr);
+        // Last resort: Resend API if available
+        if (process.env.RESEND_API_KEY || process.env.RESEND_API) {
+          return await sendWithResend({
+            to,
+            subject: templateInstance.subject,
+            html,
+            text,
+            fromName,
+            fromEmail,
+            headers: mailOptions.headers,
+          });
+        }
         throw fallbackErr;
       }
+    }
+
+    // For any other SMTP error, try Resend if configured
+    if (process.env.RESEND_API_KEY || process.env.RESEND_API) {
+      return await sendWithResend({
+        to,
+        subject: templateInstance.subject,
+        html,
+        text,
+        fromName,
+        fromEmail,
+        headers: mailOptions.headers,
+      });
     }
 
     console.error("❌ Error sending email:", error);
