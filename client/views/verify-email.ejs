@@ -47,13 +47,26 @@
         const resendText = document.getElementById("resendText");
         const cooldownOverlay = document.getElementById("cooldownOverlay");
         const triesMessage = document.getElementById("triesMessage");
+        // Namespace keys per logged-in user to avoid stale cooldown after switching accounts
+        const uid = "<%= uid || '' %>";
+        const TRIES_KEY = uid ? `resendTries:${uid}` : "resendTries";
+        const COOLDOWN_KEY = uid ? `cooldownUntil:${uid}` : "cooldownUntil";
+        const LAST_UID_KEY = "verifyEmail:lastUid";
 
         let tries = 3;
         let isCooldown = false;
 
         // Check local storage for tries and cooldown time
-        const savedTries = localStorage.getItem("resendTries");
-        const cooldownUntil = localStorage.getItem("cooldownUntil");
+        const lastUid = localStorage.getItem(LAST_UID_KEY);
+        if (uid && lastUid && lastUid !== uid) {
+          // Different user: reset any old counters
+          try { localStorage.removeItem(`resendTries:${lastUid}`); } catch (_) {}
+          try { localStorage.removeItem(`cooldownUntil:${lastUid}`); } catch (_) {}
+        }
+        if (uid) localStorage.setItem(LAST_UID_KEY, uid);
+
+        const savedTries = localStorage.getItem(TRIES_KEY);
+        const cooldownUntil = localStorage.getItem(COOLDOWN_KEY);
 
         if (savedTries !== null) {
           tries = parseInt(savedTries);
@@ -69,44 +82,79 @@
         resendBtn.addEventListener("click", function () {
           if (isCooldown || tries <= 0) return;
 
-          // Send resend request to backend
+          // UI: loading state
+          const originalText = resendText.textContent;
+          resendBtn.disabled = true;
+          resendBtn.classList.add("opacity-60", "cursor-not-allowed");
+          resendText.textContent = "Sending...";
+
+          // Client-side timeout to avoid long hanging requests
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort("timeout"), 15000);
+
           fetch("/resend-verification", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
+            signal: controller.signal,
           })
-            .then((response) => response.json())
+            .then(async (response) => {
+              clearTimeout(timeoutId);
+              if (!response.ok) {
+                if (response.status === 429) {
+                  const retry = Number(response.headers.get("Retry-After") || 60) * 1000;
+                  startCooldown(retry);
+                  throw new Error("Too many attempts. Please wait and try again.");
+                }
+                const ct = response.headers.get("content-type") || "";
+                const data = ct.includes("application/json") ? await response.json() : { message: await response.text() };
+                throw new Error(data.message || "Failed to resend verification email");
+              }
+              return response.json();
+            })
             .then((data) => {
               if (data.success) {
                 tries--;
-                localStorage.setItem("resendTries", tries);
+                localStorage.setItem(TRIES_KEY, tries);
                 updateTriesMessage();
 
+                // Cooldown: 1min for first 2 tries, then 15min
                 if (tries > 0) {
-                  // 1 minute cooldown
                   startCooldown(60000);
                 } else {
-                  // 15 minute cooldown after 3 tries
                   startCooldown(15 * 60000);
                 }
+                try { successAlert("Verification email sent!"); } catch (_) {}
               } else {
-                alert("Failed to resend verification email. " + data.message);
+                try { errorAlert("Failed to resend verification email. " + (data.message || "")); } catch (_) { }
               }
             })
             .catch((error) => {
-              console.error("Error:", error);
-              alert("An error occurred while trying to resend the verification email.");
+              if (error?.name === "AbortError") {
+                try { errorAlert("Request timed out. Please check your connection and try again."); } catch (_) {}
+              } else {
+                console.error("Error:", error);
+                try { errorAlert(error?.message || "An error occurred while trying to resend the verification email."); } catch (_) {}
+              }
+            })
+            .finally(() => {
+              // Restore button state if not in cooldown
+              if (!isCooldown) {
+                resendBtn.disabled = false;
+                resendBtn.classList.remove("opacity-60", "cursor-not-allowed");
+                resendText.textContent = originalText;
+              }
             });
         });
 
         function startCooldown(duration) {
           isCooldown = true;
-          resendBtn.classList.add("disabled");
+          resendBtn.classList.add("disabled", "opacity-60", "cursor-not-allowed");
 
           const startTime = new Date().getTime();
           const endTime = startTime + duration;
-          localStorage.setItem("cooldownUntil", endTime);
+          localStorage.setItem(COOLDOWN_KEY, endTime);
 
           // Update cooldown UI
           const updateCooldown = () => {

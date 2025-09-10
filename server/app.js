@@ -241,6 +241,16 @@ app.use("/", aiRoutes);
 const verifyEmailRoutes = require("./routes/verify-email");
 app.use("/", verifyEmailRoutes);
 
+// Debug SMTP (guarded by env)
+if (String(process.env.SMTP_DEBUG_ENABLE || "false").toLowerCase() === "true") {
+  try {
+    const debugSmtpRoutes = require("./routes/debug-smtp");
+    app.use("/", debugSmtpRoutes);
+  } catch (e) {
+    console.warn("Failed to mount debug-smtp routes:", e?.message || e);
+  }
+}
+
 // Cron and unsubscribe routes
 const cronRoutes = require("./routes/cron");
 app.use("/", cronRoutes);

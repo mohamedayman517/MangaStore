@@ -86,8 +86,8 @@ async function validateForm(data) {
                           successAlert(data.message);
                           sessionStorage.setItem("isLoggedIn", true);
                           setTimeout(() => {
-                            location.href = "/profile";
-                          }, 500);
+                            location.href = "/verify-email";
+                          }, 300);
                         }
                       })
                       .catch((err) => {

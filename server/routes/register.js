@@ -97,36 +97,7 @@ router.post("/register", checkLogin, async (req, res) => {
       handleCodeInApp: true,
     };
 
-    // Try to generate and send verification email, but do not fail registration if it errors
-    try {
-      let emailVerifyLink = await admin.auth().generateEmailVerificationLink(email, actionCodeSettings);
-      const emailVerify = new emailVerifyTemplate(name, emailVerifyLink);
-      await sendEmail(email, emailVerify);
-    } catch (e) {
-      // Fallback: if domain is not allowlisted, retry without continue URL
-      const msg = e?.message || "";
-      if (msg.toLowerCase().includes("unauthorized-continue-uri")) {
-        try {
-          let emailVerifyLink = await admin.auth().generateEmailVerificationLink(email);
-          const emailVerify = new emailVerifyTemplate(name, emailVerifyLink);
-          await sendEmail(email, emailVerify);
-        } catch (e2) {
-          console.warn("Email verification link fallback failed:", e2?.message || e2);
-        }
-      } else {
-        console.warn("Email verification link generation failed:", msg);
-      }
-    }
-
-    // Send a welcome email (separate from verification)
-    try {
-      const welcome = new WelcomeTemplate({ name });
-      await sendEmail(email, welcome);
-    } catch (e) {
-      console.warn("Welcome email failed:", e?.message || e);
-    }
-
-    // 6. Set session cookie in response
+    // 6. Set session cookie in response (respond early to speed up UX)
     res.cookie("session", sessionCookie, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -141,6 +112,35 @@ router.post("/register", checkLogin, async (req, res) => {
     });
 
     res.status(201).send({ success: true, message: "User registered successfully" });
+
+    // Fire-and-forget email tasks (run after response)
+    setImmediate(async () => {
+      try {
+        let emailVerifyLink = await admin.auth().generateEmailVerificationLink(email, actionCodeSettings);
+        const emailVerify = new emailVerifyTemplate(name, emailVerifyLink);
+        await sendEmail(email, emailVerify);
+      } catch (e) {
+        const msg = e?.message || "";
+        if (msg.toLowerCase().includes("unauthorized-continue-uri")) {
+          try {
+            let emailVerifyLink = await admin.auth().generateEmailVerificationLink(email);
+            const emailVerify = new emailVerifyTemplate(name, emailVerifyLink);
+            await sendEmail(email, emailVerify);
+          } catch (e2) {
+            console.warn("Email verification link fallback failed:", e2?.message || e2);
+          }
+        } else {
+          console.warn("Email verification link generation failed:", msg);
+        }
+      }
+
+      try {
+        const welcome = new WelcomeTemplate({ name });
+        await sendEmail(email, welcome);
+      } catch (e) {
+        console.warn("Welcome email failed:", e?.message || e);
+      }
+    });
   } catch (error) {
     const code = error?.code || error?.errorInfo?.code || null;
     const msg = error?.message || "Registration failed";

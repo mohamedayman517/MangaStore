@@ -12,14 +12,14 @@ router.get("/verify-email", validateSession, (req, res) => {
   if (req.user.email_verified) {
     return res.redirect("/profile");
   }
-  const maskEmail = (email) => email.replace(/^(.{5}).*(@.*)$/, "$1*****$2");
+  const maskEmail = (email) => email.replace(/^(.{5}).*(@.*)$/i, "$1*****$2");
 
   const email = req.user.email;
   // console.log("Email:", email);
   const maskedEmail = maskEmail(email);
 
-  // const userName = req.user.displayName || email.split("@")[0];
-  res.render("verify-email", { email: maskedEmail });
+  const uid = req.uid || (req.user && (req.user.uid || req.user.user_id));
+  res.render("verify-email", { email: maskedEmail, uid });
 });
 
 router.post(
@@ -41,7 +41,8 @@ router.post(
     try {
       const emailVerifyLink = await admin.auth().generateEmailVerificationLink(email, actionCodeSettings);
       const emailVerify = new emailVerifyTemplate(userName, emailVerifyLink);
-      await sendEmail(email, emailVerify);
+      const info = await sendEmail(email, emailVerify);
+      console.log("Verification email dispatch:", info && (info.response || info.messageId || "ok"));
       return res.status(200).json({ success: true, message: "Verification email sent!" });
     } catch (e) {
       const rawMsg = e?.message || "";
@@ -60,7 +61,8 @@ router.post(
         try {
           const link = await admin.auth().generateEmailVerificationLink(email);
           const emailVerify = new emailVerifyTemplate(userName, link);
-          await sendEmail(email, emailVerify);
+          const info2 = await sendEmail(email, emailVerify);
+          console.log("Verification email fallback dispatch:", info2 && (info2.response || info2.messageId || "ok"));
           return res.status(200).json({ success: true, message: "Verification email sent!" });
         } catch (e2) {
           console.error("Resend verification fallback failed:", e2?.message || e2);
