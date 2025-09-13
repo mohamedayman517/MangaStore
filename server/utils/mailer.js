@@ -63,7 +63,14 @@ async function sendWithResend({ to, subject, html, text, fromName, fromEmail, he
   }
   const resend = new Resend(apiKey);
 
-  const from = `${fromName || "Manga Store 🥭"} <${fromEmail}>`;
+  const effFromEmail = fromEmail || process.env.RESEND_FROM_EMAIL || process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER;
+  const effFromName = fromName || process.env.RESEND_FROM_NAME || process.env.SMTP_FROM_NAME || "Manga Store 🥭";
+  if (!effFromEmail) {
+    const cfgErr = new Error("Resend 'from' email is not configured");
+    cfgErr.code = "RESEND_CONFIG_ERROR";
+    throw cfgErr;
+  }
+  const from = `${effFromName} <${effFromEmail}>`;
 
   const res = await resend.emails.send({
     from,
@@ -75,8 +82,11 @@ async function sendWithResend({ to, subject, html, text, fromName, fromEmail, he
   });
 
   if (res?.error) {
-    const err = new Error(res.error.message || "Resend API error");
-    err.code = res.error.name || "RESEND_ERROR";
+    const details = res.error || {};
+    const combinedMsg = [details.message, details.name, details.type].filter(Boolean).join(" | ") || "Resend API error";
+    const err = new Error(`Resend API error: ${combinedMsg}`);
+    err.code = details.name || "RESEND_ERROR";
+    err.details = details;
     throw err;
   }
 
@@ -90,8 +100,8 @@ async function sendWithResend({ to, subject, html, text, fromName, fromEmail, he
  * @returns {Promise<void>}
  */
 const sendEmail = async (to, templateInstance) => {
-  const fromName = process.env.SMTP_FROM_NAME || "Manga Store 🥭";
-  const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER;
+  const fromName = process.env.RESEND_FROM_NAME || process.env.SMTP_FROM_NAME || "Manga Store 🥭";
+  const fromEmail = process.env.RESEND_FROM_EMAIL || process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER;
 
   // Honor suppression list for marketing-like templates
   if (await isSuppressed(to)) {
@@ -180,6 +190,31 @@ const sendEmail = async (to, templateInstance) => {
         }
         throw fallbackErr;
       }
+    }
+
+    // If the error came from Resend, attempt SMTP fallback (if configured) instead of retrying Resend
+    const isResendError = (error && (
+      error.code === "RESEND_ERROR" ||
+      error.code === "RESEND_CONFIG_ERROR" ||
+      /resend/i.test(String(error.code || "")) ||
+      error.details
+    ));
+
+    if (isResendError) {
+      try {
+        const smtpUser = process.env.SMTP_USER;
+        const smtpPass = process.env.SMTP_PASS;
+        if (smtpUser && smtpPass) {
+          const smtpTransporter = buildTransport();
+          const info = await smtpTransporter.sendMail(mailOptions);
+          return info;
+        }
+      } catch (smtpErr) {
+        console.error("❌ SMTP send failed after Resend error:", smtpErr);
+        // fall through to final throw
+      }
+      // No SMTP configured or it failed; rethrow original Resend error
+      throw error;
     }
 
     // For any other SMTP error, try Resend if configured

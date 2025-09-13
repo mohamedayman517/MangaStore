@@ -298,6 +298,11 @@ function scheduleInternalExports() {
 
 scheduleInternalExports();
 
+// Simple health check for platform probes
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
 // Error handling
 app.use((req, res, next) => {
   res.status(404).render("error", {

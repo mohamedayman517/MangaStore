@@ -2,11 +2,16 @@
   "name": "backend",
   "version": "1.0.0",
   "main": "index.js",
+  "engines": {
+    "node": ">=18",
+    "npm": ">=9"
+  },
   "scripts": {
     "start": "node server/app.js",
     "dev": "nodemon server/app.js",
     "build:css": "npx tailwindcss build -i ./public/css/index.css -o ./public/css/build.min.css --watch",
-    "build:css:prod": "npx tailwindcss build -o ./public/css/build.min.css --minify"
+    "build:css:prod": "npx tailwindcss build -o ./public/css/build.min.css --minify",
+    "postinstall": "npm --prefix client ci && npm --prefix client run build"
   },
   "keywords": [],
   "author": "",
